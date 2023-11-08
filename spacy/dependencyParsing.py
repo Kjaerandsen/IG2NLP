@@ -24,5 +24,5 @@ for token in doc:
 
 print(df)
 
-# Spin up a webserver on port 50 with the dependency tree using displacy
+# Spin up a webserver on port 5000 with the dependency tree using displacy
 displacy.serve(doc, style="dep")
