@@ -5,3 +5,6 @@
 .venv/
 .env/
 **/corenlp/
+**.json
+**.txt
+**__pycache__/
