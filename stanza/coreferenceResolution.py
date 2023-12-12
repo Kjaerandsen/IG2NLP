@@ -31,10 +31,17 @@ print(type(doc))
 
 print('\nNow printing coref tree\n')
 
-for sentence in doc.sentence:
-    print("\n\n NEW SENTENCE: ")
-    print(sentence.mentionsForCoref)
+#for sentence in doc.sentence:
+#    print("\n\n NEW SENTENCE: ")
+#    print(sentence.mentionsForCoref)
 
 for chains in doc.corefChain:
+    print("\n\n Coref chains: ")
     print(chains)
 
+for sentence in doc.sentence:
+    for token in sentence.token:
+        #print(token)
+        print(token.word)
+        print(token.tokenBeginIndex)
+        print(token.tokenEndIndex)
