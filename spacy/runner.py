@@ -18,7 +18,7 @@ with open("testdata.json", "r") as input:
     jsonData = json.load(input)
     print(jsonData[number])
 
-print(jsonData[number]['baseText'])
+#print(jsonData[number]['baseText'])
 
 output = Matcher(jsonData[number]['baseText'])
 
