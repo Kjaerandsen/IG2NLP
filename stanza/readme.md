@@ -33,7 +33,7 @@ Additionally, the input data for the dependency tree is added to a table and dis
 named entities and a constituency tree are printed to the console.
 The displacy visualizer is used to show the tree, which is hosted locally on "localhost:5000".
 
-# runner.py
+### runner.py
 Takes an integer in the form
 
 `python runner.py 0`
