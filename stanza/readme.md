@@ -48,7 +48,7 @@ The integer is the id of the statement which the runner automatically annotates.
     "baseText": "Base statement text",
     "processedText": "Manually annotated statement",
     "stanza": "Automatically annotated statement using stanza",
-    "stanza": "Automatically annotated statement using spacy"
+    "spacy": "Automatically annotated statement using spacy"
   },
 ]
 ```
