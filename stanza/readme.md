@@ -32,3 +32,25 @@ The program then uses displacy to create a dependency tree based on the input.
 Additionally, the input data for the dependency tree is added to a table and displayed in the terminal and
 named entities and a constituency tree are printed to the console.
 The displacy visualizer is used to show the tree, which is hosted locally on "localhost:5000".
+
+# runner.py
+Takes an integer in the form
+
+`python runner.py 0`
+
+The integer is the id of the statement which the runner automatically annotates. This statement is located in a JSON object in the file 
+`input.json`, where the JSON data has the structure:
+
+```
+[
+  {
+    "name": "Custom name for the statement",
+    "baseText": "Base statement text",
+    "processedText": "Manually annotated statement",
+    "stanza": "Automatically annotated statement using stanza",
+    "stanza": "Automatically annotated statement using spacy"
+  },
+]
+```
+
+The runner saves the automatically annotated statement to the "stanza" key of the input statement.

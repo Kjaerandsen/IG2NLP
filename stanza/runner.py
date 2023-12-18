@@ -11,10 +11,12 @@ if len(args)<2:
 
 number = int(args[1])
 
+filename = "input.json"
+
 # The testData.json is a json file containing an array of objects with a name, baseText and processedText.
 # The important fields are the baseText which is the input statement and the processedText which is the 
 # annotated statement.
-with open("testdata.json", "r") as input:
+with open(filename, "r") as input:
     jsonData = json.load(input)
     print(jsonData[number])
 
@@ -23,4 +25,10 @@ with open("testdata.json", "r") as input:
 output = Matcher(jsonData[number]['baseText'])
 
 print(jsonData[number]['baseText'] + "\n" + jsonData[number]['processedText'] + "\n" + output)
+
+jsonData[number]["stanza"] = output
+
+# Write the automatically parsed statement to the file
+with open(filename, "w") as outputFile:
+    json.dump(jsonData, outputFile, indent=2)
 
