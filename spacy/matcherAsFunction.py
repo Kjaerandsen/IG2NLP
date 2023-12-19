@@ -29,9 +29,9 @@ def Matcher(text):
         if token.text == "%" or token.text.lower == "percent":
             parsedDoc[-1] = {"text":parsedDoc[-1]['text'] + token.text, "type":symbolDict[token.dep_]}
         else:
-            if token.dep_ == "pobj":
-                parsedDoc.append({"text":token.text, "type":"Bind"})
-            elif token.dep_ == "dobj":
+            #if token.dep_ == "pobj":
+                #parsedDoc.append({"text":token.text, "type":"Bind"})
+            if token.dep_ == "dobj":
                 parsedDoc.append({"text":token.text, "type":"Bdir"})
             elif token.head.dep_ == "ROOT":
                 if token.dep_ in symbolDict:
