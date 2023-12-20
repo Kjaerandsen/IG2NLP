@@ -54,3 +54,25 @@ The integer is the id of the statement which the runner automatically annotates.
 ```
 
 The runner saves the automatically annotated statement to the "stanza" key of the input statement.
+
+### runnerAdvanced.py
+Takes an integer in the form
+
+`python runnerAdvanced.py 0`
+
+The integer is the id of the statement which the runner automatically annotates. This statement is located in a JSON object in the file 
+`input.json`, where the JSON data has the structure:
+
+```
+[
+  {
+    "name": "Custom name for the statement",
+    "baseText": "Base statement text",
+    "processedText": "Manually annotated statement",
+    "stanza": "Automatically annotated statement using stanza",
+    "spacy": "Automatically annotated statement using spacy"
+  },
+]
+```
+
+The runner saves the automatically annotated statement to the "stanza" key of the input statement.
