@@ -1,5 +1,6 @@
 import stanza
 import pandas as pd
+from spacy import displacy
 
 def Matcher(text):
     nlp = stanza.Pipeline('en', use_gpu=False)
@@ -32,6 +33,8 @@ def Matcher(text):
     
     words = doc.sentences[0].words
     wordsBak = doc.sentences[0].words
+
+    words = compoundWords(words)
 
     i = 0
     while i < len(words):
@@ -95,10 +98,11 @@ def Matcher(text):
                 print("Lengths:",  cacLen-firstVal, lastIndex, lastIndex-(cacLen-firstVal), len(wordsBak) )
                 if firstVal == 0:
                     return "Cac{"+ Matcher(condition) + "} " + Matcher(statementRest)     
-        if words[i].deprel == "compound" and words[i].text != "": 
-            words[i+1].text = words[i].text + " " + words[i+1].text
-            words[i].text = ""
-        elif words[i].deprel == "obj":
+        #if words[i].deprel == "compound" and words[i].text != "": 
+        #    words[i+1].text = words[i].text + " " + words[i+1].text
+        #    words[i].text = ""
+        #el
+        if words[i].deprel == "obj":
             #print(words[i+1].text)
             # Can potentially check for the dep_ "cc" instead
             if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
@@ -197,3 +201,45 @@ def Matcher(text):
     return outputText
 
 
+def compoundWords(words):
+    
+
+    i = 0
+    wordLen = len(words)
+
+    print("type is: ", type(words[0]), " " , wordLen)
+    while i < wordLen:
+        #print(words[i])
+        if words[i].deprel == "compound" and words[i].text != "": 
+            #words[i+1].start_char = words[i].start_char
+            words[i+1].text = words[i].text + " " + words[i+1].text
+
+            j = 0
+            while j < wordLen:
+                # Adjust the head connections to take into account the compounding of two elements
+                if words[j].head > i+1:
+                    words[j].head = words[j].head - 1
+                # Adjust the id's to take into account the removal of the compound word
+                if j >= i:
+                    words[j].id -=  1
+                j += 1
+            # Remove the compound word
+            wordLen -= 1
+            del words[i]
+        i += 1
+
+
+    #depData = {"words":[],
+    #       "arcs":[]}
+
+    #for word in words:
+    #    depData["words"].append({"text":word.text, "tag": word.pos})
+    #    if word.head != 0:
+    #        print(word, max(word.id-1, word.head-1))
+    #        depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
+    
+    # Spin up a webserver on port 5000 with the dependency tree using displacy
+    #print("TEstin", len(words))
+    #print(depData)
+    #displacy.serve(depData, style="dep", manual=True)
+    return words
