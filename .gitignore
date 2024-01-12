@@ -1,9 +1,11 @@
 **.venv/
 **.env/
+**env/
 **/.venv/
 **/.env/
 .venv/
 .env/
+env/
 **/corenlp/
 **.json
 **.txt
