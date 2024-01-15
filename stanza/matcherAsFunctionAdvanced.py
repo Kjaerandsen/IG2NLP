@@ -2,7 +2,16 @@ import stanza
 import pandas as pd
 from spacy import displacy
 
+# Dictionary of symbols for parsing
+SymbolDict = {"pobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
+
 def Matcher(text):
+    words = nlpPipeline(text)
+
+    return matchingFunction(words)
+
+# Takes a sentence as a string, returns the nlp pipeline results for the string
+def nlpPipeline(text):
     nlp = stanza.Pipeline('en', use_gpu=False)
 
     # Take the input string
@@ -26,18 +35,64 @@ def Matcher(text):
 
     #print(df)
 
-    parsedDoc = []
+    return doc.sentences[0].words
 
-    # Dictionary of symbols for parsing
-    symbolDict = {"pobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
+# Takes the words from the nlp pipeline and combines combine words to a single word
+def compoundWords(words):
     
-    words = doc.sentences[0].words
-    wordsBak = doc.sentences[0].words
+    i = 0
+    wordLen = len(words)
 
-    words = compoundWords(words)
+    #print("type is: ", type(words[0]), " " , wordLen)
+    while i < wordLen:
+        #print(words[i])
+
+        # If the word is a compound word
+        if words[i].deprel == "compound" and words[i].text != "": 
+            #words[i+1].start_char = words[i].start_char
+            # Set the text to the compound word and the following word
+            words[i+1].text = words[i].text + " " + words[i+1].text
+            
+            # Go through the words and adjust the connections between the words to account
+            # for the combination of compound words into single words
+            j = 0
+            while j < wordLen:
+                # Adjust the head connections to take into account the compounding of two elements
+                if words[j].head > i+1:
+                    words[j].head = words[j].head - 1
+                # Adjust the id's to take into account the removal of the compound word
+                if j >= i:
+                    words[j].id -=  1
+                j += 1
+            # Remove the old compound
+            wordLen -= 1
+            del words[i]
+        i += 1
+
+
+    #depData = {"words":[],
+    #       "arcs":[]}
+
+    #for word in words:
+    #    depData["words"].append({"text":word.text, "tag": word.pos})
+    #    if word.head != 0:
+    #        print(word, max(word.id-1, word.head-1))
+    #        depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
+    
+    # Spin up a webserver on port 5000 with the dependency tree using displacy
+    #print("TEstin", len(words))
+    #print(depData)
+    #displacy.serve(depData, style="dep", manual=True)
+    return words
+
+def matchingFunction(words):
+    parsedDoc = []
+    wordsBak = words
+
+    wordLen = len(words)
 
     i = 0
-    while i < len(words):
+    while i < wordLen:
         #token = doc[i]
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
         if words[i].deprel == "advcl":
@@ -97,7 +152,7 @@ def Matcher(text):
                 print("statementRest: ", statementRest)
                 print("Lengths:",  cacLen-firstVal, lastIndex, lastIndex-(cacLen-firstVal), len(wordsBak) )
                 if firstVal == 0:
-                    return "Cac{"+ Matcher(condition) + "} " + Matcher(statementRest)     
+                    return "Cac{"+ matchingFunction(nlpPipeline(condition)) + "} " + matchingFunction(nlpPipeline(statementRest))     
         #if words[i].deprel == "compound" and words[i].text != "": 
         #    words[i+1].text = words[i].text + " " + words[i+1].text
         #    words[i].text = ""
@@ -171,8 +226,8 @@ def Matcher(text):
             else:
                 parsedDoc.append({"text":words[i].text, "type":"I"})
         elif words[words[i].head-1].deprel == "root":
-            if words[i].deprel in symbolDict:
-                parsedDoc.append({"text":words[i].text, "type":symbolDict[words[i].deprel]})
+            if words[i].deprel in SymbolDict:
+                parsedDoc.append({"text":words[i].text, "type":SymbolDict[words[i].deprel]})
             else:
                 parsedDoc.append({"text":words[i].text, "type":""})
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
@@ -196,50 +251,6 @@ def Matcher(text):
                 outputText = outputText + parsedDoc[i]['text'] + " "
         else:
             outputText = outputText+parsedDoc[i]['type'] + "(" + parsedDoc[i]['text'] + ") "
-    #print(outputText)
 
+    print("Returning output: ", outputText)
     return outputText
-
-
-def compoundWords(words):
-    
-
-    i = 0
-    wordLen = len(words)
-
-    print("type is: ", type(words[0]), " " , wordLen)
-    while i < wordLen:
-        #print(words[i])
-        if words[i].deprel == "compound" and words[i].text != "": 
-            #words[i+1].start_char = words[i].start_char
-            words[i+1].text = words[i].text + " " + words[i+1].text
-
-            j = 0
-            while j < wordLen:
-                # Adjust the head connections to take into account the compounding of two elements
-                if words[j].head > i+1:
-                    words[j].head = words[j].head - 1
-                # Adjust the id's to take into account the removal of the compound word
-                if j >= i:
-                    words[j].id -=  1
-                j += 1
-            # Remove the compound word
-            wordLen -= 1
-            del words[i]
-        i += 1
-
-
-    #depData = {"words":[],
-    #       "arcs":[]}
-
-    #for word in words:
-    #    depData["words"].append({"text":word.text, "tag": word.pos})
-    #    if word.head != 0:
-    #        print(word, max(word.id-1, word.head-1))
-    #        depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
-    
-    # Spin up a webserver on port 5000 with the dependency tree using displacy
-    #print("TEstin", len(words))
-    #print(depData)
-    #displacy.serve(depData, style="dep", manual=True)
-    return words
