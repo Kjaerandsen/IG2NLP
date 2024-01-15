@@ -3,7 +3,7 @@ import pandas as pd
 from spacy import displacy
 
 # Dictionary of symbols for parsing
-SymbolDict = {"pobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
+SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
 
 def Matcher(text):
     words = nlpPipeline(text)
@@ -86,6 +86,9 @@ def compoundWords(words):
     return words
 
 def matchingFunction(words):
+
+    words = compoundWords(words)
+
     parsedDoc = []
     wordsBak = words
 
@@ -95,6 +98,8 @@ def matchingFunction(words):
     while i < wordLen:
         #token = doc[i]
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
+
+        # If the word is recognized as a condition or constraint
         if words[i].deprel == "advcl":
             # Find the substructure for the condition or constraint
             print("Advcl")
@@ -153,10 +158,8 @@ def matchingFunction(words):
                 print("Lengths:",  cacLen-firstVal, lastIndex, lastIndex-(cacLen-firstVal), len(wordsBak) )
                 if firstVal == 0:
                     return "Cac{"+ matchingFunction(nlpPipeline(condition)) + "} " + matchingFunction(nlpPipeline(statementRest))     
-        #if words[i].deprel == "compound" and words[i].text != "": 
-        #    words[i+1].text = words[i].text + " " + words[i+1].text
-        #    words[i].text = ""
-        #el
+
+        # If the word is an object
         if words[i].deprel == "obj":
             #print(words[i+1].text)
             # Can potentially check for the dep_ "cc" instead
@@ -192,8 +195,13 @@ def matchingFunction(words):
                     i += 2     
             else:
                 parsedDoc.append({"text":words[i].text, "type":"Bdir"})
+        
+        # Else if the word is the sentence root, handle it as an "Aim" (I) component
         elif words[i].deprel == "root":
+            
+            # If the word is connected to another word by a logical operator (and / or)
             if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
+                # Handle the logical operator
                 j = i+2
                 conjugated = False
                 output = words[i].text + " [" + words[i+1].text.upper() + "]"
@@ -222,19 +230,25 @@ def matchingFunction(words):
                     # Go through the rest of the sentence and check for conj connections, if none exist just add the next word
                     parsedDoc.append({"text":words[i].text + " [" + words[i+1].text.upper() + "] " + words[i+2].text, "type":"I"})
                     i += 2
-                        
+
+            # If no logical operator is present just add the symbol       
             else:
                 parsedDoc.append({"text":words[i].text, "type":"I"})
+        
+        # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
                 parsedDoc.append({"text":words[i].text, "type":SymbolDict[words[i].deprel]})
             else:
                 parsedDoc.append({"text":words[i].text, "type":""})
+        
+        # Look into this further
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
             parsedDoc.append({"text":words[i].text + " " + words[words[i].head-1].text, "type": "Bdir"})
             i += 1
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             parsedDoc.append({"text":words[i].text, "type": "Bdir"})
+        
         else:
             parsedDoc.append({"text":words[i].text, "type":""})
         i += 1
