@@ -242,29 +242,38 @@ def matchingFunction(words):
             else:
                 parsedDoc.append({"text":words[i].text, "type":""})
         
-        # Look into this further
+        # If the relation is a ccomp then handle it as a direct object
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
             parsedDoc.append({"text":words[i].text + " " + words[words[i].head-1].text, "type": "Bdir"})
             i += 1
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             parsedDoc.append({"text":words[i].text, "type": "Bdir"})
         
+        # If the word had no matches, simply add it to the parsed sentence
         else:
-            parsedDoc.append({"text":words[i].text, "type":""})
+            if words[i].deprel == "punct":
+                parsedDoc.append({"text":words[i].text, "type":"punct"})
+            else:
+                parsedDoc.append({"text":words[i].text, "type":""})
         i += 1
 
     outputText = ""
 
     for i in range(len(parsedDoc)):
         if parsedDoc[i]['type'] == "":
-            if parsedDoc[i]['text'] == ".":
-                stringAsList = list(outputText)
-                stringAsList[-1] = "."
-                outputText = ''.join(stringAsList)
-            else:
-                outputText = outputText + parsedDoc[i]['text'] + " "
+            #if parsedDoc[i]['text'] == ".":
+            #    stringAsList = list(outputText)
+            #    stringAsList[-1] = "."
+            #    outputText = ''.join(stringAsList)
+            #else:
+            outputText = outputText + " " + parsedDoc[i]['text']
+        elif parsedDoc[i]['type'] == "punct":
+            outputText = parsedDoc[i]['text']
         else:
-            outputText = outputText+parsedDoc[i]['type'] + "(" + parsedDoc[i]['text'] + ") "
+            outputText = outputText+ " " + parsedDoc[i]['type'] + "(" + parsedDoc[i]['text'] + ")"
 
+    # Remove whitespace before the sentence start
+    while outputText[0] == " ":
+        outputText = outputText[1:]
     print("Returning output: ", outputText)
     return outputText
