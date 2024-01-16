@@ -1,14 +1,16 @@
 package main
 
 import (
-	"IG-Parser/core/parser"
-	"IG-Parser/core/tree"
 	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
+
+	"IG-Parser/core/parser"
+	"IG-Parser/core/tree"
 )
 
+// Struct for the ouput file with the components, and a count of each
 type Statistics struct {
 	//
 	Attributes     []JSONComponent
@@ -28,8 +30,15 @@ type Statistics struct {
 	//
 	OrElses     []JSONComponent
 	OrElseCount int
+	//
+	ActivationConditions     []JSONComponent
+	ActivationConditionCount int
+	//
+	ExecutionConstraints     []JSONComponent
+	ExecutionConstraintCount int
 }
 
+// Struct for each component with text content, a bool for nesting and semantic annotations
 type JSONComponent struct {
 	Content            string
 	Nested             bool
@@ -37,19 +46,20 @@ type JSONComponent struct {
 }
 
 type inputStructure []struct {
-	Name                string     `json:"name"`
-	BaseText            string     `json:"baseText"`
-	ProcessedText       string     `json:"processedText"`
-	Stanza              string     `json:"stanza"`
-	Spacy               string     `json:"stanzaAdvanced"`
+	Name          string `json:"name"`
+	BaseText      string `json:"baseText"`
+	ProcessedText string `json:"processedText"`
+	Stanza        string `json:"stanza"`
+	//Spacy               string     `json:"stanzaAdvanced"`
 	ProcessedTextParsed Statistics `json:"processedTextParsed"`
 	StanzaParsed        Statistics `json:"stanzaParsed"`
-	SpacyParsed         Statistics `json:"spacyParsed"`
+	//SpacyParsed         Statistics `json:"spacyParsed"`
 }
 
 func main() {
 	// Read the input file
 	file := "./input.json"
+	outFile := "./output.json"
 
 	content, err := os.ReadFile(file)
 	if err != nil {
@@ -75,10 +85,12 @@ func main() {
 			data[i].ProcessedTextParsed = stats
 		}
 
-		stats, success = requestHandler(data[i].Spacy)
-		if success {
-			data[i].SpacyParsed = stats
-		}
+		/*
+			stats, success = requestHandler(data[i].Spacy)
+			if success {
+				data[i].SpacyParsed = stats
+			}
+		*/
 
 		stats, success = requestHandler(data[i].Stanza)
 		if success {
@@ -94,7 +106,7 @@ func main() {
 	}
 
 	// Write the JSON data to the file
-	err = os.WriteFile(file, jsonData, 0644)
+	err = os.WriteFile(outFile, jsonData, 0644)
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 		return
@@ -186,15 +198,20 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 			//fmt.Println("statement is: ", statement)
 			statementHandler(statement, stats)
 			component.Nested = true
-			component.Content = fmt.Sprintf("%v", componentNode.Entry)
-			component.SemanticAnnotation = fmt.Sprintf("%v", componentNode.Annotations)
 		} else {
 			component.Nested = false
-			component.Content = fmt.Sprintf("%v", componentNode.Entry)
-			component.SemanticAnnotation = fmt.Sprintf("%v", componentNode.Annotations)
 			//fmt.Println(componentNode.Entry)
 			//fmt.Println(reflect.TypeOf(componentNode.Entry))
 		}
+
+		component.Content = fmt.Sprintf("%v", componentNode.Entry)
+		component.SemanticAnnotation = fmt.Sprintf("%v", componentNode.Annotations)
+
+		// Remove empty semantic annotations
+		if component.SemanticAnnotation == "\u003cnil\u003e" {
+			component.SemanticAnnotation = ""
+		}
+
 		switch symbol {
 		case "A":
 			stats.AttributeCount += 1
@@ -209,8 +226,11 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 			stats.IndirectObjectCount += 1
 			stats.IndirectObjects = append(stats.IndirectObjects, component)
 		case "Cac":
-			//stats. += 1
-			//stats.Deontics = append(stats.Deontics, component)
+			stats.ActivationConditionCount += 1
+			stats.ActivationConditions = append(stats.ActivationConditions, component)
+		case "Cex":
+			stats.ExecutionConstraintCount += 1
+			stats.ExecutionConstraints = append(stats.ExecutionConstraints, component)
 		case "I":
 			stats.AimCount += 1
 			stats.Aims = append(stats.Aims, component)
