@@ -49,7 +49,7 @@ type inputStructure []struct {
 	Name          string `json:"name"`
 	BaseText      string `json:"baseText"`
 	ProcessedText string `json:"processedText"`
-	Stanza        string `json:"stanza"`
+	Stanza        string `json:"stanzaAdvanced"`
 	//Spacy               string     `json:"stanzaAdvanced"`
 	ProcessedTextParsed Statistics `json:"processedTextParsed"`
 	StanzaParsed        Statistics `json:"stanzaParsed"`
@@ -195,8 +195,19 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 		getComponentInfo(componentNode.Right, symbol, stats)
 	} else {
 		if statement, ok := componentNode.Entry.(*tree.Statement); ok {
-			//fmt.Println("statement is: ", statement)
+			// StringFlat gives the string
+			fmt.Println("statement is: ", componentNode.StringFlat())
+			fmt.Println(componentNode)
 			statementHandler(statement, stats)
+
+			//fmt.Println("No looking at stuff\n")
+			//fmt.Println(componentNode.Entry.(*tree.Statement).String())
+
+			// Statement in this case includes all subcomponents and their contents
+			// Need to go through each, get the text, and output it
+			//fmt.Println(stats)
+			//fmt.Println(componentNode.Entry)
+
 			component.Nested = true
 		} else {
 			component.Nested = false
@@ -238,4 +249,16 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 	}
 
 	//fmt.Print("\n")
+}
+
+func findNestedPart(text string) {
+	// Look for symbols which support nesting
+
+	// For each discovered symbol find the part of the text they are in
+
+	// Capture the semantic annotation if any
+
+	// Capture the contents
+
+	// Add to the output struct
 }

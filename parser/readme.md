@@ -1,9 +1,9 @@
 To run this program download the IG-Parser repo available at:
 https://github.com/chrfrantz/IG-Parser
 
-Then move the "main.go" file from this folder to the root folder of the repository.
+The programs can then be run through either adding the repository above to your goroot directory, or by moving the files in this directory to the root of the downloaded repository and running them.
 
-Finally, run the command 'go run main.go'.
+The command 'go run main.go' can be used to run the program.
 
 This will spin up a rest api which takes an annotated statement and returns a json object
 which includes the amount of and the contents of the following components:
@@ -11,6 +11,8 @@ which includes the amount of and the contents of the following components:
 * Attribute
 * Direct Object
 * Indirect Object
+* Activation Condition
+* Execution Constraint
 * Deontic
 * Aim
 
@@ -18,11 +20,7 @@ This is used to evaluate the performance of the matching function for automated 
 
 The other option is to use the "autoRunner.go".
 
-This program also requires the IG-Parser and should be moved into the IG-Parser folder.
-
-It can be run by running the command 'go run main.go'
-
-Additionally, it requires an "input.json" file with the structure:
+This program has the same requirements as the one above, additionally, it requires an "input.json" file with the structure:
 
 '''
 [
@@ -35,6 +33,8 @@ Additionally, it requires an "input.json" file with the structure:
     }
 ]
 '''
+
+It can be run by running the command 'go run autoRunner.go'
 
 This program writes the detected components to the same file in the form of JSON objects which can be used to compare.
 
