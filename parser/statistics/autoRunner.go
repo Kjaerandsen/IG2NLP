@@ -1,4 +1,4 @@
-package main
+package statistics
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 )
 
 // Struct for the ouput file with the components, and a count of each
-type Statistics struct {
+type StatisticsAuto struct {
 	//
 	Attributes     []JSONComponent
 	AttributeCount int
@@ -39,7 +39,7 @@ type Statistics struct {
 }
 
 // Struct for each component with text content, a bool for nesting and semantic annotations
-type JSONComponent struct {
+type JSONComponentAuto struct {
 	Content            string
 	Nested             bool
 	SemanticAnnotation string
@@ -51,12 +51,12 @@ type inputStructure []struct {
 	ProcessedText string `json:"processedText"`
 	Stanza        string `json:"stanzaAdvanced"`
 	//Spacy               string     `json:"stanzaAdvanced"`
-	ProcessedTextParsed Statistics `json:"processedTextParsed"`
-	StanzaParsed        Statistics `json:"stanzaParsed"`
+	ProcessedTextParsed StatisticsAuto `json:"processedTextParsed"`
+	StanzaParsed        StatisticsAuto `json:"stanzaParsed"`
 	//SpacyParsed         Statistics `json:"spacyParsed"`
 }
 
-func main() {
+func AutoRunner() {
 	// Read the input file
 	file := "./input.json"
 	outFile := "./output.json"
@@ -78,7 +78,7 @@ func main() {
 	fmt.Println(len(data))
 
 	for i := 0; i < len(data); i++ {
-		var stats Statistics
+		var stats StatisticsAuto
 
 		stats, success := requestHandler(data[i].ProcessedText)
 		if success {
@@ -116,8 +116,8 @@ func main() {
 
 }
 
-func requestHandler(inputStatement string) (Statistics, bool) {
-	var output Statistics
+func requestHandler(inputStatement string) (StatisticsAuto, bool) {
+	var output StatisticsAuto
 
 	// Parse IGScript statement into tree
 	stmts, err := parser.ParseStatement(inputStatement)
@@ -136,7 +136,7 @@ func requestHandler(inputStatement string) (Statistics, bool) {
 
 // Handler for statements, takes a statement and the statistics struct,
 // gets the stats for each component in the statement and enters them into the statistics struct
-func statementHandler(statement *tree.Statement, stats *Statistics) {
+func statementHandler(statement *tree.Statement, stats *StatisticsAuto) {
 
 	// Regulative
 	getComponentInfo(statement.Attributes, "A", stats)
@@ -175,7 +175,7 @@ func statementHandler(statement *tree.Statement, stats *Statistics) {
 }
 
 // Recursive function which goes over a symbol and it's children, adding the components to the statistics struct
-func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics) {
+func getComponentInfo(componentNode *tree.Node, symbol string, stats *StatisticsAuto) {
 	var component JSONComponent
 	component.SemanticAnnotation = ""
 
@@ -249,16 +249,4 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 	}
 
 	//fmt.Print("\n")
-}
-
-func findNestedPart(text string) {
-	// Look for symbols which support nesting
-
-	// For each discovered symbol find the part of the text they are in
-
-	// Capture the semantic annotation if any
-
-	// Capture the contents
-
-	// Add to the output struct
 }
