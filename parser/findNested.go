@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"sort"
 	"strings"
 )
 
@@ -63,10 +66,26 @@ var ComponentNames = [17]string{ //17
 func main() {
 	text := "Somethignn Cac[afwfawfw]{A(something else) I(Something [AND] something else) Bdir{Nested} Cac(This is another)}"
 
-	removeSymbols(text)
-	jsonData := findSymbols(text)
+	fmt.Println(removeSymbols(text))
+	data := findSymbols(text)
 
-	fmt.Println(jsonData)
+	outFile := "output2.json"
+
+	// Convert the struct to JSON
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return
+	}
+
+	// Write the JSON data to the file
+	err = os.WriteFile(outFile, jsonData, 0644)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	//fmt.Println(jsonData)
 }
 
 // Takes a string, returns a JSON object with all the components ordered, and counts of each component.
@@ -80,6 +99,11 @@ func findSymbols(text string) Statistics {
 	output.ORCount = strings.Count(text, "[OR]")
 	output.XORCount = strings.Count(text, "[XOR]")
 	output.ANDCount = strings.Count(text, "[AND]")
+
+	// Remove the logical operators
+	text = strings.ReplaceAll(text, "[OR]", "or")
+	text = strings.ReplaceAll(text, "[XOR]", "or")
+	text = strings.ReplaceAll(text, "[AND]", "and")
 
 	// Find and add all components
 	for i := 0; i < 17; i++ {
@@ -130,7 +154,13 @@ func findSymbols(text string) Statistics {
 		}
 	}
 
+	fmt.Println(output)
+
 	// Sort the list of components
+	sort.Slice(output.Components,
+		func(a, b int) bool {
+			return output.Components[a].StartID < output.Components[b].StartID
+		})
 
 	// Update the id's
 
@@ -138,7 +168,7 @@ func findSymbols(text string) Statistics {
 }
 
 // Takes a statement in the form of a string, goes through and removes all IG Script notation syntax
-func removeSymbols(text string) {
+func removeSymbols(text string) string {
 
 	// Remove all semantic annotations
 	for i := 0; i < 17; i++ {
@@ -150,7 +180,7 @@ func removeSymbols(text string) {
 	text = strings.ReplaceAll(text, "[XOR]", "or")
 	text = strings.ReplaceAll(text, "[AND]", "and")
 
-	fmt.Println(text)
+	return text
 }
 
 // Takes a string and a component, removes all instances of that component from the string
@@ -325,7 +355,7 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 					componentContents = text[position+1 : i]
 					end = i
 					fmt.Println("Component contents: ", componentContents)
-					componentOccurrance.Content = componentContents
+					componentOccurrance.Content = removeSymbols(componentContents)
 					break
 				}
 			}
@@ -351,6 +381,8 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 			componentOccurrance.Nested = false
 			// Find the scope of the component contents
 			brackets := 1
+
+			componentOccurrance.StartID = position + 1
 
 			for i := position + 1; i < len(text); i++ {
 				if text[i] == byte('(') {
@@ -389,7 +421,7 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 
 			// Update the start position for each component to take into account the substring used
 			for j := 0; j < len(result.Components); j++ {
-				result.Components[j].StartID += position + componentLength + 1
+				result.Components[j].StartID = result.Components[j].StartID + position + componentLength + 1
 			}
 
 			// Add the resulting components
