@@ -14,17 +14,18 @@ class TokenEntry:
         self.type = type
 
     def __str__(self):
+        print(self.text, self.type)
         if self.id == None:
             return self.text
         elif self.type == "":
             return " " + self.text
         elif self.type == "punct":
-            self.text
+            return self.text
         else:
             return " " + self.type + "(" + self.text + ")"
 
 def Matcher(text):
-    words = nlpPipeline(text)
+    #words = nlpPipeline(text)
 
     #return matchingFunction(words)
     return tokenToText(matchingFunction(nlpPipeline(text)))
@@ -67,7 +68,7 @@ def compoundWords(words):
         #print(words[i])
 
         # If the word is a compound word
-        if words[i].deprel == "compound" and words[i].text != "": 
+        if words[i].deprel == "compound" and words[i].text != "" and words[i].head-1 == i+1: 
             #words[i+1].start_char = words[i].start_char
             # Set the text to the compound word and the following word
             words[i+1].text = words[i].text + " " + words[i+1].text
@@ -133,12 +134,15 @@ def matchingFunction(words, startId=0):
             firstValFilled = False
 
             k = 0
+
+            # Go through the statement from the first word to the advcl deprel
             while k < i:
                 x = k
                 headRel = ""
                 while headRel != "root":
+                    # Set x to the head of x
                     x = wordsBak[x].head-1
-                    print(wordsBak[x].deprel)
+                    print(wordsBak[x].deprel, wordsBak[x].text)
                     if wordsBak[x].deprel == "advcl":
                         if not firstValFilled:
                             firstVal = k
@@ -353,7 +357,7 @@ def matchingFunction(words, startId=0):
                 #parsedDoc.append({"text":words[i].text, "type":""})
         i += 1
 
-    outputText = ""
+    #outputText = ""
 
     print("\n\nTokens:\n")
     print(tokenToText(tokenObject))
