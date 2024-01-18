@@ -36,6 +36,10 @@ if i == -1:
 
         jsonData[i]["stanza"] = output
 
+        # Write the automatically parsed statement to the file
+        #with open(filename, "w") as outputFile:
+        #    json.dump(jsonData, outputFile, indent=2)
+
         i += 1
 
     # Write the automatically parsed statement to the file
