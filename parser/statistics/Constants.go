@@ -50,3 +50,14 @@ type JSONComponent struct {
 var ComponentNames = [17]string{ //17
 	"A", "A,p", "D", "I", "Bdir", "Bdir,p", "Bind", "Bind,p",
 	"Cac", "Cex", "E", "E,p", "M", "F", "P", "P,p", "O"}
+
+type inputStructure []struct {
+	Name          string `json:"name"`
+	BaseText      string `json:"baseText"`
+	ProcessedText string `json:"processedText"`
+	Stanza        string `json:"stanzaAdvanced"`
+	//Spacy               string     `json:"stanzaAdvanced"`
+	ProcessedTextParsed Statistics `json:"processedTextParsed"`
+	StanzaParsed        Statistics `json:"stanzaParsed"`
+	//SpacyParsed         Statistics `json:"spacyParsed"`
+}

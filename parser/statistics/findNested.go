@@ -12,13 +12,39 @@ import (
 //"Somethignn Cac[afwfawfw]{A(something else) I(Something) Bdir{Nested} Cac(This is another)}", "Cac"
 //Somethignn Cac[afwfawfw]{something Cacelse Something Nested his is another}
 
-func RunStatistics() {
-	text := "Somethignn Cac[afwfawfw]{A(something else) I(Something [AND] something else) Bdir{Nested} Cac(This is another)}"
+func RunStatistics(inputFile string, outputFile string) {
+	content, err := os.ReadFile(inputFile)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
 
-	fmt.Println(removeSymbols(text))
-	data := findSymbols(text)
+	var data inputStructure
 
-	outFile := "output2.json"
+	err = json.Unmarshal(content, &data)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return
+	}
+
+	fmt.Println(len(data))
+
+	for i := 0; i < len(data); i++ {
+		var stats Statistics
+
+		stats = findSymbols(data[i].ProcessedText)
+		data[i].ProcessedTextParsed = stats
+
+		/*
+			stats, success = findSymbols(data[i].Spacy)
+			if success {
+				data[i].SpacyParsed = stats
+			}
+		*/
+
+		stats = findSymbols(data[i].Stanza)
+		data[i].StanzaParsed = stats
+	}
 
 	// Convert the struct to JSON
 	jsonData, err := json.MarshalIndent(data, "", "  ")
@@ -28,17 +54,42 @@ func RunStatistics() {
 	}
 
 	// Write the JSON data to the file
-	err = os.WriteFile(outFile, jsonData, 0644)
+	err = os.WriteFile(outputFile, jsonData, 0644)
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 		return
 	}
+
+	/*
+		text := "Somethignn Cac[afwfawfw]{A(something else) I(Something [AND] something else) Bdir{Nested} Cac(This is another)}"
+
+		fmt.Println(removeSymbols(text))
+		data := findSymbols(text)
+
+		outFile := "output2.json"
+
+		// Convert the struct to JSON
+		jsonData, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			fmt.Println("Error marshalling JSON:", err)
+			return
+		}
+
+		// Write the JSON data to the file
+		err = os.WriteFile(outFile, jsonData, 0644)
+		if err != nil {
+			fmt.Println("Error writing to file:", err)
+			return
+		}
+	*/
 
 	//fmt.Println(jsonData)
 }
 
 // Takes a string, returns a JSON object with all the components ordered, and counts of each component.
 func findSymbols(text string) Statistics {
+	fmt.Println("Running findSymbols on: ", text)
+
 	var output Statistics
 
 	var result Statistics
@@ -159,7 +210,7 @@ func removeComponent(text string, component string) string {
 		// If semantic annotation move the position to the end of the annotation
 		if text[position] == '[' {
 			fmt.Println("Found Semantic annotation")
-			position = strings.Index((text), "]") + 1
+			position = strings.Index(text[position:], "]") + position + 1
 		}
 
 		// Check if the symbol is a nested symbol
@@ -274,16 +325,19 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 
 		// If semantic annotation move the position to the end of the annotation
 		if text[position] == '[' {
-			fmt.Println("Found Semantic annotation")
+			fmt.Println("Found Semantic annotation", position)
 
-			positionEnd := strings.Index((text), "]")
+			positionEnd := strings.Index(text[position:], "]") + position
 
+			fmt.Println(position+1, positionEnd)
 			// Set the semantic annotation
 			componentOccurrance.SemanticAnnotation = text[position+1 : positionEnd]
 
 			// Update the position to start the parsing the contents of the component
 			position = positionEnd + 1
 		}
+
+		fmt.Println("Done with semantic annotation")
 
 		// Check if the symbol is a nested symbol
 		if text[position:position+1] == "{" {

@@ -45,7 +45,7 @@ type JSONComponentAuto struct {
 	SemanticAnnotation string
 }
 
-type inputStructure []struct {
+type inputStructureAuto []struct {
 	Name          string `json:"name"`
 	BaseText      string `json:"baseText"`
 	ProcessedText string `json:"processedText"`
@@ -56,10 +56,10 @@ type inputStructure []struct {
 	//SpacyParsed         Statistics `json:"spacyParsed"`
 }
 
-func AutoRunner() {
+func AutoRunner(file string, outFile string) {
 	// Read the input file
-	file := "./input.json"
-	outFile := "./output.json"
+	//file := "./input.json"
+	//outFile := "./output.json"
 
 	content, err := os.ReadFile(file)
 	if err != nil {
@@ -67,7 +67,7 @@ func AutoRunner() {
 		return
 	}
 
-	var data inputStructure
+	var data inputStructureAuto
 
 	err = json.Unmarshal(content, &data)
 	if err != nil {

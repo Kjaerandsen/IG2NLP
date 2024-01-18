@@ -18,9 +18,9 @@ func main() {
 
 	switch *mode {
 	case 0:
-		statistics.AutoRunner()
+		statistics.AutoRunner(*inputFile, *outputFile)
 	case 1:
-		statistics.RunStatistics()
+		statistics.RunStatistics(*inputFile, *outputFile)
 	}
 
 	// If none found default to the autorunner with the default file path
