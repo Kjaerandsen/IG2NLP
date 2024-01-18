@@ -21,6 +21,8 @@ func main() {
 		statistics.AutoRunner(*inputFile, *outputFile)
 	case 1:
 		statistics.RunStatistics(*inputFile, *outputFile)
+	case 2:
+		statistics.Compare(*inputFile, *outputFile)
 	}
 
 	// If none found default to the autorunner with the default file path

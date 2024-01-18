@@ -55,7 +55,7 @@ type inputStructure []struct {
 	Name          string `json:"name"`
 	BaseText      string `json:"baseText"`
 	ProcessedText string `json:"processedText"`
-	Stanza        string `json:"stanzaAdvanced"`
+	Stanza        string `json:"stanza"`
 	//Spacy               string     `json:"stanzaAdvanced"`
 	ProcessedTextParsed Statistics `json:"processedTextParsed"`
 	StanzaParsed        Statistics `json:"stanzaParsed"`
@@ -101,9 +101,21 @@ type inputStructureAuto []struct {
 	Name          string `json:"name"`
 	BaseText      string `json:"baseText"`
 	ProcessedText string `json:"processedText"`
-	Stanza        string `json:"stanzaAdvanced"`
+	Stanza        string `json:"stanza"`
 	//Spacy               string     `json:"stanzaAdvanced"`
 	ProcessedTextParsed StatisticsAuto `json:"processedTextParsed"`
 	StanzaParsed        StatisticsAuto `json:"stanzaParsed"`
 	//SpacyParsed         Statistics `json:"spacyParsed"`
+}
+
+type StatisticsCompare struct {
+	BaseText            string `json:"baseText"`
+	ProcessedText       string `json:"processedText"`
+	Stanza              string `json:"stanza"`
+	BindProperty        int    `json:"BindProperty"`
+	IndirectObjectCount int    `json:"IndirectObjectPropertyCount"`
+	BdirProperty        int    `json:"BdirProperty"`
+	DirectObjectCount   int    `json:"DirectObjectPropertyCount"`
+	AProperty           int    `json:"AProperty"`
+	AttributeCount      int    `json:"AttributePropertyCount"`
 }
