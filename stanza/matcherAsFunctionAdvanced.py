@@ -259,6 +259,19 @@ def matchingFunction(words, startId=0):
                 tokenObject.append(TokenEntry(words[i].text, "Bdir", i))
                 #parsedDoc.append({"text":words[i].text, "type":"Bdir"})
         
+        #  Else if the word has an amod dependency type, check if the head is a symbol
+        # that supports properties, if so, the word is a property of that symbol
+        elif words[i].deprel == "amod":
+            if words[words[i].head-1].deprel == "obj":
+                print(words[i].text, " Property of Bdir: ",  words[words[i].head-1].text)
+                tokenObject.append(TokenEntry(words[i].text, "Bdir,p",i))
+            if words[words[i].head-1].deprel == "iobj":
+                print(words[i].text, " Property of Bind: ",  words[words[i].head-1].text)
+                tokenObject.append(TokenEntry(words[i].text, "Bind,p",i))
+            if words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
+                print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
+                tokenObject.append(TokenEntry(words[i].text, "A,p",i))
+             
         # Else if the word is the sentence root, handle it as an "Aim" (I) component
         elif words[i].deprel == "root":
             
