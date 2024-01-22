@@ -119,3 +119,24 @@ type StatisticsCompare struct {
 	AProperty           int    `json:"AProperty"`
 	AttributeCount      int    `json:"AttributePropertyCount"`
 }
+
+// Regular expression strings used for removing suffixes (integer identifier for symbols) for statistics
+var RegexStrings = []string{
+	"A\\d*",
+	"A\\d*,p\\d*",
+	"D\\d*",
+	"I\\d*",
+	"Bdir\\d*",
+	"Bdir\\d*,p\\d*",
+	"Bind\\d*",
+	"Bind\\d*,p\\d*",
+	"Cac\\d*",
+	"Cex\\d*",
+	"E\\d*",
+	"E,pd*\\d*",
+	"M\\d*",
+	"F\\d*",
+	"P\\d*",
+	"P\\*d,p\\d*",
+	"O\\d*",
+}

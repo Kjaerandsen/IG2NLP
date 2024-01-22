@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -29,10 +30,34 @@ func RunStatistics(inputFile string, outputFile string) {
 
 	fmt.Println(len(data))
 
+	var text string
+
+	// Open file for appending logs, based on the example from the
+	// golang docs https://pkg.go.dev/os#example_OpenFile_append
+	/*
+		file, err := os.OpenFile("operations.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	*/
+
 	for i := 0; i < len(data); i++ {
 		var stats Statistics
 
-		stats = findSymbols(data[i].ProcessedText)
+		// Remove Suffixes from the manually annotated text
+		text = data[i].ProcessedText
+		text = removeSuffixes(text)
+
+		/*
+			if _, err := file.Write([]byte(text + "\n\n")); err != nil {
+				file.Close() // ignore error; Write error takes precedence
+				log.Fatal(err)
+			}
+			fmt.Println("Text without symbols: ", text)
+		*/
+
+		// Retrieve the statistics
+		stats = findSymbols(text)
 		data[i].ProcessedTextParsed = stats
 
 		/*
@@ -42,9 +67,16 @@ func RunStatistics(inputFile string, outputFile string) {
 			}
 		*/
 
+		// Retrieve the statistics
 		stats = findSymbols(data[i].Stanza)
 		data[i].StanzaParsed = stats
 	}
+
+	/*
+		if err := file.Close(); err != nil {
+			log.Fatal(err)
+		}
+	*/
 
 	// Convert the struct to JSON
 	jsonData, err := json.MarshalIndent(data, "", "  ")
@@ -507,4 +539,50 @@ func findNestedPart(text string, component string) {
 	} else {
 		fmt.Println("No components found")
 	}
+}
+
+// Function to remove suffixes (integer id's) from symbols in annotated text
+func removeSuffixes(text string) string {
+
+	var regEx *regexp.Regexp
+
+	//fmt.Println(text)
+
+	for i := 0; i < len(RegexStrings); i++ {
+		regEx = regexp.MustCompile(RegexStrings[i])
+		//fmt.Println(regEx)
+
+		text = removeSuffixesSymbol(text, regEx, ComponentNames[i])
+	}
+
+	return text
+}
+
+// Function that removes all suffixes from a single component type in the text
+// Takes a text string, the regular expression used, and a component symbol string
+// returns the altered text
+func removeSuffixesSymbol(text string, regEx *regexp.Regexp, symbol string) string {
+	loc := regEx.FindStringIndex(text)
+
+	if loc != nil {
+		fmt.Println(text[loc[0]:loc[1]], text[loc[1]:loc[1]+1], "\n\n")
+
+		if text[loc[1]:loc[1]+1] == "{" ||
+			text[loc[1]:loc[1]+1] == "(" ||
+			text[loc[1]:loc[1]+1] == "[" {
+
+			fmt.Println("Updating text", symbol, text[loc[0]:loc[1]+1])
+
+			fmt.Println(text, "\n\n")
+
+			text = text[:loc[0]] + symbol + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
+
+			fmt.Println(text)
+		}
+
+		text = text[:loc[1]] + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
+		//fmt.Println("Found symbol and updated: ", symbol, text)
+	}
+
+	return text
 }

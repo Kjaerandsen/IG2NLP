@@ -10,7 +10,8 @@ func main() {
 	// Take parameters when running the application
 	inputFile := flag.String("input", "input.json", "Input flag for input file")
 	outputFile := flag.String("output", "output.json", "Output flag for output file")
-	mode := flag.Int("mode", 0, "Mode flag for program mode, 0 for the autoRunner, 1 for the statistics runner")
+	mode := flag.Int("mode", 0, "Mode flag for program mode, 0 for the autoRunner, 1 for the statistics runner\n"+
+		"2 for the comparrison runner")
 
 	flag.Parse()
 
