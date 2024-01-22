@@ -28,9 +28,6 @@ class TokenEntry:
             return " " + self.type + "(" + self.text + ")"
 
 def Matcher(text):
-    #words = nlpPipeline(text)
-
-    #return matchingFunction(words)
     return tokenToText(matchingFunction(nlpPipeline(text)))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
@@ -72,6 +69,29 @@ def compoundWords(words):
             # Remove the old compound
             wordLen -= 1
             del words[i]
+        
+        # If the word is a "PART" case dependency
+        elif words[i].deprel == "case" and words[i].head-1 == i-1 and words[i].pos == "PART":
+            # Add the PART case (i.e with "state" and "'s" -> "state's")
+            words[i-1].text = words[i-1].text + words[i].text
+            
+            # Go through the words and adjust the connections between the words to account
+            # for the combination of compound words into single words
+            j = 0
+            while j < wordLen:
+                # Adjust the head connections to take into account the compounding of two elements
+                if words[j].head > i:
+                    words[j].head = words[j].head - 1
+                # Adjust the id's to take into account the removal of the compound word
+                if j >= i:
+                    words[j].id -=  1
+                j += 1
+
+            # Remove the extra word
+            wordLen -= 1
+            del words[i]
+            # Adjust i down as the current word is removed
+            i-=1
         i += 1
 
 
@@ -94,18 +114,14 @@ def matchingFunction(words, startId=0):
 
     words = compoundWords(words)
 
-    #parsedDoc = []
     wordsBak = words
 
     wordLen = len(words)
 
     tokenObject = []
 
-    #tokenObject.append(TokenEntry())
-
     i = 0
     while i < wordLen:
-        #token = doc[i]
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
         # If the word is recognized as a condition or constraint
