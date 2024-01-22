@@ -173,9 +173,7 @@ def matchingFunction(words, startId=0):
                 if firstVal == 0:
                     tokenObject = []
 
-                    
                     contents = []
-                    contentLen = len
                     contents += matchingFunction(nlpPipeline(condition))
                     tokenObject.append(TokenEntry("Cac{"+contents[0].text, "",contents[0].id))
                     tokenObject += contents[1:]
@@ -185,7 +183,6 @@ def matchingFunction(words, startId=0):
                     tokenObject += contents
 
                     return tokenObject
-                    #return matchingFunction(nlpPipeline(condition)) + "} " + matchingFunction(nlpPipeline(statementRest),lastIndex+1)     
 
         # If the word is an object
         if words[i].deprel == "obj":
@@ -195,7 +192,6 @@ def matchingFunction(words, startId=0):
                 print(words[i+1].text)
                 j = i+2
                 conjugated = False
-                #output = words[i].text + " [" + words[i+1].text.upper() + "]"
 
                 tokenObject.append(TokenEntry("Bdir("+words[i].text, "", i))
                 tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
@@ -238,18 +234,15 @@ def matchingFunction(words, startId=0):
                         
                 if conjugated:
                     print("This is conjugated")
-                    #parsedDoc.append({"text":output,"type":"Bdir"})
                 else:
                     print("This is not conjugated")
                     tokenObject.append(TokenEntry(words[i+2].text, "", i+2))
                     tokenObject.append(TokenEntry(")", ""))
                     print("i is: ", i, conjugated)
-                    #parsedDoc.append({"text":words[i].text + " [" + words[i+1].text.upper() + "] " + words[i+2].text, "type":"Bdir"})
                     i += 2     
             else:
                 print("Else condition")
                 tokenObject.append(TokenEntry(words[i].text, "Bdir", i))
-                #parsedDoc.append({"text":words[i].text, "type":"Bdir"})
         
         #  Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
@@ -274,15 +267,12 @@ def matchingFunction(words, startId=0):
                 # Handle the logical operator
                 j = i+2
                 conjugated = False
-                #output = words[i].text + " [" + words[i+1].text.upper() + "]"
 
                 tokenObject.append(TokenEntry("I("+words[i].text, "", i))
                 tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
 
                 # Positive lookahead, look for conj connection to the aim, add them if present
                 while j < len(words):
-                    #output += " " + words[j].text
-
                     # If the word has a conj dependency to the aim, then add the text and set conjugated to true
                     if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
                         print("This loop is active", words[j].deprel, words[words[j].head-1].text)
@@ -316,28 +306,23 @@ def matchingFunction(words, startId=0):
                         
                 if conjugated:
                     print("Is conjugated")
-                    #parsedDoc.append({"text":output,"type":"I"})
                 else:
                     print("Is not conjugated")
                     # Go through the rest of the sentence and check for conj connections, if none exist just add the next word
                     tokenObject.append(TokenEntry(words[i+2].text, "", i+2))
                     tokenObject.append(TokenEntry(")", ""))
-                    #parsedDoc.append({"text":words[i].text + " [" + words[i+1].text.upper() + "] " + words[i+2].text, "type":"I"})
                     i += 2
 
             # If no logical operator is present just add the symbol       
             else:
                 tokenObject.append(TokenEntry(words[i].text, "I", i))
-                #parsedDoc.append({"text":words[i].text, "type":"I"})
         
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
                 tokenObject.append(TokenEntry(words[i].text, SymbolDict[words[i].deprel], i))
-                #parsedDoc.append({"text":words[i].text, "type":SymbolDict[words[i].deprel]})
             else:
                 tokenObject.append(TokenEntry(words[i].text, "", i))
-                #parsedDoc.append({"text":words[i].text, "type":""})
         
         # If the relation is a ccomp then handle it as a direct object
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
@@ -345,51 +330,24 @@ def matchingFunction(words, startId=0):
             tokenObject.append(TokenEntry("("+words[i].text, "", i))
             tokenObject.append(TokenEntry(words[i+1].text, "",i+1))
             tokenObject.append(TokenEntry(")", ""))
-            #parsedDoc.append({"text":words[i].text + " " + words[words[i].head-1].text, "type": "Bdir"})
             i += 1
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             print("\n\nNSUBJ CCOMP OBJ\n\n")
             tokenObject.append(TokenEntry(words[i].text, "",i))
-            #parsedDoc.append({"text":words[i].text, "type": "Bdir"})
         
         # If the word had no matches, simply add it to the parsed sentence
         else:
             if words[i].deprel == "punct":
                 print("Adding punct: '", words[i].text, "'")
                 tokenObject.append(TokenEntry(words[i].text, "punct",i))
-                #parsedDoc.append({"text":words[i].text, "type":"punct"})
             else:
                 print("Adding word: '", words[i].text, "' deprel: ", words[i].deprel)
                 tokenObject.append(TokenEntry(words[i].text, "",i))
-                #parsedDoc.append({"text":words[i].text, "type":""})
         i += 1
-
-    #outputText = ""
 
     print("\n\nTokens:\n")
     print(tokenToText(tokenObject))
 
-    #for i in range(len(parsedDoc)):
-    #    if parsedDoc[i]['type'] == "":
-            #if parsedDoc[i]['text'] == ".":
-            #    stringAsList = list(outputText)
-            #    stringAsList[-1] = "."
-            #    outputText = ''.join(stringAsList)
-            #else:
-    #        outputText = outputText + " " + parsedDoc[i]['text']
-    #    elif parsedDoc[i]['type'] == "punct":
-    #        outputText = parsedDoc[i]['text']
-    #    else:
-    #        outputText = outputText+ " " + parsedDoc[i]['type'] + "(" + parsedDoc[i]['text'] + ")"
-
-    #outputText = tokenToText(tokenObject)
-
-    # Remove whitespace before the sentence start
-    #while outputText[0] == " ":
-    #    outputText = outputText[1:]
-    #print("Returning output: ", outputText)
-    
-    #return outputText
     return tokenObject
 
 # Takes a list of tokens, returns the output text contained within.
