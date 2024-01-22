@@ -92,6 +92,27 @@ def compoundWords(words):
             del words[i]
             # Adjust i down as the current word is removed
             i-=1
+        elif words[i].deprel == "punct" and words[i].head-1 == i+1:
+            if words[i+2].deprel == "punct" and words[i+2].head-1 == i+1:
+                # Combine the punct and following word
+                words[i+1].text = words[i].text+words[i+1].text
+                
+                # Go through the words and adjust the connections between the words to account
+                # for the combination of compound words into single words
+                j = 0
+                while j < wordLen:
+                    # Adjust the head connections to take into account the compounding of two elements
+                    if words[j].head > i:
+                        words[j].head = words[j].head - 1
+                    # Adjust the id's to take into account the removal of the compound word
+                    if j > i:
+                        words[j].id -=  1
+                    j += 1
+
+                # Remove the extra word
+                wordLen -= 1
+                del words[i]
+
         i += 1
 
 
