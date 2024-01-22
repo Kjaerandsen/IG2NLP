@@ -257,12 +257,14 @@ def matchingFunction(words, startId=0):
             if words[words[i].head-1].deprel == "obj":
                 print(words[i].text, " Property of Bdir: ",  words[words[i].head-1].text)
                 tokenObject.append(TokenEntry(words[i].text, "Bdir,p",i))
-            if words[words[i].head-1].deprel == "iobj":
+            elif words[words[i].head-1].deprel == "iobj":
                 print(words[i].text, " Property of Bind: ",  words[words[i].head-1].text)
                 tokenObject.append(TokenEntry(words[i].text, "Bind,p",i))
-            if words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
+            elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
                 print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 tokenObject.append(TokenEntry(words[i].text, "A,p",i))
+            else:
+                tokenObject.append(TokenEntry(words[i].text, "",i))
              
         # Else if the word is the sentence root, handle it as an "Aim" (I) component
         elif words[i].deprel == "root":
