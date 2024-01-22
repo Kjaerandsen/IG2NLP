@@ -90,6 +90,15 @@ type StatisticsAuto struct {
 	ExecutionConstraintCount int
 }
 
+type textComparison struct {
+	Name                  string `json:"name"`
+	BaseText              string `json:"baseText"`
+	ProcessedText         string `json:"processedText"`
+	Stanza                string `json:"stanza"`
+	ProcessedTextReversed string `json:"processedTextReversed"`
+	StanzaReversed        string `json:"stanzaReversed"`
+}
+
 // Struct for each component with text content, a bool for nesting and semantic annotations
 type JSONComponentAuto struct {
 	Content            string
