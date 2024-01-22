@@ -20,6 +20,9 @@ class TokenEntry:
         elif self.type == "":
             return " " + self.text
         elif self.type == "punct":
+            if self.text[0] == " " and len(self.text >= 1):
+                self.text = self.text[1:]
+                print("Text is: ", self.text)
             return self.text
         else:
             return " " + self.type + "(" + self.text + ")"
@@ -32,28 +35,10 @@ def Matcher(text):
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
-    nlp = stanza.Pipeline('en', use_gpu=False)
+    nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
 
     # Take the input string
     doc = nlp(text)
-
-    #depData = {"words":[],
-    #       "arcs":[]}
-
-    # Create a table with the relevant information from the doc
-    # Based on the example found at: https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
-    #print('Now printing dependencies\n')
-    #df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency"])
-    #for sentence in doc.sentences:
-    #    for word in sentence.words:
-    #        df = df._append({"Word": word.text, "POS":word.pos, "Head id":word.head, "Head word":sentence.words[word.head-1].text if word.head > 0 else "root", "Dependency": word.deprel}, ignore_index=True)
-    #        
-    #        # Generating the data structure for displacy visualization
-    #        depData["words"].append({"text":word.text, "tag": word.pos})
-    #        if word.head != 0:
-    #            depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
-
-    #print(df)
 
     return doc.sentences[0].words
 
@@ -100,9 +85,9 @@ def compoundWords(words):
     #        depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
     
     # Spin up a webserver on port 5000 with the dependency tree using displacy
-    #print("TEstin", len(words))
     #print(depData)
     #displacy.serve(depData, style="dep", manual=True)
+        
     return words
 
 def matchingFunction(words, startId=0):
@@ -177,6 +162,8 @@ def matchingFunction(words, startId=0):
 
             if lastIndex < len(wordsBak) and wordsBak[lastIndex].deprel == "punct":
                 statementRest = ""
+                # Skip over the following punctuation
+                lastIndex += 1
                 while lastIndex < len(wordsBak):
                     statementRest += " " + wordsBak[lastIndex].text
                     lastIndex += 1
@@ -186,10 +173,16 @@ def matchingFunction(words, startId=0):
                 if firstVal == 0:
                     tokenObject = []
 
-                    tokenObject.append(TokenEntry("Cac{", ""))
-                    tokenObject += matchingFunction(nlpPipeline(condition)) 
-                    tokenObject.append(TokenEntry("}", ""))
-                    tokenObject += matchingFunction(nlpPipeline(statementRest),lastIndex+1)
+                    
+                    contents = []
+                    contentLen = len
+                    contents += matchingFunction(nlpPipeline(condition))
+                    tokenObject.append(TokenEntry("Cac{"+contents[0].text, "",contents[0].id))
+                    tokenObject += contents[1:]
+                    tokenObject.append(TokenEntry("}"+wordsBak[cacLen].text, "punct",wordsBak[cacLen]))
+                    contents = matchingFunction(nlpPipeline(statementRest),lastIndex+2)
+                    print("Contents are: '", contents[0].text, "'")
+                    tokenObject += contents
 
                     return tokenObject
                     #return matchingFunction(nlpPipeline(condition)) + "} " + matchingFunction(nlpPipeline(statementRest),lastIndex+1)     
@@ -204,8 +197,7 @@ def matchingFunction(words, startId=0):
                 conjugated = False
                 #output = words[i].text + " [" + words[i+1].text.upper() + "]"
 
-                tokenObject.append(TokenEntry(" Bdir(", ""))
-                tokenObject.append(TokenEntry(words[i].text, "", i))
+                tokenObject.append(TokenEntry("Bdir("+words[i].text, "", i))
                 tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
 
                 print("\n\n",tokenToText(tokenObject),"\n\n")
@@ -282,8 +274,7 @@ def matchingFunction(words, startId=0):
                 conjugated = False
                 #output = words[i].text + " [" + words[i+1].text.upper() + "]"
 
-                tokenObject.append(TokenEntry("I(", ""))
-                tokenObject.append(TokenEntry(words[i].text, "", i))
+                tokenObject.append(TokenEntry("I("+words[i].text, "", i))
                 tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
 
                 # Positive lookahead, look for conj connection to the aim, add them if present
@@ -349,8 +340,7 @@ def matchingFunction(words, startId=0):
         # If the relation is a ccomp then handle it as a direct object
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
             print("\n\nAMOD NSUBJ OBJ\n\n")
-            tokenObject.append(TokenEntry("(", ""))
-            tokenObject.append(TokenEntry(words[i].text, "",i))
+            tokenObject.append(TokenEntry("("+words[i].text, "", i))
             tokenObject.append(TokenEntry(words[i+1].text, "",i+1))
             tokenObject.append(TokenEntry(")", ""))
             #parsedDoc.append({"text":words[i].text + " " + words[words[i].head-1].text, "type": "Bdir"})
@@ -363,9 +353,11 @@ def matchingFunction(words, startId=0):
         # If the word had no matches, simply add it to the parsed sentence
         else:
             if words[i].deprel == "punct":
+                print("Adding punct: '", words[i].text, "'")
                 tokenObject.append(TokenEntry(words[i].text, "punct",i))
                 #parsedDoc.append({"text":words[i].text, "type":"punct"})
             else:
+                print("Adding word: '", words[i].text, "' deprel: ", words[i].deprel)
                 tokenObject.append(TokenEntry(words[i].text, "",i))
                 #parsedDoc.append({"text":words[i].text, "type":""})
         i += 1
@@ -403,5 +395,14 @@ def tokenToText(tokens):
     output = ""
     for token in tokens:
         output += str(token)
+
+    # Remove leading space if present
+    if output[0] == " ":
+        output = output[1:]
+
+    outputLen = len(output)
+        # Remove leading space if present
+    if output[outputLen-2] == " ":
+        output = output[:outputLen-2] + output[outputLen-1]
 
     return output
