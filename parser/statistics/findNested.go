@@ -204,7 +204,7 @@ func removeSymbols(text string) string {
 
 	// Remove all semantic annotations
 	for i := 0; i < 17; i++ {
-		fmt.Println("Doing component: ", ComponentNames[i])
+		//fmt.Println("Doing component: ", ComponentNames[i])
 		text = removeComponent(text, ComponentNames[i])
 	}
 
@@ -225,7 +225,7 @@ func removeComponent(text string, component string) string {
 
 	for position != -1 {
 
-		fmt.Println("Found component: ", position)
+		//fmt.Println("Found component: ", position)
 
 		// Update the start of the symbol, used for removing it later
 		start := position
@@ -236,18 +236,18 @@ func removeComponent(text string, component string) string {
 		// Set the end position of the symbol, used for removing the brackets later
 		end := 0
 
-		fmt.Println(text[position : position+1])
-		fmt.Println(text)
+		//fmt.Println(text[position : position+1])
+		//fmt.Println(text)
 
 		// If semantic annotation move the position to the end of the annotation
 		if text[position] == '[' {
-			fmt.Println("Found Semantic annotation")
+			//fmt.Println("Found Semantic annotation")
 			position = strings.Index(text[position:], "]") + position + 1
 		}
 
 		// Check if the symbol is a nested symbol
 		if text[position:position+1] == "{" {
-			fmt.Println("Nested")
+			//fmt.Println("Nested")
 			// Find the scope of the component contents
 			brackets := 1
 
@@ -260,7 +260,7 @@ func removeComponent(text string, component string) string {
 				if brackets == 0 {
 					componentContents = text[position+1 : i]
 					end = i
-					fmt.Println("Component contents: ", componentContents)
+					//fmt.Println("Component contents: ", componentContents)
 					break
 				}
 			}
@@ -272,7 +272,7 @@ func removeComponent(text string, component string) string {
 
 			// Replace the component with its contents
 			text = text[:start] + componentContents + text[end+1:]
-			fmt.Println("Replaced text contents: ", text)
+			//fmt.Println("Replaced text contents: ", text)
 			// Find the next component
 			strings.Index(text, component)
 
@@ -280,7 +280,7 @@ func removeComponent(text string, component string) string {
 
 			// Check if the symbol is a non-nested symbol
 		} else if text[position:position+1] == "(" {
-			fmt.Println("Not Nested")
+			//fmt.Println("Not Nested")
 			// Find the scope of the component contents
 			brackets := 1
 
@@ -293,7 +293,7 @@ func removeComponent(text string, component string) string {
 				if brackets == 0 {
 					componentContents = text[position+1 : i]
 					end = i
-					fmt.Println("Component contents: ", componentContents)
+					//fmt.Println("Component contents: ", componentContents)
 					break
 				}
 			}
@@ -305,7 +305,7 @@ func removeComponent(text string, component string) string {
 
 			// Replace the component with its contents
 			text = text[:start] + componentContents + text[end+1:]
-			fmt.Println("Replaced text contents: ", text)
+			//fmt.Println("Replaced text contents: ", text)
 			// Find the next component
 			strings.Index(text, component)
 
@@ -318,6 +318,8 @@ func removeComponent(text string, component string) string {
 			return text
 		}
 	}
+
+	// Another alternative is to try to run the sentences through a pos-tagger to remove punctuation from the equation
 
 	// Return the parsed text with all instances of the symbol removed, maintaining the contents of the symbols
 	return text
@@ -565,19 +567,19 @@ func removeSuffixesSymbol(text string, regEx *regexp.Regexp, symbol string) stri
 	loc := regEx.FindStringIndex(text)
 
 	if loc != nil {
-		fmt.Println(text[loc[0]:loc[1]], text[loc[1]:loc[1]+1], "\n\n")
+		//fmt.Println(text[loc[0]:loc[1]], text[loc[1]:loc[1]+1], "\n\n")
 
 		if text[loc[1]:loc[1]+1] == "{" ||
 			text[loc[1]:loc[1]+1] == "(" ||
 			text[loc[1]:loc[1]+1] == "[" {
 
-			fmt.Println("Updating text", symbol, text[loc[0]:loc[1]+1])
+			//fmt.Println("Updating text", symbol, text[loc[0]:loc[1]+1])
 
-			fmt.Println(text, "\n\n")
+			//fmt.Println(text, "\n\n")
 
 			text = text[:loc[0]] + symbol + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
 
-			fmt.Println(text)
+			//fmt.Println(text)
 		}
 
 		text = text[:loc[1]] + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
