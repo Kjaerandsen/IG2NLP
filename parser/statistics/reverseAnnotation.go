@@ -66,24 +66,22 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 				if compManual[i] == compStanza[j] {
 
 					// If the two words are equal then remove both from their arrays
-					if i < ManualLen {
-						compManual = append(compManual[:i], compManual[i+1:]...)
-					} else {
-						compManual = compManual[:i] 
-					}
+					compManual = removeWord(compManual, ManualLen, i)
 
-					if j < StanzaLen {
-						compStanza = append(compStanza[:j], compStanza[j+1:]...)
-					} else {
-						compStanza = compStanza[:j] 
-					}
+					compStanza = removeWord(compStanza, StanzaLen, j)
 
 					ManualLen--
 					StanzaLen--
 					// Go through the new item at the same address from the start and check
 					i--
 					break
-				}
+				} /*else if compStanza[j] == "" {
+					if j < StanzaLen {
+						compStanza = append(compStanza[:j], compStanza[j+1:]...)
+					} else {
+						compStanza = compStanza[:j]
+					}
+				}*/
 			}
 		}
 
@@ -94,16 +92,12 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 				if j+1 < StanzaLen {
 					if compManual[i] == compStanza[j]+compStanza[j+1] {
 						// If the two words are equal then remove both from their arrays
-						if i < ManualLen {
-							compManual = append(compManual[:i], compManual[i+1:]...)
-						} else {
-							compManual = compManual[:i] 
-						}
+						compManual = removeWord(compManual, ManualLen, i)
 
 						if j < StanzaLen-1 {
 							compStanza = append(compStanza[:j], compStanza[j+2:]...)
 						} else {
-							compStanza = compStanza[:j+1] 
+							compStanza = compStanza[:j+1]
 						}
 
 						ManualLen--
@@ -119,42 +113,26 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 		// If the word of the stanza annotation is a substring of the manual count them as the same word.
 		for i = 0; i < StanzaLen; i++ {
 			for j = 0; j < ManualLen; j++ {
-				if strings.Contains(compManual[j],compStanza[i]) {
+				if strings.Contains(compManual[j], compStanza[i]) {
 
 					// If the two words are equal then remove both from their arrays
-					if j < ManualLen {
-						compManual = append(compManual[:j], compManual[j+1:]...)
-					} else {
-						compManual = compManual[:j] 
-					}
+					compManual = removeWord(compManual, ManualLen, j)
 
-					if i < StanzaLen {
-						compStanza = append(compStanza[:i], compStanza[i+1:]...)
-					} else {
-						compStanza = compStanza[:i] 
-					}
+					compStanza = removeWord(compStanza, StanzaLen, i)
 
 					ManualLen--
 					StanzaLen--
 					// Go through the new item at the same address from the start and check
 					i--
 					break
-				} else if strings.Contains(compManual[j],compStanza[i][:len(compStanza[i])-1]) && len(compStanza[i][:len(compStanza[i])-1]) > minWordLength {
-					
+				} else if strings.Contains(compManual[j], compStanza[i][:len(compStanza[i])-1]) && len(compStanza[i][:len(compStanza[i])-1]) > minWordLength {
+
 					fmt.Println("Match removing: ", compManual[j], compStanza[i][:len(compStanza[i])-1])
 
 					// If the two words are equal then remove both from their arrays
-					if j < ManualLen {
-						compManual = append(compManual[:j], compManual[j+1:]...)
-					} else {
-						compManual = compManual[:j] 
-					}
+					compManual = removeWord(compManual, ManualLen, j)
 
-					if i < StanzaLen {
-						compStanza = append(compStanza[:i], compStanza[i+1:]...)
-					} else {
-						compStanza = compStanza[:i] 
-					}
+					compStanza = removeWord(compStanza, StanzaLen, i)
 
 					ManualLen--
 					StanzaLen--
@@ -167,7 +145,7 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 
 		fmt.Println("Now displaying the two remaining string arrays:")
 		fmt.Println("Manual difference:\n", compManual)
-		fmt.Println("Automatic difference:\n",compStanza)
+		fmt.Println("Automatic difference:\n", compStanza)
 
 		outDataElement.ManualDifference = compManual
 		outDataElement.StanzaDifference = compStanza
@@ -188,8 +166,16 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 		fmt.Println("Error writing to file:", err)
 		return
 	}
+}
 
-	datapoint := "This is a datapoint"
+// Takes an array of words, the length and an id, removes the word with the id from the word array
+func removeWord(words []string, wordLen, id int) []string {
 
-	fmt.Println(datapoint[:18], datapoint[:17]+datapoint[18:])
+	if id < wordLen {
+		words = append(words[:id], words[id+1:]...)
+	} else {
+		words = words[:id]
+	}
+
+	return words
 }
