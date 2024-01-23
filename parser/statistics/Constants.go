@@ -97,6 +97,8 @@ type textComparison struct {
 	Stanza                string `json:"stanza"`
 	ProcessedTextReversed string `json:"processedTextReversed"`
 	StanzaReversed        string `json:"stanzaReversed"`
+	StanzaDifference      []string `json:"stanzaDifference"`
+	ManualDifference      []string `json:"manualDifference"`
 }
 
 // Struct for each component with text content, a bool for nesting and semantic annotations
