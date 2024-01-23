@@ -61,9 +61,25 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 		StanzaLen := len(compStanza)
 		ManualLen := len(compManual)
 
+		for j = 0; j < StanzaLen; j++ {
+			fmt.Println(len(compStanza[j]), compStanza[j])
+			if compStanza[j] == "" {
+				fmt.Println("Removing thing", compStanza[j])
+				compStanza = removeWord(compStanza, StanzaLen, j)
+				StanzaLen--
+				j--
+			}
+		}
+
 		for i = 0; i < ManualLen; i++ {
 			for j = 0; j < StanzaLen; j++ {
-				if compManual[i] == compStanza[j] {
+				// Remove empty "words"
+				if compManual[i] == "" {
+					compManual = removeWord(compManual, ManualLen, i)
+					ManualLen--
+					i--
+					break
+				} else if compManual[i] == compStanza[j] {
 
 					// If the two words are equal then remove both from their arrays
 					compManual = removeWord(compManual, ManualLen, i)
@@ -75,13 +91,7 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 					// Go through the new item at the same address from the start and check
 					i--
 					break
-				} /*else if compStanza[j] == "" {
-					if j < StanzaLen {
-						compStanza = append(compStanza[:j], compStanza[j+1:]...)
-					} else {
-						compStanza = compStanza[:j]
-					}
-				}*/
+				}
 			}
 		}
 
@@ -113,7 +123,8 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 		// If the word of the stanza annotation is a substring of the manual count them as the same word.
 		for i = 0; i < StanzaLen; i++ {
 			for j = 0; j < ManualLen; j++ {
-				if strings.Contains(compManual[j], compStanza[i]) {
+				// If the word is a substring longer than the minimum
+				if len(compStanza[i]) > minWordLength && strings.Contains(compManual[j], compStanza[i]) {
 
 					// If the two words are equal then remove both from their arrays
 					compManual = removeWord(compManual, ManualLen, j)
@@ -125,6 +136,7 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 					// Go through the new item at the same address from the start and check
 					i--
 					break
+					// If the word excluding the last char is a substring
 				} else if strings.Contains(compManual[j], compStanza[i][:len(compStanza[i])-1]) && len(compStanza[i][:len(compStanza[i])-1]) > minWordLength {
 
 					fmt.Println("Match removing: ", compManual[j], compStanza[i][:len(compStanza[i])-1])
