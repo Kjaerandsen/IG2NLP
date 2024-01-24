@@ -1,4 +1,3 @@
-from typing import Any
 import stanza
 import pandas as pd
 from spacy import displacy
@@ -30,7 +29,8 @@ class TokenEntry:
 
 # Word for handling   
 class Word:
-    def __init__(self, text, pos, deprel, head, id, lemma, xpos, start=0, end=0):
+    def __init__(self, text, pos, deprel, head, id, lemma, xpos, 
+                 start=0, end=0, spaces=0, symbol="", nested = False, position = 0):
         self.id = id
         self.text = text
         self.deprel = deprel
@@ -39,19 +39,50 @@ class Word:
         self.end = end
         self.pos = pos
         self.xpos = xpos
-        self.lemma = lemma    
+        self.lemma = lemma
+        self.symbol = symbol
+        self.nested = nested
+        self.position = position
+        self.spaces = spaces
 
-    def setText(self, text):
-        self.text = text
+    def getContents(self):
+        output = self.buildString
+        if self.spaces > 0:
+            return " " * self.spaces + output
+        else:
+            return output
+        
+    def buildString(self):
+        if self.symbol != "":
+            if self.nested:
+                if self.position == 0:
+                    return self.symbol+"{"+self.text+"}"
+                elif self.position == 1:
+                    return self.symbol + "{" + self.text
+                elif self.position == 2:
+                    return self.text + "}"
+            else:
+                if self.position == 0:
+                    return self.symbol+"("+self.text+")"
+                elif self.position == 1:
+                    return self.symbol + "(" + self.text
+                elif self.position == 2:
+                    return self.text + ")"
+        else:
+            return (self.text)
+    
+    # Function for combining two subsequent words into one
+    def combineWords(self, otherWord, direction):
+        if direction:
+            self.end = otherWord.end
+            self.text = self.text + " " * otherWord.spaces + otherWord.text
+        else:
+            self.start = otherWord.start
+            self.text = otherWord.text + " " * self.spaces + self.text
 
-    def setId(self, id):
-        self.id = id
-
-    def setStart(self, start):
-        self.start = start
-
-    def setEnd(self, end):
-        self.end = end
+    #def AppendStart(self, text):
+    #    self.text = text + self.text
+    #    self.end = self.start + len(self.text)
     
     def setHead(self, head):
         self.head = head-1
@@ -82,6 +113,11 @@ def compoundWords(words):
     customWords = []
 
     while i < wordLen:
+        if i > 0:
+            spaces = words[i].start_char - words[i-1].end_char
+        else:
+            spaces = 0
+
         customWords.append(
             Word(
                 words[i].text,
@@ -89,10 +125,11 @@ def compoundWords(words):
                 words[i].deprel,
                 words[i].head,
                 words[i].id,
+                words[i].lemma,
+                words[i].xpos,
                 words[i].start_char,
                 words[i].end_char,
-                words[i].lemma,
-                words[i].xpos 
+                spaces
             ))
         
         #print(customWords[i])
@@ -105,11 +142,14 @@ def compoundWords(words):
         #print(words[i])
 
         # If the word is a compound word
-        if customWords[i].deprel == "compound" and customWords[i].text != "" and customWords[i].head-1 == i+1: 
+        if customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
             #words[i+1].start_char = words[i].start_char
             # Set the text to the compound word and the following word
-            customWords[i+1].text = customWords[i].text + " " + customWords[i+1].text
             
+            #customWords[i+1].text = customWords[i].text + " " + customWords[i+1].text
+            
+            customWords[i+1].combineWords(customWords[i], False)
+
             # Go through the words and adjust the connections between the words to account
             # for the combination of compound words into single words
             j = 0
@@ -128,7 +168,9 @@ def compoundWords(words):
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "case" and customWords[i].head-1 == i-1 and customWords[i].pos == "PART":
             # Add the PART case (i.e with "state" and "'s" -> "state's")
-            customWords[i-1].text = customWords[i-1].text + customWords[i].text
+            #customWords[i-1].text = customWords[i-1].text + customWords[i].text
+
+            customWords[i-1].combineWords(customWords[i], True)
             
             # Go through the words and adjust the connections between the words to account
             # for the combination of compound words into single words
@@ -150,7 +192,8 @@ def compoundWords(words):
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
             if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
-                customWords[i+1].text = customWords[i].text+customWords[i+1].text
+                #customWords[i+1].text = customWords[i].text+customWords[i+1].text
+                customWords[i+1].combineWords(customWords[i], False)
                 
                 # Go through the words and adjust the connections between the words to account
                 # for the combination of compound words into single words
