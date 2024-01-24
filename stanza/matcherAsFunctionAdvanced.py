@@ -243,14 +243,8 @@ def compoundWords(words):
     return customWords
 
 def matchingFunction(words, startId=0):
-
-    #words = compoundWords(words)
-
-    wordsBak = words
-
     wordLen = len(words)
 
-    tokenObject = []
     words2 = []
 
     i = 0
@@ -261,8 +255,6 @@ def matchingFunction(words, startId=0):
         if words[i].deprel == "advcl":
             # Find the substructure for the condition or constraint
             # print("Advcl")
-            
-            condition = ""
 
             firstVal = 0
             firstValFilled = False
@@ -275,77 +267,50 @@ def matchingFunction(words, startId=0):
                 headRel = ""
                 while headRel != "root":
                     # Set x to the head of x
-                    x = wordsBak[x].head-1
-                    #print(wordsBak[x].deprel, wordsBak[x].text)
-                    if wordsBak[x].deprel == "advcl":
+                    x = words[x].head-1
+                    #print(words[x].deprel, words[x].text)
+                    if words[x].deprel == "advcl":
                         if not firstValFilled:
                             firstVal = k
                             firstValFilled = True
-                        condition += " " + wordsBak[k].text
                         headRel = "root"
-                    headRel = wordsBak[x].deprel
+                    headRel = words[x].deprel
                 k += 1
             
-            condition += " " + wordsBak[i].text
-
-            # print(condition)
-
             lastIndex = 0
 
             k = i+1
-            while k < len(wordsBak):
+            while k < len(words):
                 x = k
                 headRel = ""
                 while headRel != "root":
-                    x = wordsBak[x].head-1
-                    if wordsBak[x].deprel == "advcl":
-                        condition += " " + wordsBak[k].text
+                    x = words[x].head-1
+                    if words[x].deprel == "advcl":
                         lastIndex = k+1
                         headRel = "root"
-                    headRel = wordsBak[x].deprel
+                    headRel = words[x].deprel
                 k += 1
 
-            # print("Cac{" + condition + "}", lastIndex, firstVal)
-
-            cacLen = lastIndex
-
             # Return the combination of the activation condition and the rest of the sentence
-            if lastIndex < len(wordsBak) and wordsBak[lastIndex].deprel == "punct":
-                statementRest = []
-                # Skip over the following punctuation
-                lastIndex += 1
-                while lastIndex < len(wordsBak):
-                    #statementRest += " " + wordsBak[lastIndex].text
-                    statementRest.append(wordsBak[lastIndex])
-                    lastIndex += 1
+            if lastIndex < len(words) and words[lastIndex].deprel == "punct":
 
-                # print("statementRest: ", statementRest)
-                # print("Lengths:",  cacLen-firstVal, lastIndex, lastIndex-(cacLen-firstVal), len(wordsBak) )
                 if firstVal == 0:
-                    tokenObject = []
 
                     contents = []
 
                     words2.append(Word(
                         "","","",0,0,"","",0,0,0,"Cac",True,1
                         ))
-                    words2 += matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[:cacLen]))))
-                    #words2[0].setSymbol("Cac",1,True)
-                    #words2[cacLen-1].setSymbol("Cac",2,True)
+                    words2 += matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
                     words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
-                    words2.append(words[cacLen])
+                    words2.append(words[lastIndex])
 
-                    contents += matchingFunction(compoundWords(nlpPipeline(condition)))
-                    tokenObject.append(TokenEntry("Cac{"+contents[0].text, "",contents[0].id))
-                    tokenObject += contents[1:]
-                    #words[i].setSymbol("Cac",2,True)
-                    tokenObject.append(TokenEntry("}"+wordsBak[cacLen].text, "punct",wordsBak[cacLen]))
-                    contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[cacLen+1:]))),lastIndex+2)
+                    contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))),lastIndex+2)
 
                     # Copy over the old placement information to the newly generated words for proper formatting
-                    k = cacLen +1
+                    k = lastIndex +1
                     while k < len(words):
-                        index = k-cacLen-1
+                        index = k-lastIndex-1
                         contents[index].id = words[k].id
                         contents[index].start = words[k].start
                         contents[index].end = words[k].end
@@ -362,23 +327,15 @@ def matchingFunction(words, startId=0):
 
         # If the word is an object
         if words[i].deprel == "obj":
-            #print(words[i+1].text)
-            # Can potentially check for the dep_ "cc" instead
+            # Can potentially check for the dep_ "cc" instead to account for ","
             if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
                 # print(words[i+1].text)
                 j = i+2
                 conjugated = False
-
-                tokenObject.append(TokenEntry("Bdir("+words[i].text, "", i))
                 words[i].setSymbol("Bdir", 1)
-                tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
                 words[i+1].text = "[" + words[i+1].text.upper() + "]"
 
-                # print("\n\n",tokenToText(tokenObject),"\n\n")
-
                 while j < len(words):
-                    #output += " " + words[j].text
-
                     # If the word has a conj dependency to the dobj, then add the text and set conjugated to true
                     if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
                         # print("This loop is active", words[j].deprel, words[words[j].head-1].text)
@@ -390,39 +347,25 @@ def matchingFunction(words, startId=0):
 
                         # If connected add the preceeding words to the tokenObject
                         while k < j:
-                            tokenObject.append(TokenEntry(words[k].text, "", k))
                             k += 1
-
-                        # Add the current word to the tokenObject
-                        tokenObject.append(TokenEntry(words[j].text, "", j))
 
                         # While the next word(s) are connected to the conj of the dobj, add them
                         while connected:
                            if j+1 < len(words) and words[words[j+1].head-1] ==  words[depIndex]:
-                                tokenObject.append(TokenEntry(words[j+1].text, "", j+1))
-                                #output += " " + words[j+1].text
                                 j+=1
                            else:
                                words[j].setSymbol("Bdir", 2)
-                               tokenObject.append(TokenEntry(")", ""))
                                connected = False
                                i=j
                         break
                     else:
                         j += 1
                         
-                #if conjugated:
-                    #print("This is conjugated")
                 if not conjugated:
                     # print("This is not conjugated")
-                    tokenObject.append(TokenEntry(words[i+2].text, "", i+2))
                     words[i+2].setSymbol("Bdir", 2)
-                    tokenObject.append(TokenEntry(")", ""))
-                    #print("i is: ", i, conjugated)
                     i += 2     
             else:
-                #print("Else condition")
-                tokenObject.append(TokenEntry(words[i].text, "Bdir", i))
                 words[i].setSymbol("Bdir")
         
         #  Else if the word has an amod dependency type, check if the head is a symbol
@@ -430,18 +373,13 @@ def matchingFunction(words, startId=0):
         elif words[i].deprel == "amod":
             if words[words[i].head-1].deprel == "obj":
                 #print(words[i].text, " Property of Bdir: ",  words[words[i].head-1].text)
-                tokenObject.append(TokenEntry(words[i].text, "Bdir,p",i))
                 words[i].setSymbol("Bdir,p")
             elif words[words[i].head-1].deprel == "iobj":
                 #print(words[i].text, " Property of Bind: ",  words[words[i].head-1].text)
-                tokenObject.append(TokenEntry(words[i].text, "Bind,p",i))
                 words[i].setSymbol("Bind,p")
             elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
-                tokenObject.append(TokenEntry(words[i].text, "A,p",i))
                 words[i].setSymbol("A,p")
-            else:
-                tokenObject.append(TokenEntry(words[i].text, "",i))
              
         # Else if the word is the sentence root, handle it as an "Aim" (I) component
         elif words[i].deprel == "root":
@@ -452,9 +390,7 @@ def matchingFunction(words, startId=0):
                 j = i+2
                 conjugated = False
 
-                tokenObject.append(TokenEntry("I("+words[i].text, "", i))
                 words[i].setSymbol("I",1)
-                tokenObject.append(TokenEntry("[" + words[i+1].text.upper() + "]", "", i+1))
                 words[i+1].text = "[" + words[i+1].text.upper() + "]"
 
                 # Positive lookahead, look for conj connection to the aim, add them if present
@@ -470,75 +406,48 @@ def matchingFunction(words, startId=0):
 
                         # If connected add the preceeding words to the tokenObject
                         while k < j:
-                            tokenObject.append(TokenEntry(words[k].text, "", k))
                             k += 1
-
-                        # Add the current word to the tokenObject
-                        tokenObject.append(TokenEntry(words[j].text, "", j))
 
                         # While the next word(s) are connected to the conj of the aim, add them
                         while connected:
                            if j+1 < len(words) and words[words[j+1].head-1] == words[depIndex]:
-                                tokenObject.append(TokenEntry(words[j+1].text, "", j+1))
                                 output += " " + words[j+1].text
                                 j+=1
                            else:
                                words[j].setSymbol("I", 2)
-                               tokenObject.append(TokenEntry(")", ""))
                                connected = False
                                i=j
                         break
                     else:
                         j += 1
                         
-                #if conjugated:
-                #    print("Is conjugated")
                 if not conjugated:
                 #   print("Is not conjugated")
                     # Go through the rest of the sentence and check for conj connections, if none exist just add the next word
-                    tokenObject.append(TokenEntry(words[i+2].text, "", i+2))
                     words[i+2].setSymbol("I", 2)
-                    tokenObject.append(TokenEntry(")", ""))
                     i += 2
 
             # If no logical operator is present just add the symbol       
             else:
-                tokenObject.append(TokenEntry(words[i].text, "I", i))
                 words[i].setSymbol("I")
         
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
-                tokenObject.append(TokenEntry(words[i].text, SymbolDict[words[i].deprel], i))
                 words[i].setSymbol(SymbolDict[words[i].deprel])
-            else:
-                tokenObject.append(TokenEntry(words[i].text, "", i))
         
         # If the relation is a ccomp then handle it as a direct object
         elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
             #print("\n\nAMOD NSUBJ OBJ\n\n")
-            tokenObject.append(TokenEntry("("+words[i].text, "", i))
             words[i].setSymbol(words[i],"bdir", 1)
-            tokenObject.append(TokenEntry(words[i+1].text, "",i+1))
             words[i+1].setSymbol(words[i+1],"bdir", 2)
-            tokenObject.append(TokenEntry(")", ""))
             i += 1
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
-            #print("\n\nNSUBJ CCOMP OBJ\n\n")
-            tokenObject.append(TokenEntry(words[i].text, "",i))
+            print("\n\nNSUBJ CCOMP OBJ\n\n")
         
-        # If the word had no matches, simply add it to the parsed sentence
-        else:
-            if words[i].deprel == "punct":
-                #print("Adding punct: '", words[i].text, "'")
-                tokenObject.append(TokenEntry(words[i].text, "punct",i))
-            else:
-                #print("Adding word: '", words[i].text, "' deprel: ", words[i].deprel)
-                tokenObject.append(TokenEntry(words[i].text, "",i))
         i += 1
 
     print("\n\nTokens:\n")
-    print(tokenToText(tokenObject))
     print(WordsToSentence2)
 
     return words
