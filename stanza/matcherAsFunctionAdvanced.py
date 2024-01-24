@@ -1,3 +1,4 @@
+from typing import Any
 import stanza
 import pandas as pd
 from spacy import displacy
@@ -27,8 +28,41 @@ class TokenEntry:
         else:
             return " " + self.type + "(" + self.text + ")"
 
+# Word for handling   
+class Word:
+    def __init__(self, text, pos, deprel, head, id, lemma, xpos, start=0, end=0):
+        self.id = id
+        self.text = text
+        self.deprel = deprel
+        self.head = head
+        self.start = start
+        self.end = end
+        self.pos = pos
+        self.xpos = xpos
+        self.lemma = lemma    
+
+    def setText(self, text):
+        self.text = text
+
+    def setId(self, id):
+        self.id = id
+
+    def setStart(self, start):
+        self.start = start
+
+    def setEnd(self, end):
+        self.end = end
+    
+    def setHead(self, head):
+        self.head = head-1
+
+    def __str__(self):
+        return("Word: "+ self.text + " pos: "+ self.pos + " deprel: "+ str(self.deprel) 
+               + " head: " + str(self.head) + " id: " + str(self.id)
+               + " start: " + str(self.start) + " end: " + str(self.end))
+
 def Matcher(text):
-    return tokenToText(matchingFunction(nlpPipeline(text)))
+    return tokenToText(matchingFunction(compoundWords(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
@@ -40,78 +74,99 @@ def nlpPipeline(text):
     return doc.sentences[0].words
 
 # Takes the words from the nlp pipeline and combines combine words to a single word
+# Also converts the datatype to the Word class
 def compoundWords(words):
-    
     i = 0
     wordLen = len(words)
+
+    customWords = []
+
+    while i < wordLen:
+        customWords.append(
+            Word(
+                words[i].text,
+                words[i].pos,
+                words[i].deprel,
+                words[i].head,
+                words[i].id,
+                words[i].start_char,
+                words[i].end_char,
+                words[i].lemma,
+                words[i].xpos 
+            ))
+        
+        #print(customWords[i])
+        #print(words[i])
+
+        i += 1
 
     #print("type is: ", type(words[0]), " " , wordLen)
     while i < wordLen:
         #print(words[i])
 
         # If the word is a compound word
-        if words[i].deprel == "compound" and words[i].text != "" and words[i].head-1 == i+1: 
+        if customWords[i].deprel == "compound" and customWords[i].text != "" and customWords[i].head-1 == i+1: 
             #words[i+1].start_char = words[i].start_char
             # Set the text to the compound word and the following word
-            words[i+1].text = words[i].text + " " + words[i+1].text
+            customWords[i+1].text = customWords[i].text + " " + customWords[i+1].text
             
             # Go through the words and adjust the connections between the words to account
             # for the combination of compound words into single words
             j = 0
             while j < wordLen:
                 # Adjust the head connections to take into account the compounding of two elements
-                if words[j].head > i+1:
-                    words[j].head = words[j].head - 1
+                if customWords[j].head > i+1:
+                    customWords[j].head = customWords[j].head - 1
                 # Adjust the id's to take into account the removal of the compound word
                 if j >= i:
-                    words[j].id -=  1
+                    customWords[j].id -=  1
                 j += 1
             # Remove the old compound
             wordLen -= 1
-            del words[i]
+            del customWords[i]
         
         # If the word is a "PART" case dependency
-        elif words[i].deprel == "case" and words[i].head-1 == i-1 and words[i].pos == "PART":
+        elif customWords[i].deprel == "case" and customWords[i].head-1 == i-1 and customWords[i].pos == "PART":
             # Add the PART case (i.e with "state" and "'s" -> "state's")
-            words[i-1].text = words[i-1].text + words[i].text
+            customWords[i-1].text = customWords[i-1].text + customWords[i].text
             
             # Go through the words and adjust the connections between the words to account
             # for the combination of compound words into single words
             j = 0
             while j < wordLen:
                 # Adjust the head connections to take into account the compounding of two elements
-                if words[j].head > i:
-                    words[j].head = words[j].head - 1
+                if customWords[j].head > i:
+                    customWords[j].head = customWords[j].head-1
                 # Adjust the id's to take into account the removal of the compound word
                 if j >= i:
-                    words[j].id -=  1
+                    customWords[j].id -=  1
                 j += 1
 
             # Remove the extra word
             wordLen -= 1
-            del words[i]
+            del customWords[i]
             # Adjust i down as the current word is removed
             i-=1
-        elif words[i].deprel == "punct" and words[i].head-1 == i+1:
-            if words[i+2].deprel == "punct" and words[i+2].head-1 == i+1:
+        elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
+            if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
-                words[i+1].text = words[i].text+words[i+1].text
+                customWords[i+1].text = customWords[i].text+customWords[i+1].text
                 
                 # Go through the words and adjust the connections between the words to account
                 # for the combination of compound words into single words
                 j = 0
                 while j < wordLen:
                     # Adjust the head connections to take into account the compounding of two elements
-                    if words[j].head > i:
-                        words[j].head = words[j].head - 1
+                    if customWords[j].head > i:
+                        customWords[j].head = customWords[j].head - 1
                     # Adjust the id's to take into account the removal of the compound word
                     if j > i:
-                        words[j].id -=  1
+                        customWords[j].id -=  1
                     j += 1
 
                 # Remove the extra word
                 wordLen -= 1
-                del words[i]
+                del customWords[i]
 
         i += 1
 
@@ -129,11 +184,11 @@ def compoundWords(words):
     #print(depData)
     #displacy.serve(depData, style="dep", manual=True)
         
-    return words
+    return customWords
 
 def matchingFunction(words, startId=0):
 
-    words = compoundWords(words)
+    #words = compoundWords(words)
 
     wordsBak = words
 
