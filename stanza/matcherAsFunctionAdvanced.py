@@ -93,6 +93,7 @@ class Word:
                + " start: " + str(self.start) + " end: " + str(self.end))
 
 def Matcher(text):
+    #print(WordsToSentence(compoundWords(nlpPipeline(text))))
     return tokenToText(matchingFunction(compoundWords(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
@@ -501,3 +502,21 @@ def tokenToText(tokens):
         output = output[:outputLen-2] + output[outputLen-1]
 
     return output
+
+def WordsToSentence(words):
+    wordLen = len(words)
+    index = 0
+    i = 0
+
+    sentence = ""
+
+    while i < wordLen:
+        if words[i].start > index:
+            sentence += " "*(words[i].start-index) + words[i].text
+            index += 1 + len(words[i].text)
+        elif words[i].start <= index:
+            sentence += words[i].text
+            index = len(sentence)
+        i += 1
+
+    return sentence
