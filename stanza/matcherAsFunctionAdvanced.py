@@ -5,28 +5,6 @@ from spacy import displacy
 # Dictionary of symbols for parsing
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
 
-# Class for tokens or words in the text after going through the nlp pipeline and the matcher
-# Has functionality for properly displaying the different words as strings for output formatting
-class TokenEntry:
-    def __init__(self, text, type, id=None, indexStart=None, indexEnd=None):
-        self.id = id
-        self.text = text
-        self.type = type
-
-    def __str__(self):
-        #print(self.text, self.type)
-        if self.id == None:
-            return self.text
-        elif self.type == "":
-            return " " + self.text
-        elif self.type == "punct":
-            if self.text[0] == " " and len(self.text >= 1):
-                self.text = self.text[1:]
-                #print("Text is: ", self.text)
-            return self.text
-        else:
-            return " " + self.type + "(" + self.text + ")"
-
 # Word for handling   
 class Word:
     def __init__(self, text, pos, deprel, head, id, lemma, xpos, 
@@ -91,10 +69,6 @@ class Word:
             self.start = otherWord.start
             self.text = otherWord.text + " " * self.spaces + self.text
             self.spaces = otherWord.spaces
-
-    #def AppendStart(self, text):
-    #    self.text = text + self.text
-    #    self.end = self.start + len(self.text)
     
     def setHead(self, head):
         self.head = head-1
@@ -105,12 +79,12 @@ class Word:
                + " start: " + str(self.start) + " end: " + str(self.end))
 
 def Matcher(text):
-    #print(WordsToSentence(compoundWords(nlpPipeline(text))))
     return WordsToSentence2(matchingFunction(compoundWords(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+    print(nlp.processors)
 
     # Take the input string
     doc = nlp(text)
@@ -225,30 +199,18 @@ def compoundWords(words):
                 del customWords[i]
 
         i += 1
-
-
-    #depData = {"words":[],
-    #       "arcs":[]}
-
-    #for word in words:
-    #    depData["words"].append({"text":word.text, "tag": word.pos})
-    #    if word.head != 0:
-    #        print(word, max(word.id-1, word.head-1))
-    #        depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
-    
-    # Spin up a webserver on port 5000 with the dependency tree using displacy
-    #print(depData)
-    #displacy.serve(depData, style="dep", manual=True)
         
     return customWords
 
-def matchingFunction(words, startId=0):
+def matchingFunction(words):
     wordLen = len(words)
 
     words2 = []
 
     i = 0
+
     while i < wordLen:
+        deprel = words[i].deprel
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
         # If the word is recognized as a condition or constraint
@@ -305,7 +267,7 @@ def matchingFunction(words, startId=0):
                     words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
                     words2.append(words[lastIndex])
 
-                    contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))),lastIndex+2)
+                    contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))))
 
                     # Copy over the old placement information to the newly generated words for proper formatting
                     k = lastIndex +1
@@ -319,20 +281,24 @@ def matchingFunction(words, startId=0):
                         k += 1
 
                     # print("Contents are: '", contents[0].text, "'")
-                    #tokenObject += contents
                     words2 += contents
 
-                    #return tokenObject
                     return words2
 
         # If the word is an object
-        if words[i].deprel == "obj":
+        if deprel == "obj" or deprel == "root":
+            if deprel == "obj":
+                symbol = "Bdir"
+            elif deprel == "root":
+                symbol = "I"
+
+            # If there is a logical operator adjacent to the right
             # Can potentially check for the dep_ "cc" instead to account for ","
             if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
                 # print(words[i+1].text)
                 j = i+2
                 conjugated = False
-                words[i].setSymbol("Bdir", 1)
+                words[i].setSymbol(symbol, 1)
                 words[i+1].text = "[" + words[i+1].text.upper() + "]"
 
                 while j < len(words):
@@ -354,7 +320,7 @@ def matchingFunction(words, startId=0):
                            if j+1 < len(words) and words[words[j+1].head-1] ==  words[depIndex]:
                                 j+=1
                            else:
-                               words[j].setSymbol("Bdir", 2)
+                               words[j].setSymbol(symbol, 2)
                                connected = False
                                i=j
                         break
@@ -363,10 +329,10 @@ def matchingFunction(words, startId=0):
                         
                 if not conjugated:
                     # print("This is not conjugated")
-                    words[i+2].setSymbol("Bdir", 2)
+                    words[i+2].setSymbol(symbol, 2)
                     i += 2     
             else:
-                words[i].setSymbol("Bdir")
+                words[i].setSymbol(symbol)
         
         #  Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
@@ -381,56 +347,6 @@ def matchingFunction(words, startId=0):
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
              
-        # Else if the word is the sentence root, handle it as an "Aim" (I) component
-        elif words[i].deprel == "root":
-            
-            # If the word is connected to another word by a logical operator (and / or)
-            if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
-                # Handle the logical operator
-                j = i+2
-                conjugated = False
-
-                words[i].setSymbol("I",1)
-                words[i+1].text = "[" + words[i+1].text.upper() + "]"
-
-                # Positive lookahead, look for conj connection to the aim, add them if present
-                while j < len(words):
-                    # If the word has a conj dependency to the aim, then add the text and set conjugated to true
-                    if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
-                        #print("This loop is active", words[j].deprel, words[words[j].head-1].text)
-                        depIndex = j
-                        conjugated = True
-                        connected = True
-
-                        k = i+2
-
-                        # If connected add the preceeding words to the tokenObject
-                        while k < j:
-                            k += 1
-
-                        # While the next word(s) are connected to the conj of the aim, add them
-                        while connected:
-                           if j+1 < len(words) and words[words[j+1].head-1] == words[depIndex]:
-                                output += " " + words[j+1].text
-                                j+=1
-                           else:
-                               words[j].setSymbol("I", 2)
-                               connected = False
-                               i=j
-                        break
-                    else:
-                        j += 1
-                        
-                if not conjugated:
-                #   print("Is not conjugated")
-                    # Go through the rest of the sentence and check for conj connections, if none exist just add the next word
-                    words[i+2].setSymbol("I", 2)
-                    i += 2
-
-            # If no logical operator is present just add the symbol       
-            else:
-                words[i].setSymbol("I")
-        
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
