@@ -1,6 +1,6 @@
 import json
 import sys
-from matcherAsFunctionAdvanced import Matcher
+from matcherAsFunctionAdvanced import Matcher, MatcherMiddleware
 
 args = sys.argv
 
@@ -26,21 +26,8 @@ if i == -1:
     i = 0
 
     print("Running with ", len(jsonData), " items.")
-    while i < len(jsonData): 
-        
-
-        
-        output = Matcher(jsonData[i]['baseText'])
-
-        print(jsonData[i]['baseText'] + "\n" + jsonData[i]['processedText'] + "\n" + output)
-
-        jsonData[i]["stanza"] = output
-
-        # Write the automatically parsed statement to the file
-        #with open(filename, "w") as outputFile:
-        #    json.dump(jsonData, outputFile, indent=2)
-
-        i += 1
+    
+    jsonData = MatcherMiddleware(jsonData)
 
     # Write the automatically parsed statement to the file
     with open(filename, "w") as outputFile:
@@ -49,12 +36,10 @@ if i == -1:
 # Else only go through the selected item
 else:
     #print(jsonData[i]['baseText'])
-
-    output = Matcher(jsonData[i]['baseText'])
-
-    print(jsonData[i]['baseText'] + "\n" + jsonData[i]['processedText'] + "\n" + output)
-
-    jsonData[i]["stanza"] = output
+    if i >= len(jsonData):
+        print("Error, the index provided is higher than or equal to the amount of items in the input data.")
+    else:
+        jsonData[i] = MatcherMiddleware(jsonData[i:i+1])[0]
 
     # Write the automatically parsed statement to the file
     with open(filename, "w") as outputFile:

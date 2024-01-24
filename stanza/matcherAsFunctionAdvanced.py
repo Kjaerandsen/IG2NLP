@@ -1,9 +1,9 @@
 import stanza
-import pandas as pd
-from spacy import displacy
 
 # Dictionary of symbols for parsing
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
+
+nlp = None
 
 # Word for handling   
 class Word:
@@ -78,13 +78,44 @@ class Word:
                + " head: " + str(self.head) + " id: " + str(self.id)
                + " start: " + str(self.start) + " end: " + str(self.end))
 
+def MatcherMiddleware(jsonData):
+    global nlp
+    nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+    #print(nlp.processors["sentiment"])
+    nlp.processors.pop("sentiment")
+    nlp.processors.pop("constituency")
+
+    i = 0
+    while i < len(jsonData): 
+        output = Matcher(jsonData[i]['baseText'])
+
+        print(jsonData[i]['baseText'] + "\n" + jsonData[i]['processedText'] + "\n" + output)
+
+        jsonData[i]["stanza"] = output
+
+        # Write the automatically parsed statement to the file
+        #with open(filename, "w") as outputFile:
+        #    json.dump(jsonData, outputFile, indent=2)
+
+        i += 1
+
+    return jsonData
+
 def Matcher(text):
+    #global nlp 
+    #nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+    #nlp.processors.pop("sentiment")
+    #lp.processors.pop("constituency")
+
     return WordsToSentence2(matchingFunction(compoundWords(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
-    nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
-    print(nlp.processors)
+    print("Running the pipeline")
+    #nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+    #print(nlp.processors["sentiment"])
+    #nlp.processors.pop("sentiment")
+    #nlp.processors.pop("constituency")
 
     # Take the input string
     doc = nlp(text)
