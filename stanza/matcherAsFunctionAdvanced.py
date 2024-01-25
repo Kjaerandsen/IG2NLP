@@ -159,79 +159,80 @@ def compoundWords(words):
 
         # If the word is a compound word
         if customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
-            #words[i+1].start_char = words[i].start_char
-            # Set the text to the compound word and the following word
-            
-            #customWords[i+1].text = customWords[i].text + " " + customWords[i+1].text
-            
-            customWords[i+1].combineWords(customWords[i], False)
-
+            customWords, i, wordLen = removeWord(customWords, i, wordLen)
+        # Compound of three words
+        #elif customWords[i].deprel == "compound" and customWords[i].head-1 == i+2: 
+        #    customWords[i+1].combineWords(customWords[i], False)
             # Go through the words and adjust the connections between the words to account
             # for the combination of compound words into single words
-            j = 0
-            while j < wordLen:
+        #    j = 0
+        #    while j < wordLen:
                 # Adjust the head connections to take into account the compounding of two elements
-                if customWords[j].head > i+1:
-                    customWords[j].head = customWords[j].head - 1
+        #        if customWords[j].head > i+1:
+        #            customWords[j].head = customWords[j].head - 1
                 # Adjust the id's to take into account the removal of the compound word
-                if j >= i:
-                    customWords[j].id -=  1
-                j += 1
+        #        if j >= i+1:
+        #            customWords[j].id -=  1
+        #        j += 1
             # Remove the old compound
-            wordLen -= 1
+        #    wordLen -= 1
             # Adjust i down as the current word is removed
-            del customWords[i]
-            i-=1
+        #    del customWords[i]
+        #    customWords[i+1].combineWords(customWords[i], False)
+            # Go through the words and adjust the connections between the words to account
+            # for the combination of compound words into single words
+        #    j = 0
+        #    while j < wordLen:
+                # Adjust the head connections to take into account the compounding of two elements
+        #        if customWords[j].head > i+1:
+        #            customWords[j].head = customWords[j].head - 1
+                # Adjust the id's to take into account the removal of the compound word
+        #        if j >= i+1:
+        #            customWords[j].id -=  1
+        #        j += 1
+            # Remove the old compound
+        #    wordLen -= 1
+            # Adjust i down as the current word is removed
+        #    del customWords[i]
+        #    i-=2
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "case" and customWords[i].head-1 == i-1 and customWords[i].pos == "PART":
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #customWords[i-1].text = customWords[i-1].text + customWords[i].text
-
-            customWords[i-1].combineWords(customWords[i], True)
-            
-            # Go through the words and adjust the connections between the words to account
-            # for the combination of compound words into single words
-            j = 0
-            while j < wordLen:
-                # Adjust the head connections to take into account the compounding of two elements
-                if customWords[j].head > i:
-                    customWords[j].head = customWords[j].head-1
-                # Adjust the id's to take into account the removal of the compound word
-                if j >= i:
-                    customWords[j].id -=  1
-                j += 1
-
-            # Remove the extra word
-            wordLen -= 1
-            del customWords[i]
-            # Adjust i down as the current word is removed
-            i-=1
+            customWords, i, wordLen = removeWord(customWords, i, wordLen, 1)
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
             if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
-                #customWords[i+1].text = customWords[i].text+customWords[i+1].text
-                customWords[i+1].combineWords(customWords[i], False)
-                
-                # Go through the words and adjust the connections between the words to account
-                # for the combination of compound words into single words
-                j = 0
-                while j < wordLen:
-                    # Adjust the head connections to take into account the compounding of two elements
-                    if customWords[j].head > i:
-                        customWords[j].head = customWords[j].head - 1
-                    # Adjust the id's to take into account the removal of the compound word
-                    if j > i:
-                        customWords[j].id -=  1
-                    j += 1
-
-                # Remove the extra word
-                wordLen -= 1
-                del customWords[i]
-                # Adjust i down as the current word is removed
-                i-=1
+                customWords, i, wordLen = removeWord(customWords, i, wordLen)
         i += 1
         
     return customWords
+
+def removeWord(words,i,wordLen,direction=0):
+    if direction == 0:
+        id = i+1
+        words[id].combineWords(words[i], False)
+    else:
+        id = i
+        words[id-1].combineWords(words[i], True)
+
+    # Go through the words and adjust the connections between the words to account
+    # for the combination of compound words into single words
+    j = 0
+    while j < wordLen:
+        # Adjust the head connections to take into account the compounding of two elements
+        if words[j].head > id:
+            words[j].head = words[j].head - 1
+        # Adjust the id's to take into account the removal of the compound word
+        if j >= i:
+            words[j].id -=  1
+        j += 1
+
+    # Remove the extra word
+    del words[i]
+    
+    return words,i-1,wordLen-1
+
 
 def matchingFunction(words):
     wordLen = len(words)
@@ -389,7 +390,7 @@ def matchingFunction(words):
             elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
-   
+
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
