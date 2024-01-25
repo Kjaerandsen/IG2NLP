@@ -52,13 +52,13 @@ var ComponentNames = [17]string{ //17
 	"Cac", "Cex", "E", "E,p", "M", "F", "P", "P,p", "O"}
 
 type inputStructure []struct {
-	Name          string `json:"name"`
-	BaseText      string `json:"baseText"`
-	ProcessedText string `json:"processedText"`
-	Stanza        string `json:"stanza"`
+	Name   string `json:"name"`
+	BaseTx string `json:"baseTx"`
+	Manual string `json:"manual"`
+	Stanza string `json:"stanza"`
 	//Spacy               string     `json:"stanzaAdvanced"`
-	ProcessedTextParsed Statistics `json:"processedTextParsed"`
-	StanzaParsed        Statistics `json:"stanzaParsed"`
+	ManualParsed Statistics `json:"manualParsed"`
+	StanzaParsed Statistics `json:"stanzaParsed"`
 	//SpacyParsed         Statistics `json:"spacyParsed"`
 }
 
@@ -91,14 +91,14 @@ type StatisticsAuto struct {
 }
 
 type textComparison struct {
-	Name                  string `json:"name"`
-	BaseText              string `json:"baseText"`
-	ProcessedText         string `json:"processedText"`
-	Stanza                string `json:"stanza"`
-	ProcessedTextReversed string `json:"processedTextReversed"`
-	StanzaReversed        string `json:"stanzaReversed"`
-	StanzaDifference      []string `json:"stanzaDifference"`
-	ManualDifference      []string `json:"manualDifference"`
+	Name             string   `json:"name"`
+	BaseTx           string   `json:"baseTx"`
+	Manual           string   `json:"manual"`
+	Stanza           string   `json:"stanza"`
+	ManualReversed   string   `json:"manualReversed"`
+	StanzaReversed   string   `json:"stanzaReversed"`
+	StanzaDifference []string `json:"stanzaDifference"`
+	ManualDifference []string `json:"manualDifference"`
 }
 
 // Struct for each component with text content, a bool for nesting and semantic annotations
@@ -109,19 +109,19 @@ type JSONComponentAuto struct {
 }
 
 type inputStructureAuto []struct {
-	Name          string `json:"name"`
-	BaseText      string `json:"baseText"`
-	ProcessedText string `json:"processedText"`
-	Stanza        string `json:"stanza"`
+	Name   string `json:"name"`
+	BaseTx string `json:"baseTx"`
+	Manual string `json:"manual"`
+	Stanza string `json:"stanza"`
 	//Spacy               string     `json:"stanzaAdvanced"`
-	ProcessedTextParsed StatisticsAuto `json:"processedTextParsed"`
-	StanzaParsed        StatisticsAuto `json:"stanzaParsed"`
+	ManualParsed StatisticsAuto `json:"manualParsed"`
+	StanzaParsed StatisticsAuto `json:"stanzaParsed"`
 	//SpacyParsed         Statistics `json:"spacyParsed"`
 }
 
 type StatisticsCompare struct {
-	BaseText            string `json:"baseText"`
-	ProcessedText       string `json:"processedText"`
+	BaseTx              string `json:"baseTx"`
+	Manual              string `json:"mnual"`
 	Stanza              string `json:"stanza"`
 	BindProperty        int    `json:"BindProperty"`
 	IndirectObjectCount int    `json:"IndirectObjectPropertyCount"`

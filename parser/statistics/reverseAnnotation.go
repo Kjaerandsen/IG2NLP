@@ -34,14 +34,14 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 	for i := 0; i < len(data); i++ {
 		var outDataElement textComparison
 		// Remove Suffixes from the manually annotated text
-		text = data[i].ProcessedText
+		text = data[i].Manual
 		text = removeSuffixes(text)
 
 		outDataElement.Name = data[i].Name
-		outDataElement.BaseText = data[i].BaseText
-		outDataElement.ProcessedText = data[i].ProcessedText
+		outDataElement.BaseTx = data[i].BaseTx
+		outDataElement.Manual = data[i].Manual
 		outDataElement.Stanza = data[i].Stanza
-		outDataElement.ProcessedTextReversed = removeSymbols(text)
+		outDataElement.ManualReversed = removeSymbols(text)
 		outDataElement.StanzaReversed = removeSymbols(data[i].Stanza)
 
 		var compStanza []string
@@ -49,7 +49,7 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 
 		// Take the parsed sentences, split into []string by ""
 		compStanza = strings.Split(outDataElement.StanzaReversed, " ")
-		compManual = strings.Split(outDataElement.ProcessedTextReversed, " ")
+		compManual = strings.Split(outDataElement.ManualReversed, " ")
 
 		// Compare to the BaseText?
 

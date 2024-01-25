@@ -30,24 +30,24 @@ func Compare(inputFile string, outputFile string) {
 
 		outData = append(outData, *new(StatisticsCompare))
 		//stats = findSymbols(data[i].ProcessedText)
-		outData[i].ProcessedText = data[i].ProcessedText
+		outData[i].Manual = data[i].Manual
 		outData[i].Stanza = data[i].Stanza
-		outData[i].BaseText = data[i].BaseText
+		outData[i].BaseTx = data[i].BaseTx
 
-		outData[i].AProperty = data[i].ProcessedTextParsed.AttributePropertyCount -
+		outData[i].AProperty = data[i].ManualParsed.AttributePropertyCount -
 			data[i].StanzaParsed.AttributePropertyCount
 
-		outData[i].AttributeCount = data[i].ProcessedTextParsed.AttributePropertyCount
+		outData[i].AttributeCount = data[i].ManualParsed.AttributePropertyCount
 
-		outData[i].BdirProperty = data[i].ProcessedTextParsed.DirectObjectPropertyCount -
+		outData[i].BdirProperty = data[i].ManualParsed.DirectObjectPropertyCount -
 			data[i].StanzaParsed.DirectObjectPropertyCount
 
-		outData[i].DirectObjectCount = data[i].ProcessedTextParsed.DirectObjectPropertyCount
+		outData[i].DirectObjectCount = data[i].ManualParsed.DirectObjectPropertyCount
 
-		outData[i].BindProperty = data[i].ProcessedTextParsed.IndirectObjectPropertyCount -
+		outData[i].BindProperty = data[i].ManualParsed.IndirectObjectPropertyCount -
 			data[i].StanzaParsed.IndirectObjectPropertyCount
 
-		outData[i].IndirectObjectCount = data[i].ProcessedTextParsed.IndirectObjectPropertyCount
+		outData[i].IndirectObjectCount = data[i].ManualParsed.IndirectObjectPropertyCount
 
 		/*
 			stats, success = findSymbols(data[i].Spacy)

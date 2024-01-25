@@ -34,9 +34,9 @@ func AutoRunner(file string, outFile string) {
 	for i := 0; i < len(data); i++ {
 		var stats StatisticsAuto
 
-		stats, success := requestHandler(data[i].ProcessedText)
+		stats, success := requestHandler(data[i].Manual)
 		if success {
-			data[i].ProcessedTextParsed = stats
+			data[i].ManualParsed = stats
 		}
 
 		/*

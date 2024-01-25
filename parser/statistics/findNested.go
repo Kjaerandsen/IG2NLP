@@ -45,7 +45,7 @@ func RunStatistics(inputFile string, outputFile string) {
 		var stats Statistics
 
 		// Remove Suffixes from the manually annotated text
-		text = data[i].ProcessedText
+		text = data[i].Manual
 		text = removeSuffixes(text)
 
 		/*
@@ -58,7 +58,7 @@ func RunStatistics(inputFile string, outputFile string) {
 
 		// Retrieve the statistics
 		stats = findSymbols(text)
-		data[i].ProcessedTextParsed = stats
+		data[i].ManualParsed = stats
 
 		/*
 			stats, success = findSymbols(data[i].Spacy)
