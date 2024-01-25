@@ -87,15 +87,12 @@ def MatcherMiddleware(jsonData):
 
     i = 0
     while i < len(jsonData): 
-        output = Matcher(jsonData[i]['baseText'])
+        base = jsonData[i]['baseTx']
+        output = Matcher(base)
 
-        print(jsonData[i]['baseText'] + "\n" + jsonData[i]['processedText'] + "\n" + output)
+        print("\n"+ base + "\n" + jsonData[i]['manual'] + "\n" + output)
 
         jsonData[i]["stanza"] = output
-
-        # Write the automatically parsed statement to the file
-        #with open(filename, "w") as outputFile:
-        #    json.dump(jsonData, outputFile, indent=2)
 
         i += 1
 
@@ -111,7 +108,7 @@ def Matcher(text):
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
-    print("Running the pipeline")
+    #print("Running the pipeline")
     #nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
     #print(nlp.processors["sentiment"])
     #nlp.processors.pop("sentiment")
@@ -291,12 +288,24 @@ def matchingFunction(words):
 
                     contents = []
 
-                    words2.append(Word(
+                    
+                    
+                    activationCondition = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
+                    
+                    if validateNested(activationCondition):
+                        words2.append(Word(
                         "","","",0,0,"","",0,0,0,"Cac",True,1
                         ))
-                    words2 += matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
-                    words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
-                    words2.append(words[lastIndex])
+                        words2 += activationCondition
+                        words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
+                        words2.append(words[lastIndex])
+                    else:
+                        words2 += words[:lastIndex]
+                        words2[0].setSymbol("Cac",1)
+                        words2[lastIndex-1].setSymbol("Cac",2)
+                        words2.append(words[lastIndex])
+
+                    
 
                     contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))))
 
@@ -377,7 +386,7 @@ def matchingFunction(words):
             elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
-             
+     
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
@@ -393,9 +402,6 @@ def matchingFunction(words):
             print("\n\nNSUBJ CCOMP OBJ\n\n")
         
         i += 1
-
-    print("\n\nTokens:\n")
-    print(WordsToSentence2)
 
     return words
 
@@ -444,3 +450,22 @@ def WordsToSentence2(words):
         i += 1
     
     return sentence
+
+def validateNested(words):
+    wordLen = len(words)
+
+    Aim = False
+    Attribute = False
+
+    i = 0
+    while i < wordLen:
+        if words[i].symbol == "A":
+            Attribute = True
+            if Aim:
+                return True
+        if words[i].symbol == "I":
+            Aim = True
+            if Attribute:
+                return True
+        i += 1
+    return False
