@@ -152,6 +152,7 @@ def compoundWords(words):
 
         i += 1
 
+    i = 0
     #print("type is: ", type(words[0]), " " , wordLen)
     while i < wordLen:
         #print(words[i])
@@ -178,8 +179,9 @@ def compoundWords(words):
                 j += 1
             # Remove the old compound
             wordLen -= 1
+            # Adjust i down as the current word is removed
             del customWords[i]
-        
+            i-=1
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "case" and customWords[i].head-1 == i-1 and customWords[i].pos == "PART":
             # Add the PART case (i.e with "state" and "'s" -> "state's")
@@ -225,7 +227,8 @@ def compoundWords(words):
                 # Remove the extra word
                 wordLen -= 1
                 del customWords[i]
-
+                # Adjust i down as the current word is removed
+                i-=1
         i += 1
         
     return customWords
@@ -386,7 +389,7 @@ def matchingFunction(words):
             elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
-     
+   
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
