@@ -472,17 +472,19 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 	return output, text
 }
 
-func findNestedPart(text string, component string) {
-
+func findNestedPart(text string, component string) []JSONComponent {
+	var output []JSONComponent
 	// Look for symbols which support nesting
 	// A,p Bdir Bdir,p Bind Bind,p Cac Cex E,p P P,p
+	// Full list is in Constants "NestedComponentNames"
 
-	//
 	position := strings.Index(text, component)
 
 	removeSymbols(text)
 
 	if position != -1 {
+		var currentSymbol JSONComponent
+		currentSymbol.Nested = true
 
 		// Finds first instance of the component
 		fmt.Println("Position is: ", position)
@@ -502,45 +504,71 @@ func findNestedPart(text string, component string) {
 
 			if end != -1 {
 				fmt.Println("Semantic annotation is: ", text[1:end])
-				text := text[end+2:]
+				currentSymbol.SemanticAnnotation = text[1:end]
+				text = text[end+2:]
 
-				brackets := 1
+				/*
+					brackets := 1
 
-				for i := 0; i < len(text); i++ {
-					if text[i] == byte('{') {
-						brackets++
-					} else if text[i] == byte('}') {
-						brackets--
+					for i := 0; i < len(text); i++ {
+						if text[i] == byte('{') {
+							brackets++
+						} else if text[i] == byte('}') {
+							brackets--
+						}
+						if brackets == 0 {
+							componentContents := text[:i]
+							text := text[i+1:]
+							fmt.Println("Found end: ", componentContents)
+							currentSymbol.Content = componentContents
+							fmt.Println("Rest: ", len(text))
+							output = append(output, currentSymbol)
+							break
+						}
 					}
-					if brackets == 0 {
-						componentContents := text[:i]
-						text := text[i+1:]
-						fmt.Println("Found end: ", componentContents)
-						fmt.Println("Rest: ", len(text))
-						break
-					}
-				}
-
-				fmt.Println(text)
+					fmt.Println(text)
+					return append(output, findNestedPart(text, component)...)
+				*/
+				// If no closing bracket is found return an empty output
 			} else {
-				fmt.Println("Error no end")
+				log.Fatalf("Error no end bracket ']' found: " + text)
+				return output
 			}
-		} else if text[0:1] == "{" {
-			fmt.Println("Non-semantic")
-		} else {
-			fmt.Println("Not scoped")
 		}
+		// If the component is nested, get the contents and recurse
+		if text[0:1] == "{" {
+			fmt.Println("Contents")
 
-		// After finding scope check for others within the component, and outside of the component
-		// Simply recurse until done
+			brackets := 1
 
-		// Capture the contents
+			for i := 0; i < len(text); i++ {
+				if text[i] == byte('{') {
+					brackets++
+				} else if text[i] == byte('}') {
+					brackets--
+				}
+				if brackets == 0 {
+					componentContents := text[:i]
+					text := text[i+1:]
+					fmt.Println("Found end: ", componentContents)
+					currentSymbol.Content = componentContents
+					fmt.Println("Rest: ", len(text))
+					output = append(output, currentSymbol)
+					break
+				}
+			}
+			fmt.Println(text)
+			return append(output, findNestedPart(text, component)...)
 
-		// Add to the output struct
-		fmt.Println("done")
-	} else {
-		fmt.Println("No components found")
+			// If the component is not a nested component, recurse to look for nested components
+		} else {
+			fmt.Println("Not Nested")
+			return findNestedPart(text, component)
+		}
 	}
+
+	// If no detections just return the empty output
+	return output
 }
 
 // Function to remove suffixes (integer id's) from symbols in annotated text
@@ -587,4 +615,18 @@ func removeSuffixesSymbol(text string, regEx *regexp.Regexp, symbol string) stri
 	}
 
 	return text
+}
+
+func getNestedComponents(text string) []JSONComponent {
+	var output []JSONComponent
+
+	// Remove suffixes from the input text
+	text = removeSuffixes(text)
+
+	// Get the nested components
+	for i := 0; i < len(NestedComponentNames); i++ {
+		findNestedPart(text, NestedComponentNames[i])
+	}
+
+	return output
 }

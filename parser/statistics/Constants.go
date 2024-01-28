@@ -51,6 +51,10 @@ var ComponentNames = [17]string{ //17
 	"A", "A,p", "D", "I", "Bdir", "Bdir,p", "Bind", "Bind,p",
 	"Cac", "Cex", "E", "E,p", "M", "F", "P", "P,p", "O"}
 
+var NestedComponentNames = [11]string{
+	"A,p", "Bdir", "Bdir,p", "Bind", "Bind,p",
+	"Cac", "Cex", "E,p", "P", "P,p", "O"}
+
 type inputStructure []struct {
 	Name   string `json:"name"`
 	BaseTx string `json:"baseTx"`
@@ -68,11 +72,20 @@ type StatisticsAuto struct {
 	Attributes     []JSONComponent
 	AttributeCount int
 	//
+	AttributeProperties    []JSONComponent
+	AttributePropertyCount int
+	//
 	DirectObjects     []JSONComponent
 	DirectObjectCount int
 	//
+	DirectObjectProperties    []JSONComponent
+	DirectObjectPropertyCount int
+	//
 	IndirectObjects     []JSONComponent
 	IndirectObjectCount int
+	//
+	IndirectObjectProperties    []JSONComponent
+	IndirectObjectPropertyCount int
 	//
 	Aims     []JSONComponent
 	AimCount int
@@ -88,6 +101,10 @@ type StatisticsAuto struct {
 	//
 	ExecutionConstraints     []JSONComponent
 	ExecutionConstraintCount int
+	//
+	ORCount  int
+	XORCount int
+	ANDCount int
 }
 
 type textComparison struct {

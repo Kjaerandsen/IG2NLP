@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"IG-Parser/core/parser"
 	"IG-Parser/core/tree"
@@ -12,8 +13,6 @@ import (
 
 func AutoRunner(file string, outFile string) {
 	// Read the input file
-	//file := "./input.json"
-	//outFile := "./output.json"
 
 	content, err := os.ReadFile(file)
 	if err != nil {
@@ -39,13 +38,6 @@ func AutoRunner(file string, outFile string) {
 			data[i].ManualParsed = stats
 		}
 
-		/*
-			stats, success = requestHandler(data[i].Spacy)
-			if success {
-				data[i].SpacyParsed = stats
-			}
-		*/
-
 		stats, success = requestHandler(data[i].Stanza)
 		if success {
 			data[i].StanzaParsed = stats
@@ -65,9 +57,6 @@ func AutoRunner(file string, outFile string) {
 		fmt.Println("Error writing to file:", err)
 		return
 	}
-
-	//http.HandleFunc("/statement", requestHandler)
-
 }
 
 func requestHandler(inputStatement string) (StatisticsAuto, bool) {
@@ -83,7 +72,49 @@ func requestHandler(inputStatement string) (StatisticsAuto, bool) {
 
 	statement := stmts[0].Entry.(*tree.Statement)
 
+	// Get all components without nesting
 	statementHandler(statement, &output)
+	// Count occurrences of logical operators
+	output.ORCount = strings.Count(inputStatement, "[OR]")
+	output.XORCount = strings.Count(inputStatement, "[XOR]")
+	output.ANDCount = strings.Count(inputStatement, "[AND]")
+	// Get all components with nesting
+	nestedComponents := getNestedComponents(inputStatement)
+
+	for i := 0; i < len(nestedComponents); i++ {
+		switch nestedComponents[i].ComponentType {
+		case "A,p":
+			output.AttributeProperties = append(output.AttributeProperties, nestedComponents[i])
+			output.AttributeCount += 1
+		case "Bdir":
+			output.DirectObjects = append(output.DirectObjects, nestedComponents[i])
+			output.DirectObjectCount += 1
+		case "Bdir,p":
+			output.DirectObjectProperties = append(output.DirectObjectProperties, nestedComponents[i])
+			output.DirectObjectPropertyCount += 1
+		case "Bind":
+			output.IndirectObjects = append(output.IndirectObjects, nestedComponents[i])
+			output.IndirectObjectCount += 1
+		case "Bind,p":
+			output.IndirectObjectProperties = append(output.IndirectObjectProperties, nestedComponents[i])
+			output.IndirectObjectPropertyCount += 1
+		case "Cac":
+			output.ActivationConditions = append(output.ActivationConditions, nestedComponents[i])
+			output.ActivationConditionCount += 1
+		case "Cex":
+			output.ExecutionConstraints = append(output.ExecutionConstraints, nestedComponents[i])
+			output.ExecutionConstraintCount += 1
+		case "E,p":
+			fmt.Println("E,p")
+		case "P":
+			fmt.Println("P")
+		case "P,p":
+			fmt.Println("P,p")
+		case "O":
+			output.OrElses = append(output.OrElses, nestedComponents[i])
+			output.OrElseCount += 1
+		}
+	}
 
 	return output, true
 }
@@ -107,7 +138,6 @@ func statementHandler(statement *tree.Statement, stats *StatisticsAuto) {
 	getComponentInfo(statement.DirectObjectPropertyComplex, "Bdir,p", stats)
 	getComponentInfo(statement.IndirectObjectPropertySimple, "Bind,p", stats)
 	getComponentInfo(statement.IndirectObjectPropertyComplex, "Bind,p", stats)
-
 	// Constitutive
 	getComponentInfo(statement.ConstitutedEntity, "E", stats)
 	getComponentInfo(statement.Modal, "M", stats)
@@ -177,28 +207,41 @@ func getComponentInfo(componentNode *tree.Node, symbol string, stats *Statistics
 			component.SemanticAnnotation = ""
 		}
 
-		switch symbol {
-		case "A":
-			stats.AttributeCount += 1
-			stats.Attributes = append(stats.Attributes, component)
-		case "D":
-			stats.DeonticCount += 1
-			stats.Deontics = append(stats.Deontics, component)
-		case "Bdir":
-			stats.DirectObjectCount += 1
-			stats.DirectObjects = append(stats.DirectObjects, component)
-		case "Bind":
-			stats.IndirectObjectCount += 1
-			stats.IndirectObjects = append(stats.IndirectObjects, component)
-		case "Cac":
-			stats.ActivationConditionCount += 1
-			stats.ActivationConditions = append(stats.ActivationConditions, component)
-		case "Cex":
-			stats.ExecutionConstraintCount += 1
-			stats.ExecutionConstraints = append(stats.ExecutionConstraints, component)
-		case "I":
-			stats.AimCount += 1
-			stats.Aims = append(stats.Aims, component)
+		// Only add non-nested symbols
+		// Nested symbols are handled separately
+		if !component.Nested {
+			switch symbol {
+			case "A":
+				stats.AttributeCount += 1
+				stats.Attributes = append(stats.Attributes, component)
+			case "A,p":
+				stats.AttributePropertyCount += 1
+				stats.AttributeProperties = append(stats.AttributeProperties, component)
+			case "D":
+				stats.DeonticCount += 1
+				stats.Deontics = append(stats.Deontics, component)
+			case "Bdir":
+				stats.DirectObjectCount += 1
+				stats.DirectObjects = append(stats.DirectObjects, component)
+			case "Bdir,p":
+				stats.DirectObjectPropertyCount += 1
+				stats.DirectObjectProperties = append(stats.DirectObjectProperties, component)
+			case "Bind":
+				stats.IndirectObjectCount += 1
+				stats.IndirectObjects = append(stats.IndirectObjects, component)
+			case "Bind,p":
+				stats.IndirectObjectPropertyCount += 1
+				stats.IndirectObjectProperties = append(stats.IndirectObjectProperties, component)
+			case "Cac":
+				stats.ActivationConditionCount += 1
+				stats.ActivationConditions = append(stats.ActivationConditions, component)
+			case "Cex":
+				stats.ExecutionConstraintCount += 1
+				stats.ExecutionConstraints = append(stats.ExecutionConstraints, component)
+			case "I":
+				stats.AimCount += 1
+				stats.Aims = append(stats.Aims, component)
+			}
 		}
 	}
 
