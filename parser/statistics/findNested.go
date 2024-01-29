@@ -585,15 +585,10 @@ func findNestedPart(text string, component string) []JSONComponent {
 
 // Function to remove suffixes (integer id's) from symbols in annotated text
 func removeSuffixes(text string) string {
-
 	var regEx *regexp.Regexp
-
-	//fmt.Println(text)
 
 	for i := 0; i < len(RegexStrings); i++ {
 		regEx = regexp.MustCompile(RegexStrings[i])
-		//fmt.Println(regEx)
-
 		text = removeSuffixesSymbol(text, regEx, RegexComponents[i])
 	}
 
