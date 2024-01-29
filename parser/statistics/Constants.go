@@ -189,12 +189,12 @@ type StatisticsGeneric struct {
 }
 
 type CompareStatisticsGeneric struct {
-	BaseTx          string              `json:"baseTx"`
-	Manual          string              `json:"manual"`
-	Stanza          string              `json:"stanza"`
-	TP              [17]int             `json:"tp"`
-	ExtraComponents [17][]JSONComponent `json:"extraComponents"`
-	Count           [20]int             `json:"count"`
+	BaseTx          string                 `json:"baseTx"`
+	Manual          string                 `json:"manual"`
+	Stanza          string                 `json:"stanza"`
+	TP              [17]int                `json:"tp"`
+	ExtraComponents [2][17][]JSONComponent `json:"extraComponents"`
+	Count           [2][20]int             `json:"count"`
 }
 
 // Regular expression strings used for removing suffixes (integer identifier for symbols) for statistics
