@@ -9,6 +9,28 @@ type JSONComponent struct {
 	StartID            int
 }
 
+type Component int
+
+const (
+	Ap Component = iota
+	Bdir
+	Bdirp
+	Bind
+	Bindp
+	Cac
+	Cex
+	Ep
+	P
+	Pp
+	O
+	A
+	D
+	I
+	E
+	M
+	F
+)
+
 var ComponentNames = [17]string{ //17
 	// First line is components with nesting (11)
 	"A,p", "Bdir", "Bdir,p", "Bind", "Bind,p", "Cac", "Cex", "E,p", "P", "P,p", "O",
@@ -61,7 +83,45 @@ type CompareStatisticsGeneric struct {
 	TP [17]int `json:"tp"`
 	// Components which are not true positive matches
 	ExtraComponents [2][17][]JSONComponent `json:"extraComponents"`
-	Count           [2][20]int             `json:"count"`
+	PartialPool     []PartialPool          `json:"partialPool"`
+	// For partial matches of the same type
+	PartialCount [17]int
+	// Count 1 is Manual, 2 is Stanza
+	// Count 1 is false negative, Count 2 is false positive
+	Count [2][20]int `json:"count"`
+}
+
+type CompareOut struct {
+	BaseTx string `json:"baseTx"`
+	Manual string `json:"manual"`
+	Stanza string `json:"stanza"`
+	// Components which are not true positive matches
+	ExtraComponents [2][]JSONComponent `json:"extraComponents"`
+	PartialPool     []PartialPool      `json:"partialPool"`
+	// Count
+	Count StatisticsCount `json:"count"`
+}
+
+// Count for statistics of the properties, TP, PP, FP, FN
+// True positive, partial positive, false positive and false negative
+type StatisticsCount struct {
+	AttributeProperty                [4]int `json:"AttributeProperty"`
+	DirectObject                     [4]int `json:"DirectObject"`
+	DirectObjectProperty             [4]int `json:"DirectObjectProperty"`
+	IndirectObject                   [4]int `json:"IndirectObject"`
+	IndirectObjectProperty           [4]int `json:"IndirectObjectProperty"`
+	ActivationCondition              [4]int `json:"ActivationCondition"`
+	ExecutionConstraint              [4]int `json:"ExecutionConstraint"`
+	ConstitutedEntityProperty        [4]int `json:"ConstitutedEntityProperty"`
+	ConstitutingProperties           [4]int `json:"ConstitutingProperties"`
+	ConstitutingPropertiesProperties [4]int `json:"ConstitutingPropertiesProperties"`
+	OrElse                           [4]int `json:"OrElse"`
+	Attribute                        [4]int `json:"Attribute"`
+	Deontic                          [4]int `json:"Deontic"`
+	Aim                              [4]int `json:"Aim"`
+	ConstitutedEntity                [4]int `json:"ConstitutedEntity"`
+	Modal                            [4]int `json:"Modal"`
+	ConstitutiveFunction             [4]int `json:"ConstitutiveFunction"`
 }
 
 // Regular expression strings used for removing suffixes (integer identifier for symbols) for statistics
@@ -133,4 +193,9 @@ type Statistics struct {
 	ORCount  int
 	XORCount int
 	ANDCount int
+}
+
+type PartialPool struct {
+	ManualComponents []JSONComponent
+	StanzaComponents []JSONComponent
 }

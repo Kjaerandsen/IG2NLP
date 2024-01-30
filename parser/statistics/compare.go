@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func CompareParsed(inputFile string, outputFile string) {
@@ -35,6 +36,8 @@ func CompareParsed(inputFile string, outputFile string) {
 
 		// Look for true positives
 		CompareComponentsDirect(&data[i].ManualParsed, &data[i].StanzaParsed, &outData[i])
+		// Look for partial positives
+		outData[i] = CompareComponentsPartial(outData[i])
 	}
 
 	// Convert the struct to JSON
@@ -62,6 +65,115 @@ func CompareComponents() {
 
 }
 
+func CompareComponentsPartial(data CompareStatisticsGeneric) CompareStatisticsGeneric {
+	// Compare the components in the extraComponents pool
+
+	// First by certain components
+	// X - X, X,p - X
+	for i := 0; i < 17; i++ {
+		manualLen := len(data.ExtraComponents[0][i])
+		automaLen := len(data.ExtraComponents[1][i])
+		for j := 0; j < manualLen; j++ {
+			for k := 0; k < automaLen; k++ {
+				if j == manualLen || k == automaLen {
+					break
+				}
+				manualContent := data.ExtraComponents[0][i][j].Content
+				automaContent := data.ExtraComponents[1][i][k].Content
+
+				// If the content is a match, then the nesting was incorrect
+				if manualContent == automaContent {
+					// Content match
+					var match PartialPool
+					// Add the match to a PartialPool
+					match.ManualComponents =
+						append(match.ManualComponents, data.ExtraComponents[0][i][j])
+					match.StanzaComponents =
+						append(match.StanzaComponents, data.ExtraComponents[1][i][k])
+					// Append the PartialPool to the data
+					data.PartialPool = append(data.PartialPool, match)
+					// Update the counters
+					data.Count[0][i]--
+					data.Count[1][i]--
+					data.PartialCount[i]++
+					// Remove the elements from the original data
+					data.ExtraComponents[0][i] =
+						append(data.ExtraComponents[0][i][:j], data.ExtraComponents[0][i][j+1:]...)
+					data.ExtraComponents[1][i] =
+						append(data.ExtraComponents[1][i][:k], data.ExtraComponents[1][i][k+1:]...)
+					// Reduce the second counter to go through the rest of the components
+					k--
+					automaLen--
+					manualLen--
+					continue
+				}
+
+				// Check for partial matches
+				// If the automatic is contained within the manual
+				if strings.Contains(manualContent, automaContent) {
+					// Partial match
+					var match PartialPool
+					// Add the match to a PartialPool
+					match.ManualComponents =
+						append(match.ManualComponents, data.ExtraComponents[0][i][j])
+					match.StanzaComponents =
+						append(match.StanzaComponents, data.ExtraComponents[1][i][k])
+					// Append the PartialPool to the data
+					data.PartialPool = append(data.PartialPool, match)
+					// Update the counters
+					data.Count[0][i]--
+					data.Count[1][i]--
+					data.PartialCount[i]++
+					// Remove the elements from the original data
+					data.ExtraComponents[0][i] =
+						append(data.ExtraComponents[0][i][:j], data.ExtraComponents[0][i][j+1:]...)
+					data.ExtraComponents[1][i] =
+						append(data.ExtraComponents[1][i][:k], data.ExtraComponents[1][i][k+1:]...)
+					// Reduce the second counter to go through the rest of the components
+					k--
+					automaLen--
+					manualLen--
+					continue
+				}
+				// If the manual is contained within the automatic
+				if strings.Contains(automaContent, manualContent) {
+					// Partial match
+					var match PartialPool
+					// Add the match to a PartialPool
+					match.ManualComponents =
+						append(match.ManualComponents, data.ExtraComponents[0][i][j])
+					match.StanzaComponents =
+						append(match.StanzaComponents, data.ExtraComponents[1][i][k])
+					// Append the PartialPool to the data
+					data.PartialPool = append(data.PartialPool, match)
+					// Update the counters
+					data.Count[0][i]--
+					data.Count[1][i]--
+					data.PartialCount[i]++
+					// Remove the elements from the original data
+					data.ExtraComponents[0][i] =
+						append(data.ExtraComponents[0][i][:j], data.ExtraComponents[0][i][j+1:]...)
+					data.ExtraComponents[1][i] =
+						append(data.ExtraComponents[1][i][:k], data.ExtraComponents[1][i][k+1:]...)
+					// Reduce the second counter to go through the rest of the components
+					k--
+					automaLen--
+					manualLen--
+					continue
+				}
+			}
+		}
+	}
+	// Cac - Cex, Attribute - X and finally X - Y
+
+	// Comparrison first by words, if word is contained then add both to the pool
+
+	// If match X - X add both to a partial pool, remove one from each Count
+	// Add 1 to the PartialCount of that symbol
+	// Then look for other components with the rest of the words
+	return data
+}
+
 // For 1-to-1 comparrison, where the string contents are equal.
 // Removes all equal components and counts up a true positive rate.
 func CompareComponentsDirect(Manual *StatisticsGeneric, Automatic *StatisticsGeneric, outData *CompareStatisticsGeneric) {
@@ -82,13 +194,10 @@ func CompareComponentsDirect(Manual *StatisticsGeneric, Automatic *StatisticsGen
 func CompareComponentTP(list1 []JSONComponent, list2 []JSONComponent, list1Len, list2Len int) (int, []JSONComponent, []JSONComponent) {
 
 	TPCount := 0
-	fmt.Println(list1Len, list2Len)
 	for i := 0; i < list1Len; i++ {
 		for j := 0; j < list2Len; j++ {
-			fmt.Println("Going")
-			// If match
-			if list1[i].Content == list2[j].Content {
-				fmt.Println("Content match")
+			// If content match and equal nesting
+			if list1[i].Content == list2[j].Content && list1[i].Nested == list2[j].Nested {
 				// If the two words are equal then remove both from their arrays
 				list1 = removeComponentList(list1, list1Len, i)
 				list2 = removeComponentList(list2, list2Len, j)
