@@ -314,14 +314,17 @@ func removeComponent(text string, component string) string {
 			// If the symbol is a false positive recurse over the rest of the text until done
 		} else {
 			// Run the same function for the rest of the text recursively until complete
-			text = text[:position+componentLength] + removeComponent(text[position+componentLength:], component)
+			text = text[:position+componentLength] +
+				removeComponent(text[position+componentLength:], component)
 			return text
 		}
 	}
 
-	// Another alternative is to try to run the sentences through a pos-tagger to remove punctuation from the equation
+	// Another alternative is to try to run the sentences through a
+	// pos-tagger to remove punctuation from the equation
 
-	// Return the parsed text with all instances of the symbol removed, maintaining the contents of the symbols
+	// Return the parsed text with all instances of the symbol removed,
+	// maintaining the contents of the symbols
 	return text
 }
 
@@ -458,7 +461,8 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 
 			// Update the start position for each component to take into account the substring used
 			for j := 0; j < len(result.Components); j++ {
-				result.Components[j].StartID = result.Components[j].StartID + position + componentLength + 1
+				result.Components[j].StartID = result.Components[j].StartID +
+					position + componentLength + 1
 			}
 
 			// Add the resulting components

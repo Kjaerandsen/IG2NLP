@@ -95,7 +95,8 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 			}
 		}
 
-		// Go through the remaining items, check for edge cases where the punctuation spacing is improper
+		// Go through the remaining items,
+		// check for edge cases where the punctuation spacing is improper
 		// Or the difference is a beginning, ending or both char.
 		for i = 0; i < ManualLen; i++ {
 			for j = 0; j < StanzaLen; j++ {
@@ -120,11 +121,13 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 			}
 		}
 
-		// If the word of the stanza annotation is a substring of the manual count them as the same word.
+		// If the word of the stanza annotation is
+		// a substring of the manual count them as the same word.
 		for i = 0; i < StanzaLen; i++ {
 			for j = 0; j < ManualLen; j++ {
 				// If the word is a substring longer than the minimum
-				if len(compStanza[i]) > minWordLength && strings.Contains(compManual[j], compStanza[i]) {
+				if len(compStanza[i]) > minWordLength &&
+					strings.Contains(compManual[j], compStanza[i]) {
 
 					// If the two words are equal then remove both from their arrays
 					compManual = removeWord(compManual, ManualLen, j)
@@ -137,9 +140,11 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 					i--
 					break
 					// If the word excluding the last char is a substring
-				} else if strings.Contains(compManual[j], compStanza[i][:len(compStanza[i])-1]) && len(compStanza[i][:len(compStanza[i])-1]) > minWordLength {
+				} else if strings.Contains(compManual[j], compStanza[i][:len(compStanza[i])-1]) &&
+					len(compStanza[i][:len(compStanza[i])-1]) > minWordLength {
 
-					fmt.Println("Match removing: ", compManual[j], compStanza[i][:len(compStanza[i])-1])
+					fmt.Println("Match removing: ", compManual[j],
+						compStanza[i][:len(compStanza[i])-1])
 
 					// If the two words are equal then remove both from their arrays
 					compManual = removeWord(compManual, ManualLen, j)

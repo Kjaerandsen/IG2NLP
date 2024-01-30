@@ -137,7 +137,8 @@ func statementHandlerGeneric(statement *tree.Statement, stats *StatisticsGeneric
 	getComponentInfoGeneric(statement.OrElse, "O", stats)
 }
 
-// Recursive function which goes over a symbol and it's children, adding the components to the statistics struct
+// Recursive function which goes over a symbol and it's children,
+// adding the components to the statistics struct
 func getComponentInfoGeneric(componentNode *tree.Node, symbol string, stats *StatisticsGeneric) {
 	var component JSONComponent
 	component.SemanticAnnotation = ""
@@ -156,7 +157,8 @@ func getComponentInfoGeneric(componentNode *tree.Node, symbol string, stats *Sta
 		getComponentInfoGeneric(componentNode.Left, symbol, stats)
 		getComponentInfoGeneric(componentNode.Right, symbol, stats)
 	} else {
-		// If the statement is nested set the nested variable to true and handle the nested components
+		// If the statement is nested set the nested variable to true and
+		// handle the nested components
 		if statement, ok := componentNode.Entry.(*tree.Statement); ok {
 			statementHandlerGeneric(statement, stats)
 			component.Nested = true
