@@ -32,9 +32,10 @@ const (
 )
 
 var ComponentNames = [17]string{ //17
-	// First line is components with nesting (11)
-	"A,p", "Bdir", "Bdir,p", "Bind", "Bind,p", "Cac", "Cex", "E,p", "P", "P,p", "O",
-	// Second line is without support for nesting
+	// First components with nesting (11)
+	"A,p", "Bdir", "Bdir,p", "Bind", "Bind,p",
+	"Cac", "Cex", "E,p", "P", "P,p", "O",
+	// Final line is without support for nesting
 	"A", "D", "I", "E", "M", "F"}
 
 var NestedComponentNames = [11]string{
@@ -99,32 +100,36 @@ type CompareOut struct {
 	ExtraComponents [2][]JSONComponent `json:"extraComponents"`
 	PartialPool     []PartialPool      `json:"partialPool"`
 	// Count
-	Count StatisticsCount `json:"count"`
+	Count    StatisticsCount `json:"count"`
+	ANDCount [2]int          `json:"andcount"`
+	ORCount  [2]int          `json:"orcount"`
+	XORCount [2]int          `json:"xorcount"`
 }
 
 // Count for statistics of the properties, TP, PP, FP, FN
 // True positive, partial positive, false positive and false negative
 type StatisticsCount struct {
-	AttributeProperty                [4]int `json:"AttributeProperty"`
-	DirectObject                     [4]int `json:"DirectObject"`
-	DirectObjectProperty             [4]int `json:"DirectObjectProperty"`
-	IndirectObject                   [4]int `json:"IndirectObject"`
-	IndirectObjectProperty           [4]int `json:"IndirectObjectProperty"`
-	ActivationCondition              [4]int `json:"ActivationCondition"`
-	ExecutionConstraint              [4]int `json:"ExecutionConstraint"`
-	ConstitutedEntityProperty        [4]int `json:"ConstitutedEntityProperty"`
-	ConstitutingProperties           [4]int `json:"ConstitutingProperties"`
-	ConstitutingPropertiesProperties [4]int `json:"ConstitutingPropertiesProperties"`
-	OrElse                           [4]int `json:"OrElse"`
-	Attribute                        [4]int `json:"Attribute"`
-	Deontic                          [4]int `json:"Deontic"`
-	Aim                              [4]int `json:"Aim"`
-	ConstitutedEntity                [4]int `json:"ConstitutedEntity"`
-	Modal                            [4]int `json:"Modal"`
-	ConstitutiveFunction             [4]int `json:"ConstitutiveFunction"`
+	AttributeProperty                [5]int `json:"AttributeProperty"`
+	DirectObject                     [5]int `json:"DirectObject"`
+	DirectObjectProperty             [5]int `json:"DirectObjectProperty"`
+	IndirectObject                   [5]int `json:"IndirectObject"`
+	IndirectObjectProperty           [5]int `json:"IndirectObjectProperty"`
+	ActivationCondition              [5]int `json:"ActivationCondition"`
+	ExecutionConstraint              [5]int `json:"ExecutionConstraint"`
+	ConstitutedEntityProperty        [5]int `json:"ConstitutedEntityProperty"`
+	ConstitutingProperties           [5]int `json:"ConstitutingProperties"`
+	ConstitutingPropertiesProperties [5]int `json:"ConstitutingPropertiesProperties"`
+	OrElse                           [5]int `json:"OrElse"`
+	Attribute                        [5]int `json:"Attribute"`
+	Deontic                          [5]int `json:"Deontic"`
+	Aim                              [5]int `json:"Aim"`
+	ConstitutedEntity                [5]int `json:"ConstitutedEntity"`
+	Modal                            [5]int `json:"Modal"`
+	ConstitutiveFunction             [5]int `json:"ConstitutiveFunction"`
 }
 
-// Regular expression strings used for removing suffixes (integer identifier for symbols) for statistics
+// Regular expression strings used for removing suffixes
+// (integer identifier for symbols) for statistics
 // Ordered to first remove suffixes preceeding properties, then property suffixes if present
 var RegexStrings = [12]string{
 	"A\\d*",

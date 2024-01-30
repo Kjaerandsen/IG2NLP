@@ -23,6 +23,7 @@ func CompareParsed(inputFile string, outputFile string) {
 	}
 
 	var outData []CompareStatisticsGeneric
+	var jsonData []byte
 
 	fmt.Println(len(data))
 
@@ -35,13 +36,198 @@ func CompareParsed(inputFile string, outputFile string) {
 		outData[i].Count[1] = data[i].StanzaParsed.Count
 
 		// Look for true positives
-		CompareComponentsDirect(&data[i].ManualParsed, &data[i].StanzaParsed, &outData[i])
+		CompareComponentsDirect(&data[i].ManualParsed, &data[i].StanzaParsed,
+			&outData[i])
 		// Look for partial positives
 		outData[i] = CompareComponentsPartial(outData[i])
 	}
 
+	// Convert output data type
+	var outputData []CompareOut
+	for i := 0; i < len(data); i++ {
+		var newOutput CompareOut
+
+		newOutput.BaseTx = outData[i].BaseTx
+		newOutput.Manual = outData[i].Manual
+		newOutput.Stanza = outData[i].Stanza
+
+		// Add all extra components
+		for j := 0; j < 17; j++ {
+			// Add the manual extra components
+			newOutput.ExtraComponents[0] = append(newOutput.ExtraComponents[0],
+				outData[i].ExtraComponents[0][j]...)
+			// Add the automatic extra components
+			newOutput.ExtraComponents[1] = append(newOutput.ExtraComponents[1],
+				outData[i].ExtraComponents[1][j]...)
+		}
+
+		// Handle the counts
+		newOutput.Count.AttributeProperty =
+			[5]int{
+				outData[i].TP[0],           // TP
+				outData[i].PartialCount[0], // PP
+				outData[i].Count[1][0],     // FP
+				outData[i].Count[0][0],     // FN
+				outData[i].TP[0] + outData[i].PartialCount[0] +
+					outData[i].Count[1][0] + outData[i].Count[0][0]}
+
+		newOutput.Count.DirectObject =
+			[5]int{
+				outData[i].TP[1],
+				outData[i].PartialCount[1],
+				outData[i].Count[1][1],
+				outData[i].Count[0][1],
+				outData[i].TP[1] + outData[i].PartialCount[1] +
+					outData[i].Count[1][1] + outData[i].Count[0][1]}
+
+		newOutput.Count.DirectObjectProperty =
+			[5]int{
+				outData[i].TP[2],
+				outData[i].PartialCount[2],
+				outData[i].Count[1][2],
+				outData[i].Count[0][2],
+				outData[i].TP[2] + outData[i].PartialCount[2] +
+					outData[i].Count[1][2] + outData[i].Count[0][2]}
+
+		newOutput.Count.IndirectObject =
+			[5]int{
+				outData[i].TP[3],
+				outData[i].PartialCount[3],
+				outData[i].Count[1][3],
+				outData[i].Count[0][3],
+				outData[i].TP[3] + outData[i].PartialCount[3] +
+					outData[i].Count[1][3] + outData[i].Count[0][3]}
+
+		newOutput.Count.IndirectObjectProperty =
+			[5]int{
+				outData[i].TP[4],
+				outData[i].PartialCount[4],
+				outData[i].Count[1][4],
+				outData[i].Count[0][4],
+				outData[i].TP[4] + outData[i].PartialCount[4] +
+					outData[i].Count[1][4] + outData[i].Count[0][4]}
+
+		newOutput.Count.ActivationCondition =
+			[5]int{
+				outData[i].TP[5],
+				outData[i].PartialCount[5],
+				outData[i].Count[1][5],
+				outData[i].Count[0][5],
+				outData[i].TP[5] + outData[i].PartialCount[5] +
+					outData[i].Count[1][5] + outData[i].Count[0][5]}
+
+		newOutput.Count.ExecutionConstraint =
+			[5]int{
+				outData[i].TP[6],
+				outData[i].PartialCount[6],
+				outData[i].Count[1][6],
+				outData[i].Count[0][6],
+				outData[i].TP[6] + outData[i].PartialCount[6] +
+					outData[i].Count[1][6] + outData[i].Count[0][6]}
+
+		newOutput.Count.ConstitutedEntityProperty =
+			[5]int{
+				outData[i].TP[7],
+				outData[i].PartialCount[7],
+				outData[i].Count[1][7],
+				outData[i].Count[0][7],
+				outData[i].TP[7] + outData[i].PartialCount[7] +
+					outData[i].Count[1][7] + outData[i].Count[0][7]}
+
+		newOutput.Count.ConstitutingProperties =
+			[5]int{
+				outData[i].TP[8],
+				outData[i].PartialCount[8],
+				outData[i].Count[1][8],
+				outData[i].Count[0][8],
+				outData[i].TP[8] + outData[i].PartialCount[8] +
+					outData[i].Count[1][8] + outData[i].Count[0][8]}
+
+		newOutput.Count.ConstitutingPropertiesProperties =
+			[5]int{
+				outData[i].TP[9],
+				outData[i].PartialCount[9],
+				outData[i].Count[1][9],
+				outData[i].Count[0][9],
+				outData[i].TP[9] + outData[i].PartialCount[9] +
+					outData[i].Count[1][9] + outData[i].Count[0][9]}
+
+		newOutput.Count.OrElse =
+			[5]int{
+				outData[i].TP[10],
+				outData[i].PartialCount[10],
+				outData[i].Count[1][10],
+				outData[i].Count[0][10],
+				outData[i].TP[10] + outData[i].PartialCount[10] +
+					outData[i].Count[1][10] + outData[i].Count[0][10]}
+
+		newOutput.Count.Attribute =
+			[5]int{
+				outData[i].TP[11],
+				outData[i].PartialCount[11],
+				outData[i].Count[1][11],
+				outData[i].Count[0][11],
+				outData[i].TP[11] + outData[i].PartialCount[11] +
+					outData[i].Count[1][11] + outData[i].Count[0][11]}
+
+		newOutput.Count.Deontic =
+			[5]int{
+				outData[i].TP[12],
+				outData[i].PartialCount[12],
+				outData[i].Count[1][12],
+				outData[i].Count[0][12],
+				outData[i].TP[12] + outData[i].PartialCount[12] +
+					outData[i].Count[1][12] + outData[i].Count[0][12]}
+
+		newOutput.Count.Aim =
+			[5]int{
+				outData[i].TP[13],
+				outData[i].PartialCount[13],
+				outData[i].Count[1][13],
+				outData[i].Count[0][13],
+				outData[i].TP[13] + outData[i].PartialCount[13] +
+					outData[i].Count[1][13] + outData[i].Count[0][13]}
+
+		newOutput.Count.ConstitutedEntity =
+			[5]int{
+				outData[i].TP[14],
+				outData[i].PartialCount[14],
+				outData[i].Count[1][14],
+				outData[i].Count[0][14],
+				outData[i].TP[14] + outData[i].PartialCount[14] +
+					outData[i].Count[1][14] + outData[i].Count[0][14]}
+
+		newOutput.Count.Modal =
+			[5]int{
+				outData[i].TP[15],
+				outData[i].PartialCount[15],
+				outData[i].Count[1][15],
+				outData[i].Count[0][15],
+				outData[i].TP[15] + outData[i].PartialCount[15] +
+					outData[i].Count[1][15] + outData[i].Count[0][15]}
+
+		newOutput.Count.ConstitutiveFunction =
+			[5]int{
+				outData[i].TP[16],
+				outData[i].PartialCount[16],
+				outData[i].Count[1][16],
+				outData[i].Count[0][16],
+				outData[i].TP[16] + outData[i].PartialCount[16] +
+					outData[i].Count[1][16] + outData[i].Count[0][16]}
+
+		newOutput.ORCount[0] = outData[i].Count[0][17]
+		newOutput.ORCount[1] = outData[i].Count[1][17]
+		newOutput.XORCount[0] = outData[i].Count[0][18]
+		newOutput.XORCount[1] = outData[i].Count[1][18]
+		newOutput.ANDCount[0] = outData[i].Count[0][19]
+		newOutput.ANDCount[1] = outData[i].Count[1][19]
+
+		outputData = append(outputData, newOutput)
+
+	}
+
 	// Convert the struct to JSON
-	jsonData, err := json.MarshalIndent(outData, "", "  ")
+	jsonData, err = json.MarshalIndent(outputData, "", "  ")
 	if err != nil {
 		fmt.Println("Error marshalling JSON:", err)
 		return
@@ -55,12 +241,14 @@ func CompareParsed(inputFile string, outputFile string) {
 	}
 }
 
-// Function that compares the reversed text of both the manual and automatic annotations
+// Function that compares the reversed text of both the manual and
+// automatic annotations
 func CompareReversedText() {
 
 }
 
-// Function that compares the component contents of both the manual and automatic annotations
+// Function that compares the component contents of both the manual
+// and automatic annotations
 func CompareComponents() {
 
 }
@@ -98,9 +286,11 @@ func CompareComponentsPartial(data CompareStatisticsGeneric) CompareStatisticsGe
 					data.PartialCount[i]++
 					// Remove the elements from the original data
 					data.ExtraComponents[0][i] =
-						append(data.ExtraComponents[0][i][:j], data.ExtraComponents[0][i][j+1:]...)
+						append(data.ExtraComponents[0][i][:j],
+							data.ExtraComponents[0][i][j+1:]...)
 					data.ExtraComponents[1][i] =
-						append(data.ExtraComponents[1][i][:k], data.ExtraComponents[1][i][k+1:]...)
+						append(data.ExtraComponents[1][i][:k],
+							data.ExtraComponents[1][i][k+1:]...)
 					// Reduce the second counter to go through the rest of the components
 					k--
 					automaLen--
@@ -176,11 +366,13 @@ func CompareComponentsPartial(data CompareStatisticsGeneric) CompareStatisticsGe
 
 // For 1-to-1 comparrison, where the string contents are equal.
 // Removes all equal components and counts up a true positive rate.
-func CompareComponentsDirect(Manual *StatisticsGeneric, Automatic *StatisticsGeneric, outData *CompareStatisticsGeneric) {
+func CompareComponentsDirect(Manual *StatisticsGeneric, Automatic *StatisticsGeneric,
+	outData *CompareStatisticsGeneric) {
 
 	for i := 0; i < len(ComponentNames); i++ {
 		outData.TP[i], Manual.Components[i], Automatic.Components[i] =
-			CompareComponentTP(Manual.Components[i], Automatic.Components[i], len(Manual.Components[i]), len(Automatic.Components[i]))
+			CompareComponentTP(Manual.Components[i], Automatic.Components[i],
+				len(Manual.Components[i]), len(Automatic.Components[i]))
 		// Reduce the count
 		outData.Count[0][i] -= outData.TP[i]
 		outData.Count[1][i] -= outData.TP[i]
@@ -190,8 +382,10 @@ func CompareComponentsDirect(Manual *StatisticsGeneric, Automatic *StatisticsGen
 	outData.ExtraComponents[1] = Automatic.Components
 }
 
-// Function that takes two lists of components and compares the contents to find true positive content matches
-func CompareComponentTP(list1 []JSONComponent, list2 []JSONComponent, list1Len, list2Len int) (int, []JSONComponent, []JSONComponent) {
+// Function that takes two lists of components and compares the contents
+// to find true positive content matches
+func CompareComponentTP(list1, list2 []JSONComponent, list1Len, list2Len int) (
+	int, []JSONComponent, []JSONComponent) {
 
 	TPCount := 0
 	for i := 0; i < list1Len; i++ {
