@@ -1,0 +1,1 @@
+# The purpose of this directory is to have a shared directory for the JSON input and output data files from the programs in the main repository.

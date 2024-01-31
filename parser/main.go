@@ -18,6 +18,9 @@ func main() {
 
 	fmt.Println(*inputFile, *outputFile, *mode)
 
+	*inputFile = "../data/" + *inputFile
+	*outputFile = "../data/" + *outputFile
+
 	// If none found default to the autorunner with the default file path
 	switch *mode {
 	case 0:
