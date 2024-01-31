@@ -3,6 +3,7 @@ package statistics
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -24,7 +25,7 @@ func CompareParsed(inputFile string, outputFile string) {
 
 	var outData []CompareStatisticsGeneric
 	var jsonData []byte
-	jsonData = []byte("[\n")
+	jsonData = []byte("[")
 
 	fmt.Println(len(data))
 
@@ -225,258 +226,95 @@ func CompareParsed(inputFile string, outputFile string) {
 
 		//outputData = append(outputData, newOutput)
 
-		jsonData = append(jsonData, []byte("  {\n")...)
-
-		jsonData = append(jsonData, []byte("    "+`"baseTx": `)...)
-		jsonContents, err := json.MarshalIndent(newOutput.BaseTx, "    ", "  ")
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = append(jsonData, []byte(" {\n    "+`"baseTx": `)...)
+		jsonData = appendToJSON(newOutput.BaseTx, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n    "+`"manual": `)...)
-		jsonContents, err = json.MarshalIndent(newOutput.Manual, "    ", "  ")
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Manual, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n    "+`"stanza": `)...)
-		jsonContents, err = json.MarshalIndent(newOutput.Stanza, "    ", "  ")
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Stanza, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n    "+`"extraComponents": `)...)
-
-		jsonContents, err = json.MarshalIndent(newOutput.ExtraComponents, "    ", "  ")
+		jsonContents, err := json.MarshalIndent(newOutput.ExtraComponents, "    ", "  ")
 		if err != nil {
 			fmt.Println("Error marshalling JSON:", err)
 			return
 		}
-
 		jsonData = append(jsonData, jsonContents...)
 
 		jsonData = append(jsonData, []byte(",\n    "+`"partialPool": `)...)
-
 		jsonContents, err = json.MarshalIndent(newOutput.PartialPool, "    ", "  ")
 		if err != nil {
 			fmt.Println("Error marshalling JSON:", err)
 			return
 		}
-
 		jsonData = append(jsonData, jsonContents...)
 
 		jsonData = append(jsonData, []byte(",\n    "+`"count": {`)...)
 
 		jsonData = append(jsonData, []byte("\n      "+`"AttributeProperty": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.AttributeProperty)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.AttributeProperty, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"DirectObject": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.DirectObject)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.DirectObject, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"DirectObjectProperty": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.DirectObjectProperty)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.DirectObjectProperty, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"IndirectObject": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.IndirectObject)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.IndirectObject, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"IndirectObjectProperty": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.IndirectObjectProperty)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.IndirectObjectProperty, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ActivationCondition": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ActivationCondition)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ActivationCondition, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ExecutionConstraint": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ExecutionConstraint)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ExecutionConstraint, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntityProperty": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ConstitutedEntityProperty)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ConstitutedEntityProperty, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ConstitutingProperties": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ConstitutingProperties)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ConstitutingProperties, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ConstitutingPropertiesProperties": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ConstitutingPropertiesProperties)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ConstitutingPropertiesProperties, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"OrElse": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.OrElse)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.OrElse, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"Attribute": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.Attribute)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.Attribute, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"Deontic": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.Deontic)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.Deontic, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"Aim": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.Aim)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.Aim, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntity": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.ConstitutedEntity)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.ConstitutedEntity, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"Modal": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.Count.Modal)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = appendToJSON(newOutput.Count.Modal, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"ConstitutiveFunction": `)...)
+		jsonData = appendToJSON(newOutput.Count.ConstitutiveFunction, jsonData)
 
-		jsonContents, err = json.Marshal(newOutput.Count.ConstitutiveFunction)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
+		jsonData = append(jsonData, []byte("}")...)
+		jsonData = append(jsonData, []byte(",\n      "+`"andcount": `)...)
+		jsonData = appendToJSON(newOutput.ANDCount, jsonData)
 
-		jsonData = append(jsonData, jsonContents...)
+		jsonData = append(jsonData, []byte(",\n      "+`"orcount": `)...)
+		jsonData = appendToJSON(newOutput.ORCount, jsonData)
 
-		jsonData = append(jsonData, []byte("\n    }")...)
+		jsonData = append(jsonData, []byte(",\n      "+`"xorcount": `)...)
+		jsonData = appendToJSON(newOutput.XORCount, jsonData)
 
-		jsonData = append(jsonData, []byte(",\n    "+`"andcount": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.ANDCount)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
-
-		jsonData = append(jsonData, []byte(",\n    "+`"orcount": `)...)
-		jsonContents, err = json.Marshal(newOutput.ORCount)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
-
-		jsonData = append(jsonData, []byte(",\n    "+`"xorcount": `)...)
-
-		jsonContents, err = json.Marshal(newOutput.XORCount)
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		jsonData = append(jsonData, jsonContents...)
-
+		// For the last item don't add a trailing comma
 		if i != len(data)-1 {
 			jsonData = append(jsonData, []byte("\n"+`  },`)...)
 		} else {
@@ -683,4 +521,17 @@ func removeComponentList(components []JSONComponent, compLen, id int) []JSONComp
 	}
 
 	return components
+}
+
+// Takes a variable to json marshal and append to a byte array
+func appendToJSON(content any, jsonData []byte) []byte {
+	jsonContents, err := json.Marshal(content)
+	if err != nil {
+		log.Fatalf("Error marshalling data in appendToJSON: \n", err)
+		return jsonData
+	}
+
+	jsonData = append(jsonData, jsonContents...)
+
+	return jsonData
 }
