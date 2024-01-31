@@ -109,10 +109,10 @@ type CompareOut struct {
 }
 
 type TotalOut struct {
-	Count    StatisticsCount `json:"count"`
-	ANDCount int             `json:"andcount"`
-	ORCount  int             `json:"orcount"`
-	XORCount int             `json:"xorcount"`
+	Count    StatisticsCountReordered `json:"count"`
+	ANDCount int                      `json:"andcount"`
+	ORCount  int                      `json:"orcount"`
+	XORCount int                      `json:"xorcount"`
 }
 
 // Count for statistics of the properties, TP, PP, FP, FN
@@ -135,6 +135,33 @@ type StatisticsCount struct {
 	ConstitutedEntity                [5]int `json:"ConstitutedEntity"`
 	Modal                            [5]int `json:"Modal"`
 	ConstitutiveFunction             [5]int `json:"ConstitutiveFunction"`
+}
+
+type StatisticsCountReordered struct {
+	// Regulative components
+	Attribute         [5]int `json:"Attribute"`
+	AttributeProperty [5]int `json:"AttributeProperty"`
+	Deontic           [5]int `json:"Deontic"`
+	Aim               [5]int `json:"Aim"`
+
+	DirectObject         [5]int `json:"DirectObject"`
+	DirectObjectProperty [5]int `json:"DirectObjectProperty"`
+
+	IndirectObject         [5]int `json:"IndirectObject"`
+	IndirectObjectProperty [5]int `json:"IndirectObjectProperty"`
+
+	// Shared components
+	ActivationCondition [5]int `json:"ActivationCondition"`
+	ExecutionConstraint [5]int `json:"ExecutionConstraint"`
+	OrElse              [5]int `json:"OrElse"`
+
+	// Constitutive components
+	ConstitutedEntity                [5]int `json:"ConstitutedEntity"`
+	ConstitutedEntityProperty        [5]int `json:"ConstitutedEntityProperty"`
+	Modal                            [5]int `json:"Modal"`
+	ConstitutiveFunction             [5]int `json:"ConstitutiveFunction"`
+	ConstitutingProperties           [5]int `json:"ConstitutingProperties"`
+	ConstitutingPropertiesProperties [5]int `json:"ConstitutingPropertiesProperties"`
 }
 
 // Regular expression strings used for removing suffixes
