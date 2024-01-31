@@ -251,9 +251,8 @@ func CompareParsed(inputFile string, outputFile string) {
 		}
 		jsonData = append(jsonData, jsonContents...)
 
-		jsonData = append(jsonData, []byte(",\n    "+`"count": {`)...)
-
-		jsonData = append(jsonData, []byte("\n      "+`"AttributeProperty": `)...)
+		jsonData = append(jsonData, []byte(",\n    "+`"count": {`+
+			"\n      "+`"AttributeProperty": `)...)
 		jsonData = appendToJSON(newOutput.Count.AttributeProperty, jsonData)
 
 		jsonData = append(jsonData, []byte(",\n      "+`"DirectObject": `)...)
