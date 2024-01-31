@@ -19,7 +19,8 @@ print(client)
 args = sys.argv
 
 if len(args)<2:
-    print('Error: a string must be passed with the function in the format:\ndependencyParsing "Input string here"')
+    print('Error: a string must be passed with the function in the format:\n' + 
+          'dependencyParsing "Input string here"')
     sys.exit()
 
 client.start()

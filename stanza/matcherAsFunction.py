@@ -15,17 +15,23 @@ def Matcher(text):
            "arcs":[]}
 
     # Create a table with the relevant information from the doc
-    # Based on the example found at: https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
+    # Based on the example found at: 
+    # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
     print('Now printing dependencies\n')
     df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency"])
     for sentence in doc.sentences:
         for word in sentence.words:
-            df = df._append({"Word": word.text, "POS":word.pos, "Head id":word.head, "Head word":sentence.words[word.head-1].text if word.head > 0 else "root", "Dependency": word.deprel}, ignore_index=True)
+            df = df._append({
+                "Word": word.text, "POS":word.pos, "Head id":word.head, 
+                "Head word":sentence.words[word.head-1].text if word.head > 0 else "root", 
+                "Dependency": word.deprel}, ignore_index=True)
             
             # Generating the data structure for displacy visualization
             depData["words"].append({"text":word.text, "tag": word.pos})
             if word.head != 0:
-                depData["arcs"].append({"start": min(word.id-1, word.head-1), "end": max(word.id-1, word.head-1), "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
+                depData["arcs"].append({"start": min(word.id-1, word.head-1), 
+                                        "end": max(word.id-1, word.head-1), "label": word.deprel, 
+                                        "dir": "left" if word.head > word.id else "right"})
 
     print(df)
 
@@ -41,7 +47,8 @@ def Matcher(text):
         print(words[i].text, words[i].deprel, words[words[i].head-1].text)
         #print(words[words[i].head].deprel, words[i].deprel, words[i].text)
         if words[i].text == "%" or words[i].text.lower == "percent":
-            parsedDoc[-1] = {"text":parsedDoc[-1]['text'] + words[i].text, "type":symbolDict[words[i].deprel]}
+            parsedDoc[-1] = {"text":parsedDoc[-1]['text'] + words[i].text, 
+                             "type":symbolDict[words[i].deprel]}
         else:
             if words[i].deprel == "pobj":
                 parsedDoc.append({"text":words[i].text, "type":"Bind"})

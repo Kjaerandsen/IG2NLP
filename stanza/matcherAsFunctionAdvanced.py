@@ -196,7 +196,8 @@ def compoundWords(words):
         #    del customWords[i]
         #    i-=2
         # If the word is a "PART" case dependency
-        elif customWords[i].deprel == "case" and customWords[i].head-1 == i-1 and customWords[i].pos == "PART":
+        elif (customWords[i].deprel == "case" and customWords[i].head-1 == i-1 
+              and customWords[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #customWords[i-1].text = customWords[i-1].text + customWords[i].text
             customWords, i, wordLen = removeWord(customWords, i, wordLen, 1)
@@ -289,12 +290,12 @@ def matchingFunction(words):
             if lastIndex < len(words) and words[lastIndex].deprel == "punct":
 
                 if firstVal == 0:
-
                     contents = []
 
-                    
-                    
-                    activationCondition = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
+                    activationCondition = matchingFunction(
+                        compoundWords(
+                            nlpPipeline(
+                                WordsToSentence(words[:lastIndex]))))
                     
                     if validateNested(activationCondition):
                         words2.append(Word(
@@ -309,11 +310,12 @@ def matchingFunction(words):
                         words2[lastIndex-1].setSymbol("Cac",2)
                         words2.append(words[lastIndex])
 
-                    
+                    contents = matchingFunction(compoundWords(
+                        nlpPipeline(
+                            WordsToSentence(words[lastIndex+1:]))))
 
-                    contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))))
-
-                    # Copy over the old placement information to the newly generated words for proper formatting
+                    # Copy over the old placement information to the 
+                    # newly generated words for proper formatting
                     k = lastIndex +1
                     while k < len(words):
                         index = k-lastIndex-1
@@ -338,7 +340,10 @@ def matchingFunction(words):
 
             # If there is a logical operator adjacent to the right
             # Can potentially check for the dep_ "cc" instead to account for ","
-            if i+1 < len(words) and (words[i+1].text.lower() == "or" or words[i+1].text.lower() == "and"):
+            if (i+1 < len(words) 
+                and (words[i+1].text.lower() == "or" 
+                or words[i+1].text.lower() == "and")):
+
                 # print(words[i+1].text)
                 j = i+2
                 conjugated = False
@@ -346,7 +351,8 @@ def matchingFunction(words):
                 words[i+1].text = "[" + words[i+1].text.upper() + "]"
 
                 while j < len(words):
-                    # If the word has a conj dependency to the dobj, then add the text and set conjugated to true
+                    # If the word has a conj dependency to the dobj, then add the text 
+                    # and set conjugated to true
                     if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
                         # print("This loop is active", words[j].deprel, words[words[j].head-1].text)
                         depIndex = j
@@ -387,7 +393,8 @@ def matchingFunction(words):
             elif words[words[i].head-1].deprel == "iobj":
                 #print(words[i].text, " Property of Bind: ",  words[words[i].head-1].text)
                 words[i].setSymbol("Bind,p")
-            elif words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "root":
+            elif (words[words[i].head-1].deprel == "nsubj" 
+                  and words[words[words[i].head-1].head-1].deprel == "root"):
                 #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
 
@@ -397,7 +404,9 @@ def matchingFunction(words):
                 words[i].setSymbol(SymbolDict[words[i].deprel])
         
         # If the relation is a ccomp then handle it as a direct object
-        elif words[i].deprel == "amod" and words[words[i].head-1].deprel == "nsubj" and words[words[words[i].head-1].head-1].deprel == "ccomp":
+        elif (words[i].deprel == "amod" 
+              and words[words[i].head-1].deprel == "nsubj" 
+              and words[words[words[i].head-1].head-1].deprel == "ccomp"):
             #print("\n\nAMOD NSUBJ OBJ\n\n")
             words[i].setSymbol(words[i],"bdir", 1)
             words[i+1].setSymbol(words[i+1],"bdir", 2)

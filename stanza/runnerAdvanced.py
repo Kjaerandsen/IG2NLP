@@ -6,7 +6,8 @@ args = sys.argv
 
 # Check if an input was given
 if len(args)<2:
-    print('Error: a string must be passed with the function in the format:\ndependencyParsing "Input string here"')
+    print('Error: a string must be passed with the function in the format:\n'+
+          'dependencyParsing "Input string here"')
     sys.exit()
 
 number = int(args[1])
@@ -15,9 +16,10 @@ filename = "input.json"
 
 i = number
 
-# The testData.json is a json file containing an array of objects with a name, baseText and processedText.
-# The important fields are the baseText which is the input statement and the processedText which is the 
-# annotated statement.
+# The testData.json is a json file containing an array of objects 
+# with a name, baseText and processedText.
+# The important fields are the baseText which is the input statement 
+# and the processedText which is the annotated statement.
 with open(filename, "r") as input:
     jsonData = json.load(input)
 
@@ -37,7 +39,8 @@ if i == -1:
 else:
     #print(jsonData[i]['baseText'])
     if i >= len(jsonData):
-        print("Error, the index provided is higher than or equal to the amount of items in the input data.")
+        print("Error, the index provided is higher than "+
+              "or equal to the amount of items in the input data.")
     else:
         jsonData[i] = MatcherMiddleware(jsonData[i:i+1])[0]
 
