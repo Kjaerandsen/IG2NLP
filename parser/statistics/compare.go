@@ -289,17 +289,19 @@ func CompareParsed(inputFile string, outputFile string) {
 		}
 
 		newOutput.ORCount[0] = outData[i].Count[0][17]
+		newOutput.ORCount[1] = outData[i].Count[1][17]
 		total.ORCount -= outData[i].Count[0][17]
 		total.ORCount += outData[i].Count[1][17]
-		newOutput.ORCount[1] = outData[i].Count[1][17]
+
 		newOutput.XORCount[0] = outData[i].Count[0][18]
-		total.ORCount -= outData[i].Count[0][18]
-		total.ORCount += outData[i].Count[1][18]
 		newOutput.XORCount[1] = outData[i].Count[1][18]
+		total.XORCount -= outData[i].Count[0][18]
+		total.XORCount += outData[i].Count[1][18]
+
 		newOutput.ANDCount[0] = outData[i].Count[0][19]
-		total.ORCount -= outData[i].Count[0][19]
-		total.ORCount += outData[i].Count[1][19]
 		newOutput.ANDCount[1] = outData[i].Count[1][19]
+		total.ANDCount -= outData[i].Count[0][19]
+		total.ANDCount += outData[i].Count[1][19]
 
 		//outputData = append(outputData, newOutput)
 
