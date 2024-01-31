@@ -141,8 +141,8 @@ type StatisticsCountReordered struct {
 	// Regulative components
 	Attribute         [5]int `json:"Attribute"`
 	AttributeProperty [5]int `json:"AttributeProperty"`
-	Deontic           [5]int `json:"Deontic"`
 	Aim               [5]int `json:"Aim"`
+	Deontic           [5]int `json:"Deontic"`
 
 	DirectObject         [5]int `json:"DirectObject"`
 	DirectObjectProperty [5]int `json:"DirectObjectProperty"`

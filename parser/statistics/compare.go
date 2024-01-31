@@ -417,11 +417,14 @@ func CompareParsed(inputFile string, outputFile string) {
 		return
 	}
 
-	jsonData, err = json.MarshalIndent(total, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return
-	}
+	/*
+		jsonData, err = json.MarshalIndent(total, "", "  ")
+		if err != nil {
+			fmt.Println("Error marshalling JSON:", err)
+			return
+		}
+	*/
+	jsonData = createTotalJSON(total)
 
 	// Write the JSON data to the file
 	err = os.WriteFile(outputFile+"total"+FILETYPE, jsonData, 0644)
@@ -625,5 +628,74 @@ func appendToJSON(content any, jsonData []byte) []byte {
 
 	jsonData = append(jsonData, jsonContents...)
 
+	return jsonData
+}
+
+func createTotalJSON(total TotalOut) []byte {
+	var jsonData = []byte("{" + "\n  " + `"count": {` +
+		"\n    " + `"Attribute":                        `)
+
+	jsonData = appendToJSON(total.Count.Attribute, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"AttributeProperty":                `)...)
+	jsonData = appendToJSON(total.Count.AttributeProperty, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"Aim":                              `)...)
+	jsonData = appendToJSON(total.Count.Aim, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"Deontic":                          `)...)
+	jsonData = appendToJSON(total.Count.Deontic, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"DirectObject":                     `)...)
+	jsonData = appendToJSON(total.Count.DirectObject, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"DirectObjectProperty":             `)...)
+	jsonData = appendToJSON(total.Count.DirectObjectProperty, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"IndirectObject":                   `)...)
+	jsonData = appendToJSON(total.Count.IndirectObject, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"IndirectObjectProperty":           `)...)
+	jsonData = appendToJSON(total.Count.IndirectObjectProperty, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ActivationCondition":              `)...)
+	jsonData = appendToJSON(total.Count.ActivationCondition, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ExecutionConstraint":              `)...)
+	jsonData = appendToJSON(total.Count.ExecutionConstraint, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"OrElse":                           `)...)
+	jsonData = appendToJSON(total.Count.OrElse, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ConstitutedEntity":                `)...)
+	jsonData = appendToJSON(total.Count.ConstitutedEntity, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ConstitutedEntityProperty":        `)...)
+	jsonData = appendToJSON(total.Count.ConstitutedEntityProperty, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"Modal":                            `)...)
+	jsonData = appendToJSON(total.Count.Modal, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ConstitutiveFunction":             `)...)
+	jsonData = appendToJSON(total.Count.ConstitutiveFunction, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ConstitutingProperties":           `)...)
+	jsonData = appendToJSON(total.Count.ConstitutingProperties, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n    "+`"ConstitutingPropertiesProperties": `)...)
+	jsonData = appendToJSON(total.Count.ConstitutingPropertiesProperties, jsonData)
+
+	jsonData = append(jsonData, []byte("\n  }")...)
+
+	jsonData = append(jsonData, []byte(",\n  "+`"andcount": `)...)
+	jsonData = appendToJSON(total.ANDCount, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n  "+`"orcount":  `)...)
+	jsonData = appendToJSON(total.ORCount, jsonData)
+
+	jsonData = append(jsonData, []byte(",\n  "+`"xorcount": `)...)
+	jsonData = appendToJSON(total.XORCount, jsonData)
+
+	jsonData = append(jsonData, []byte("\n}")...)
 	return jsonData
 }
