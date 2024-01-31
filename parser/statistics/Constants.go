@@ -87,6 +87,7 @@ type CompareStatisticsGeneric struct {
 	// Components which are not true positive matches
 	ExtraComponents [2][17][]JSONComponent `json:"extraComponents"`
 	PartialPool     []PartialPool          `json:"partialPool"`
+	OtherPool       []PartialPool          `json:"partialPool"`
 	// For partial matches of the same type
 	PartialCount [17]int
 	// Count 1 is Manual, 2 is Stanza
@@ -101,6 +102,7 @@ type CompareOut struct {
 	// Components which are not true positive matches
 	ExtraComponents [2][]JSONComponent `json:"extraComponents"`
 	PartialPool     []PartialPool      `json:"partialPool"`
+	OtherPool       []PartialPool      `json:"otherPool"`
 	// Count
 	Count    StatisticsCount `json:"count"`
 	ANDCount [2]int          `json:"andcount"`
@@ -118,23 +120,23 @@ type TotalOut struct {
 // Count for statistics of the properties, TP, PP, FP, FN
 // True positive, partial positive, false positive and false negative
 type StatisticsCount struct {
-	AttributeProperty                [5]int `json:"AttributeProperty"`
-	DirectObject                     [5]int `json:"DirectObject"`
-	DirectObjectProperty             [5]int `json:"DirectObjectProperty"`
-	IndirectObject                   [5]int `json:"IndirectObject"`
-	IndirectObjectProperty           [5]int `json:"IndirectObjectProperty"`
-	ActivationCondition              [5]int `json:"ActivationCondition"`
-	ExecutionConstraint              [5]int `json:"ExecutionConstraint"`
-	ConstitutedEntityProperty        [5]int `json:"ConstitutedEntityProperty"`
-	ConstitutingProperties           [5]int `json:"ConstitutingProperties"`
-	ConstitutingPropertiesProperties [5]int `json:"ConstitutingPropertiesProperties"`
-	OrElse                           [5]int `json:"OrElse"`
-	Attribute                        [5]int `json:"Attribute"`
-	Deontic                          [5]int `json:"Deontic"`
-	Aim                              [5]int `json:"Aim"`
-	ConstitutedEntity                [5]int `json:"ConstitutedEntity"`
-	Modal                            [5]int `json:"Modal"`
-	ConstitutiveFunction             [5]int `json:"ConstitutiveFunction"`
+	/* 0*/ AttributeProperty [5]int `json:"AttributeProperty"`
+	/* 1*/ DirectObject [5]int `json:"DirectObject"`
+	/* 2*/ DirectObjectProperty [5]int `json:"DirectObjectProperty"`
+	/* 3*/ IndirectObject [5]int `json:"IndirectObject"`
+	/* 4*/ IndirectObjectProperty [5]int `json:"IndirectObjectProperty"`
+	/* 5*/ ActivationCondition [5]int `json:"ActivationCondition"`
+	/* 6*/ ExecutionConstraint [5]int `json:"ExecutionConstraint"`
+	/* 7*/ ConstitutedEntityProperty [5]int `json:"ConstitutedEntityProperty"`
+	/* 8*/ ConstitutingProperties [5]int `json:"ConstitutingProperties"`
+	/* 9*/ ConstitutingPropertiesProperties [5]int `json:"ConstitutingPropertiesProperties"`
+	/*10*/ OrElse [5]int `json:"OrElse"`
+	/*11*/ Attribute [5]int `json:"Attribute"`
+	/*12*/ Deontic [5]int `json:"Deontic"`
+	/*13*/ Aim [5]int `json:"Aim"`
+	/*14*/ ConstitutedEntity [5]int `json:"ConstitutedEntity"`
+	/*15*/ Modal [5]int `json:"Modal"`
+	/*16*/ ConstitutiveFunction [5]int `json:"ConstitutiveFunction"`
 }
 
 type StatisticsCountReordered struct {

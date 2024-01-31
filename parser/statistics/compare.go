@@ -42,6 +42,7 @@ func CompareParsed(inputFile string, outputFile string) {
 			&outData[i])
 		// Look for partial positives
 		outData[i] = CompareComponentsPartial(outData[i])
+		CompareComponentsOther(outData[i])
 	}
 
 	// Convert output data type
@@ -470,6 +471,53 @@ func CompareComponentsPartial(data CompareStatisticsGeneric) CompareStatisticsGe
 	// Add 1 to the PartialCount of that symbol
 	// Then look for other components with the rest of the words
 	return data
+}
+
+func CompareComponentsOther(data CompareStatisticsGeneric) CompareStatisticsGeneric {
+	// Compare the components in the extraComponents pool
+
+	// First compare Cac - Cex
+	data.OtherPool = append(data.OtherPool,
+		compareTwoComponents(
+			data.ExtraComponents[0],
+			data.ExtraComponents[1],
+			5, 6))
+
+	// Compare Bdir,p and Bdir
+	data.OtherPool = append(data.OtherPool,
+		compareTwoComponents(
+			data.ExtraComponents[0],
+			data.ExtraComponents[1],
+			5, 6))
+
+	// Compare Bdir,p and Bdir
+	data.OtherPool = append(data.OtherPool,
+		compareTwoComponents(
+			data.ExtraComponents[0],
+			data.ExtraComponents[1],
+			5, 6))
+
+	return data
+}
+
+func compareTwoComponents(list1, list2 [17][]JSONComponent, id1, id2 int) PartialPool {
+	var output PartialPool
+	manualLen := len(list1[id1])
+	automaLen := len(list2[id2])
+
+	for i := 0; i < manualLen; i++ {
+		for j := 0; j < automaLen; j++ {
+			if list1[id1][i].Content == list2[id2][j].Content {
+				fmt.Println("Shared content: ", list1[id1][i], list2[id2][j])
+			} else if strings.Contains(list1[id1][i].Content, list2[id2][j].Content) {
+				fmt.Println("Shared partial content: ", list1[id1][i], list2[id2][j])
+			}
+		}
+	}
+
+	// Call itself in reverse after? (id1 and id2 swapped)
+
+	return output
 }
 
 // For 1-to-1 comparrison, where the string contents are equal.
