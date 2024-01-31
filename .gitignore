@@ -11,3 +11,4 @@ env/
 **.txt
 **__pycache__/
 **/IG-Parser
+**.html
