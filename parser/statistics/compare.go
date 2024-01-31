@@ -571,62 +571,62 @@ func createCompareJSON(newOutput CompareOut, jsonData []byte) []byte {
 	jsonData = append(jsonData, jsonContents...)
 
 	jsonData = append(jsonData, []byte(",\n    "+`"count": {`+
-		"\n      "+`"AttributeProperty": `)...)
+		"\n      "+`"AttributeProperty":                `)...)
 	jsonData = appendToJSON(newOutput.Count.AttributeProperty, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"DirectObject": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"DirectObject":                     `)...)
 	jsonData = appendToJSON(newOutput.Count.DirectObject, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"DirectObjectProperty": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"DirectObjectProperty":             `)...)
 	jsonData = appendToJSON(newOutput.Count.DirectObjectProperty, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"IndirectObject": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"IndirectObject":                   `)...)
 	jsonData = appendToJSON(newOutput.Count.IndirectObject, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"IndirectObjectProperty": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"IndirectObjectProperty":           `)...)
 	jsonData = appendToJSON(newOutput.Count.IndirectObjectProperty, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ActivationCondition": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ActivationCondition":              `)...)
 	jsonData = appendToJSON(newOutput.Count.ActivationCondition, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ExecutionConstraint": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ExecutionConstraint":              `)...)
 	jsonData = appendToJSON(newOutput.Count.ExecutionConstraint, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntityProperty": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntityProperty":        `)...)
 	jsonData = appendToJSON(newOutput.Count.ConstitutedEntityProperty, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutingProperties": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutingProperties":           `)...)
 	jsonData = appendToJSON(newOutput.Count.ConstitutingProperties, jsonData)
 
 	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutingPropertiesProperties": `)...)
 	jsonData = appendToJSON(newOutput.Count.ConstitutingPropertiesProperties, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"OrElse": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"OrElse":                           `)...)
 	jsonData = appendToJSON(newOutput.Count.OrElse, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"Attribute": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"Attribute":                        `)...)
 	jsonData = appendToJSON(newOutput.Count.Attribute, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"Deontic": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"Deontic":                          `)...)
 	jsonData = appendToJSON(newOutput.Count.Deontic, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"Aim": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"Aim":                              `)...)
 	jsonData = appendToJSON(newOutput.Count.Aim, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntity": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutedEntity":                `)...)
 	jsonData = appendToJSON(newOutput.Count.ConstitutedEntity, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"Modal": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"Modal":                            `)...)
 	jsonData = appendToJSON(newOutput.Count.Modal, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutiveFunction": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"ConstitutiveFunction":             `)...)
 	jsonData = appendToJSON(newOutput.Count.ConstitutiveFunction, jsonData)
 
 	jsonData = append(jsonData, []byte("}")...)
 	jsonData = append(jsonData, []byte(",\n      "+`"andcount": `)...)
 	jsonData = appendToJSON(newOutput.ANDCount, jsonData)
 
-	jsonData = append(jsonData, []byte(",\n      "+`"orcount": `)...)
+	jsonData = append(jsonData, []byte(",\n      "+`"orcount":  `)...)
 	jsonData = appendToJSON(newOutput.ORCount, jsonData)
 
 	jsonData = append(jsonData, []byte(",\n      "+`"xorcount": `)...)
