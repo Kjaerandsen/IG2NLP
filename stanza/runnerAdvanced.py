@@ -1,6 +1,6 @@
 import json
 import sys
-from matcherAsFunctionAdvanced import Matcher, MatcherMiddleware
+from matcherAsFunctionAdvanced import MatcherMiddleware
 
 args = sys.argv
 
@@ -12,7 +12,7 @@ if len(args)<2:
 
 number = int(args[1])
 
-filename = "input.json"
+filename = "../data/input.json"
 
 i = number
 
