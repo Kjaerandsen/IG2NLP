@@ -9,7 +9,7 @@ import (
 )
 
 func CompareParsed(inputFile string, outputFile string) {
-	content, err := os.ReadFile(inputFile)
+	content, err := os.ReadFile(inputFile + FILETYPE)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
@@ -46,6 +46,7 @@ func CompareParsed(inputFile string, outputFile string) {
 
 	// Convert output data type
 	//var outputData []CompareOut
+	var total TotalOut
 	for i := 0; i < len(data); i++ {
 		var newOutput CompareOut
 
@@ -73,6 +74,11 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].TP[0] + outData[i].PartialCount[0] +
 					outData[i].Count[1][0] + outData[i].Count[0][0]}
 
+			// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.AttributeProperty[j] += newOutput.Count.AttributeProperty[j]
+		}
+
 		newOutput.Count.DirectObject =
 			[5]int{
 				outData[i].TP[1],
@@ -81,6 +87,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][1],
 				outData[i].TP[1] + outData[i].PartialCount[1] +
 					outData[i].Count[1][1] + outData[i].Count[0][1]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.DirectObject[j] += newOutput.Count.DirectObject[j]
+		}
 
 		newOutput.Count.DirectObjectProperty =
 			[5]int{
@@ -90,6 +100,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][2],
 				outData[i].TP[2] + outData[i].PartialCount[2] +
 					outData[i].Count[1][2] + outData[i].Count[0][2]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.DirectObjectProperty[j] += newOutput.Count.DirectObjectProperty[j]
+		}
 
 		newOutput.Count.IndirectObject =
 			[5]int{
@@ -99,6 +113,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][3],
 				outData[i].TP[3] + outData[i].PartialCount[3] +
 					outData[i].Count[1][3] + outData[i].Count[0][3]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.IndirectObject[j] += newOutput.Count.IndirectObject[j]
+		}
 
 		newOutput.Count.IndirectObjectProperty =
 			[5]int{
@@ -108,6 +126,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][4],
 				outData[i].TP[4] + outData[i].PartialCount[4] +
 					outData[i].Count[1][4] + outData[i].Count[0][4]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.IndirectObjectProperty[j] += newOutput.Count.IndirectObjectProperty[j]
+		}
 
 		newOutput.Count.ActivationCondition =
 			[5]int{
@@ -117,6 +139,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][5],
 				outData[i].TP[5] + outData[i].PartialCount[5] +
 					outData[i].Count[1][5] + outData[i].Count[0][5]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ActivationCondition[j] += newOutput.Count.ActivationCondition[j]
+		}
 
 		newOutput.Count.ExecutionConstraint =
 			[5]int{
@@ -126,6 +152,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][6],
 				outData[i].TP[6] + outData[i].PartialCount[6] +
 					outData[i].Count[1][6] + outData[i].Count[0][6]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ExecutionConstraint[j] += newOutput.Count.ExecutionConstraint[j]
+		}
 
 		newOutput.Count.ConstitutedEntityProperty =
 			[5]int{
@@ -135,6 +165,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][7],
 				outData[i].TP[7] + outData[i].PartialCount[7] +
 					outData[i].Count[1][7] + outData[i].Count[0][7]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ConstitutedEntityProperty[j] += newOutput.Count.ConstitutedEntityProperty[j]
+		}
 
 		newOutput.Count.ConstitutingProperties =
 			[5]int{
@@ -144,6 +178,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][8],
 				outData[i].TP[8] + outData[i].PartialCount[8] +
 					outData[i].Count[1][8] + outData[i].Count[0][8]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ConstitutingProperties[j] += newOutput.Count.ConstitutingProperties[j]
+		}
 
 		newOutput.Count.ConstitutingPropertiesProperties =
 			[5]int{
@@ -153,6 +191,11 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][9],
 				outData[i].TP[9] + outData[i].PartialCount[9] +
 					outData[i].Count[1][9] + outData[i].Count[0][9]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ConstitutingPropertiesProperties[j] +=
+				newOutput.Count.ConstitutingPropertiesProperties[j]
+		}
 
 		newOutput.Count.OrElse =
 			[5]int{
@@ -162,6 +205,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][10],
 				outData[i].TP[10] + outData[i].PartialCount[10] +
 					outData[i].Count[1][10] + outData[i].Count[0][10]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.OrElse[j] += newOutput.Count.OrElse[j]
+		}
 
 		newOutput.Count.Attribute =
 			[5]int{
@@ -171,6 +218,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][11],
 				outData[i].TP[11] + outData[i].PartialCount[11] +
 					outData[i].Count[1][11] + outData[i].Count[0][11]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.Attribute[j] += newOutput.Count.Attribute[j]
+		}
 
 		newOutput.Count.Deontic =
 			[5]int{
@@ -180,6 +231,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][12],
 				outData[i].TP[12] + outData[i].PartialCount[12] +
 					outData[i].Count[1][12] + outData[i].Count[0][12]}
+			// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.Deontic[j] += newOutput.Count.Deontic[j]
+		}
 
 		newOutput.Count.Aim =
 			[5]int{
@@ -189,6 +244,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][13],
 				outData[i].TP[13] + outData[i].PartialCount[13] +
 					outData[i].Count[1][13] + outData[i].Count[0][13]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.Aim[j] += newOutput.Count.Aim[j]
+		}
 
 		newOutput.Count.ConstitutedEntity =
 			[5]int{
@@ -198,6 +257,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][14],
 				outData[i].TP[14] + outData[i].PartialCount[14] +
 					outData[i].Count[1][14] + outData[i].Count[0][14]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ConstitutedEntity[j] += newOutput.Count.ConstitutedEntity[j]
+		}
 
 		newOutput.Count.Modal =
 			[5]int{
@@ -207,6 +270,10 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][15],
 				outData[i].TP[15] + outData[i].PartialCount[15] +
 					outData[i].Count[1][15] + outData[i].Count[0][15]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.Modal[j] += newOutput.Count.Modal[j]
+		}
 
 		newOutput.Count.ConstitutiveFunction =
 			[5]int{
@@ -216,12 +283,22 @@ func CompareParsed(inputFile string, outputFile string) {
 				outData[i].Count[0][16],
 				outData[i].TP[16] + outData[i].PartialCount[16] +
 					outData[i].Count[1][16] + outData[i].Count[0][16]}
+		// Add to the total
+		for j := 0; j < 5; j++ {
+			total.Count.ConstitutiveFunction[j] += newOutput.Count.ConstitutiveFunction[j]
+		}
 
 		newOutput.ORCount[0] = outData[i].Count[0][17]
+		total.ORCount -= outData[i].Count[0][17]
+		total.ORCount += outData[i].Count[1][17]
 		newOutput.ORCount[1] = outData[i].Count[1][17]
 		newOutput.XORCount[0] = outData[i].Count[0][18]
+		total.ORCount -= outData[i].Count[0][18]
+		total.ORCount += outData[i].Count[1][18]
 		newOutput.XORCount[1] = outData[i].Count[1][18]
 		newOutput.ANDCount[0] = outData[i].Count[0][19]
+		total.ORCount -= outData[i].Count[0][19]
+		total.ORCount += outData[i].Count[1][19]
 		newOutput.ANDCount[1] = outData[i].Count[1][19]
 
 		//outputData = append(outputData, newOutput)
@@ -331,7 +408,20 @@ func CompareParsed(inputFile string, outputFile string) {
 	*/
 
 	// Write the JSON data to the file
-	err = os.WriteFile(outputFile, jsonData, 0644)
+	err = os.WriteFile(outputFile+FILETYPE, jsonData, 0644)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	jsonData, err = json.MarshalIndent(total, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return
+	}
+
+	// Write the JSON data to the file
+	err = os.WriteFile(outputFile+"total"+FILETYPE, jsonData, 0644)
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 		return
