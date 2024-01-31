@@ -31,6 +31,8 @@ const (
 	F
 )
 
+const FILETYPE = ".json"
+
 var ComponentNames = [17]string{ //17
 	// First components with nesting (11)
 	"A,p", "Bdir", "Bdir,p", "Bind", "Bind,p",
@@ -104,6 +106,13 @@ type CompareOut struct {
 	ANDCount [2]int          `json:"andcount"`
 	ORCount  [2]int          `json:"orcount"`
 	XORCount [2]int          `json:"xorcount"`
+}
+
+type TotalOut struct {
+	Count    StatisticsCount `json:"count"`
+	ANDCount int             `json:"andcount"`
+	ORCount  int             `json:"orcount"`
+	XORCount int             `json:"xorcount"`
 }
 
 // Count for statistics of the properties, TP, PP, FP, FN

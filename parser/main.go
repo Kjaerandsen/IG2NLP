@@ -8,8 +8,8 @@ import (
 
 func main() {
 	// Take parameters when running the application
-	inputFile := flag.String("input", "input.json", "Input flag for input file")
-	outputFile := flag.String("output", "output.json", "Output flag for output file")
+	inputFile := flag.String("input", "input", "Input flag for input file")
+	outputFile := flag.String("output", "output", "Output flag for output file")
 	mode := flag.Int("mode", 0,
 		"Mode flag for program mode, 0 for the autoRunner, 1 for the statistics runner\n"+
 			"2 for the comparrison runner")
@@ -21,13 +21,13 @@ func main() {
 	// If none found default to the autorunner with the default file path
 	switch *mode {
 	case 0:
-		statistics.AutoRunnerGeneric(*inputFile, *outputFile)
+		statistics.AutoRunnerGeneric(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
 	case 1:
-		statistics.RunStatistics(*inputFile, *outputFile)
+		statistics.RunStatistics(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
 	case 2:
 		statistics.CompareParsed(*inputFile, *outputFile)
 	case 3:
-		statistics.ReverseAnnotation(*inputFile, *outputFile)
+		statistics.ReverseAnnotation(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
 	}
 
 	//statistics.RunStatistics()
