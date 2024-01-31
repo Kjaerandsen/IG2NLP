@@ -53,6 +53,7 @@ func CompareParsed(inputFile string, outputFile string) {
 		newOutput.BaseTx = outData[i].BaseTx
 		newOutput.Manual = outData[i].Manual
 		newOutput.Stanza = outData[i].Stanza
+		newOutput.PartialPool = outData[i].PartialPool
 
 		// Add all extra components
 		for j := 0; j < 17; j++ {
