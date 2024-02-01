@@ -375,103 +375,9 @@ def matchingFunction(words):
 
         # If the word is an object
         elif deprel == "obj" :
-            symbol = "Bdir"
-
-            # If there is a logical operator adjacent   
-            scopeStart = i
-            scopeEnd = i
-
-            j=0
-            cc = False
-            while j < wordLen:
-                if words[j].deprel == "cc":
-                    if words[words[j].head-1].head-1 == i:
-                        cc = True
-                        if j > scopeEnd:
-                            scopeEnd = j
-                        elif j < scopeStart:
-                            scopeStart = j
-                elif words[j].deprel == "conj":
-                    if words[j].head-1 == i:
-                        if j > scopeEnd:
-                            scopeEnd = j
-                        elif j < scopeStart:
-                            scopeStart = j
-                j += 1
-            
-            if scopeEnd - scopeStart != 0 and cc:
-                outOfScope = False
-                j = scopeStart
-                while j < scopeEnd:
-                    if (j!=i and words[j].deprel != "conj" 
-                                 and words[j].deprel != "punct" and words[j].deprel != "cc"):
-                        outOfScope = True
-                        break
-                    j += 1
-
-                if not outOfScope:
-                    j = scopeStart
-                    while j < scopeEnd:
-                        if words[j].deprel == "cc":
-                            words[j].text = "["+ words[j].text.upper()+"]"
-                        j += 1
-                    words[scopeStart].setSymbol(symbol, 1)
-                    words[scopeEnd].setSymbol(symbol, 2)
-                    i = scopeEnd
-                else:
-                    words[i].setSymbol(symbol)
-            else:
-                words[i].setSymbol(symbol)
-
+           smallLogicalOperator(words, i, "Bdir", wordLen)
         elif deprel == "root":
-            symbol = "I"
-
-            # If there is a logical operator adjacent        
-            scopeStart = i
-            scopeEnd = i
-
-            j=0
-            cc = False
-            while j < wordLen:
-                if words[j].deprel == "cc":
-                    if words[words[j].head-1].head-1 == i:
-                        cc = True
-                        if j > scopeEnd:
-                            scopeEnd = j
-                        elif j < scopeStart:
-                            scopeStart = j
-                elif words[j].deprel == "conj":
-                    if words[j].head-1 == i:
-                        if j > scopeEnd:
-                            scopeEnd = j
-                        elif j < scopeStart:
-                            scopeStart = j
-                j += 1
-            
-            if scopeEnd - scopeStart != 0 and cc:
-                # Add the words as a Cex
-                outOfScope = False
-                j = scopeStart
-                while j < scopeEnd:
-                    if (j!=i and words[j].deprel != "conj" 
-                                 and words[j].deprel != "punct" and words[j].deprel != "cc"):
-                        outOfScope = True
-                        break
-                    j += 1
-
-                if not outOfScope:
-                    j = scopeStart
-                    while j < scopeEnd:
-                        if words[j].deprel == "cc":
-                            words[j].text = "["+ words[j].text.upper()+"]"
-                        j += 1
-                    words[scopeStart].setSymbol(symbol, 1)
-                    words[scopeEnd].setSymbol(symbol, 2)
-                    i = scopeEnd
-                else:
-                    words[i].setSymbol(symbol)
-            else:
-                words[i].setSymbol(symbol)
+            smallLogicalOperator(words, i, "I", wordLen)
         
         #  Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
@@ -581,3 +487,52 @@ def ifHeadRelation(words, wordId, headId):
             return True
         wordId = words[wordId].head-1
     return False
+
+# Finds and handles symbols with logical operators
+def smallLogicalOperator(words, i, symbol, wordLen):
+    # If there is a logical operator adjacent        
+    scopeStart = i  
+    scopeEnd = i
+
+    j=0
+    cc = False
+    while j < wordLen:
+        if words[j].deprel == "cc":
+            if words[words[j].head-1].head-1 == i:
+                cc = True
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        elif words[j].deprel == "conj":
+            if words[j].head-1 == i:
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        j += 1
+            
+    if scopeEnd - scopeStart != 0 and cc:
+        # Add the words as a Cex
+        outOfScope = False
+        j = scopeStart
+        while j < scopeEnd:
+            if (j!=i and words[j].deprel != "conj" 
+                         and words[j].deprel != "punct" and words[j].deprel != "cc"):
+                outOfScope = True
+                break
+            j += 1
+
+        if not outOfScope:
+            j = scopeStart
+            while j < scopeEnd:
+                if words[j].deprel == "cc":
+                    words[j].text = "["+ words[j].text.upper()+"]"
+                j += 1
+            words[scopeStart].setSymbol(symbol, 1)
+            words[scopeEnd].setSymbol(symbol, 2)
+            i = scopeEnd
+        else:
+            words[i].setSymbol(symbol)
+    else:
+        words[i].setSymbol(symbol)
