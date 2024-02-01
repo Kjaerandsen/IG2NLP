@@ -160,47 +160,22 @@ def compoundWords(words):
         # If the word is a compound word
         if customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
             customWords, i, wordLen = removeWord(customWords, i, wordLen)
-        # Compound of three words
-        #elif customWords[i].deprel == "compound" and customWords[i].head-1 == i+2: 
-        #    customWords[i+1].combineWords(customWords[i], False)
-            # Go through the words and adjust the connections between the words to account
-            # for the combination of compound words into single words
-        #    j = 0
-        #    while j < wordLen:
-                # Adjust the head connections to take into account the compounding of two elements
-        #        if customWords[j].head > i+1:
-        #            customWords[j].head = customWords[j].head - 1
-                # Adjust the id's to take into account the removal of the compound word
-        #        if j >= i+1:
-        #            customWords[j].id -=  1
-        #        j += 1
-            # Remove the old compound
-        #    wordLen -= 1
-            # Adjust i down as the current word is removed
-        #    del customWords[i]
-        #    customWords[i+1].combineWords(customWords[i], False)
-            # Go through the words and adjust the connections between the words to account
-            # for the combination of compound words into single words
-        #    j = 0
-        #    while j < wordLen:
-                # Adjust the head connections to take into account the compounding of two elements
-        #        if customWords[j].head > i+1:
-        #            customWords[j].head = customWords[j].head - 1
-                # Adjust the id's to take into account the removal of the compound word
-        #        if j >= i+1:
-        #            customWords[j].id -=  1
-        #        j += 1
-            # Remove the old compound
-        #    wordLen -= 1
-            # Adjust i down as the current word is removed
-        #    del customWords[i]
-        #    i-=2
-        # If the word is a "PART" case dependency
         elif (customWords[i].deprel == "case" and customWords[i].head-1 == i-1 
               and customWords[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #customWords[i-1].text = customWords[i-1].text + customWords[i].text
             customWords, i, wordLen = removeWord(customWords, i, wordLen, 1)
+
+        # Compound of three words in the form compound, punct, word
+        # Combines the punct and the compound first, then the function above is used to combine
+        # the compound and the word
+        elif customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
+            if i < customWords[i].head-1:
+                if words[i+1].deprel == "punct":
+                    customWords, i, wordLen = removeWord(customWords, i+1, wordLen, 1)
+                    i-=1
+        
+        # If the word is a "PART" case dependency
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
             if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
@@ -208,6 +183,8 @@ def compoundWords(words):
         i += 1
         
     return customWords
+
+        
 
 def removeWord(words,i,wordLen,direction=0):
     if direction == 0:
