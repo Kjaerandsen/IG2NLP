@@ -1,4 +1,5 @@
 import stanza
+import time
 
 # Dictionary of symbols for parsing
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
@@ -287,9 +288,10 @@ def matchingFunction(words):
                         words2[lastIndex-1].setSymbol("Cac",2)
                         words2.append(words[lastIndex])
 
-                    contents = matchingFunction(compoundWords(
-                        nlpPipeline(
-                            WordsToSentence(words[lastIndex+1:]))))
+                    #contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))))
+
+                    contents = matchingFunction(removeStart(words[lastIndex+1:], lastIndex+1, 
+                                                            wordLen-(lastIndex+1)))
 
                     # Copy over the old placement information to the 
                     # newly generated words for proper formatting
@@ -536,3 +538,26 @@ def smallLogicalOperator(words, i, symbol, wordLen):
             words[i].setSymbol(symbol)
     else:
         words[i].setSymbol(symbol)
+
+# Function that tries to use the old dependency parse tree for the second part of sentences starting
+# with an activation condition. If the words do not include a root connection the words are
+# parsed again.
+def removeStart(words, offset, wordLen):
+    i = 0
+
+    noRoot = True
+    while i < wordLen:
+        #print(words[i])
+        if words[i].head != 0:
+            words[i].head -= offset
+        if words[i].deprel == "root":
+            noRoot = False
+        words[i].id -= offset
+        #print(words[i].id, words[i].head)
+
+        i+=1
+
+    if noRoot:
+        return compoundWords(nlpPipeline(WordsToSentence(words)))
+
+    return words
