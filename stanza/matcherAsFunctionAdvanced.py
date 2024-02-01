@@ -446,6 +446,7 @@ def matchingFunction(words):
                 words[i].setSymbol(SymbolDict[words[i].deprel])
         
         # If the relation is a ccomp then handle it as a direct object
+                '''
         elif (words[i].deprel == "amod" 
               and words[words[i].head-1].deprel == "nsubj" 
               and words[words[words[i].head-1].head-1].deprel == "ccomp"):
@@ -453,6 +454,7 @@ def matchingFunction(words):
             words[i].setSymbol(words[i],"bdir", 1)
             words[i+1].setSymbol(words[i+1],"bdir", 2)
             i += 1
+            '''
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             print("\n\nNSUBJ CCOMP OBJ\n\n")
         
