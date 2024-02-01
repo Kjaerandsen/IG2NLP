@@ -331,8 +331,68 @@ def matchingFunction(words):
 
                     return words2
 
+        
+        if deprel == "obl":
+            #words[i].setSymbol("Cex", 1)
+            # Check for connections to the obl both before and after
+            scopeStart = i
+            scopeEnd = i
+
+            j = 0
+            while j < wordLen:
+                if words[j].head-1 == i and words[j].deprel != "punct":
+                    if j > scopeEnd:
+                        scopeEnd = j
+                    elif j < scopeStart:
+                        scopeStart = j
+                elif words[words[j].head-1].head-1 == i and words[j].deprel != "punct":
+                    if j > scopeEnd:
+                        scopeEnd = j
+                    elif j < scopeStart:
+                        scopeStart = j
+                j += 1
+            
+            if scopeEnd - scopeStart != 0:
+                # Add the words as a Cex
+                words[scopeStart].setSymbol("Cex", 1)
+                words[scopeEnd].setSymbol("Cex", 2)
+            
+            i = scopeEnd
+
+        elif deprel == "obl:tmod":
+            i = words[i].head-1
+
+            scopeStart = i
+            scopeEnd = i
+
+            j = 0
+
+            while j < wordLen:
+                if (words[j].head-1 == i 
+                    and words[j].deprel != "punct" 
+                    and words[j].deprel != "cc"):
+                    if j > scopeEnd:
+                        scopeEnd = j
+                    elif j < scopeStart:
+                        scopeStart = j
+                elif (ifHeadRelation(words, j, i) 
+                      and words[j].deprel != "punct"
+                      and words[j].deprel != "cc"):
+                    if j > scopeEnd:
+                        scopeEnd = j
+                    elif j < scopeStart:
+                        scopeStart = j
+                j += 1
+            
+            if scopeEnd - scopeStart != 0:
+                # Add the words as a Cex
+                words[scopeStart].setSymbol("Cex", 1)
+                words[scopeEnd].setSymbol("Cex", 2)
+            
+            i = scopeEnd
+
         # If the word is an object
-        if deprel == "obj" or deprel == "root":
+        elif deprel == "obj" or deprel == "root":
             if deprel == "obj":
                 symbol = "Bdir"
             elif deprel == "root":
@@ -481,4 +541,12 @@ def validateNested(words):
             if Attribute:
                 return True
         i += 1
+    return False
+
+# Check if the word is connected to the headId through a head connection
+def ifHeadRelation(words, wordId, headId):
+    while words[words[wordId].head-1].deprel != "root":
+        if words[wordId].head-1 == headId:
+            return True
+        wordId = words[wordId].head-1
     return False
