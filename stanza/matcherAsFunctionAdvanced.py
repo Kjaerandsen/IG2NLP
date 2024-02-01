@@ -374,11 +374,56 @@ def matchingFunction(words):
             i = scopeEnd
 
         # If the word is an object
-        elif deprel == "obj" or deprel == "root":
-            if deprel == "obj":
-                symbol = "Bdir"
-            elif deprel == "root":
-                symbol = "I"
+        elif deprel == "obj" :
+            symbol = "Bdir"
+
+            # If there is a logical operator adjacent to the right
+            # Can potentially check for the dep_ "cc" instead to account for ","
+            if (i+1 < len(words) 
+                and (words[i+1].text.lower() == "or" 
+                or words[i+1].text.lower() == "and")):
+
+                # print(words[i+1].text)
+                j = i+2
+                conjugated = False
+                words[i].setSymbol(symbol, 1)
+                words[i+1].text = "[" + words[i+1].text.upper() + "]"
+
+                while j < len(words):
+                    # If the word has a conj dependency to the dobj, then add the text 
+                    # and set conjugated to true
+                    if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
+                        # print("This loop is active", words[j].deprel, words[words[j].head-1].text)
+                        depIndex = j
+                        conjugated = True
+                        connected = True
+
+                        k = i+2
+
+                        # If connected add the preceeding words to the tokenObject
+                        while k < j:
+                            k += 1
+
+                        # While the next word(s) are connected to the conj of the dobj, add them
+                        while connected:
+                           if j+1 < len(words) and words[words[j+1].head-1] ==  words[depIndex]:
+                                j+=1
+                           else:
+                               words[j].setSymbol(symbol, 2)
+                               connected = False
+                               i=j
+                        break
+                    else:
+                        j += 1 
+                        
+                if not conjugated:
+                    # print("This is not conjugated")
+                    words[i+2].setSymbol(symbol, 2)
+                    i += 2     
+            else:
+                words[i].setSymbol(symbol)
+        elif deprel == "root":
+            symbol = "I"
 
             # If there is a logical operator adjacent to the right
             # Can potentially check for the dep_ "cc" instead to account for ","
