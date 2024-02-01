@@ -377,97 +377,99 @@ def matchingFunction(words):
         elif deprel == "obj" :
             symbol = "Bdir"
 
-            # If there is a logical operator adjacent to the right
-            # Can potentially check for the dep_ "cc" instead to account for ","
-            if (i+1 < len(words) 
-                and (words[i+1].text.lower() == "or" 
-                or words[i+1].text.lower() == "and")):
+            # If there is a logical operator adjacent   
+            scopeStart = i
+            scopeEnd = i
 
-                # print(words[i+1].text)
-                j = i+2
-                conjugated = False
-                words[i].setSymbol(symbol, 1)
-                words[i+1].text = "[" + words[i+1].text.upper() + "]"
-
-                while j < len(words):
-                    # If the word has a conj dependency to the dobj, then add the text 
-                    # and set conjugated to true
-                    if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
-                        # print("This loop is active", words[j].deprel, words[words[j].head-1].text)
-                        depIndex = j
-                        conjugated = True
-                        connected = True
-
-                        k = i+2
-
-                        # If connected add the preceeding words to the tokenObject
-                        while k < j:
-                            k += 1
-
-                        # While the next word(s) are connected to the conj of the dobj, add them
-                        while connected:
-                           if j+1 < len(words) and words[words[j+1].head-1] ==  words[depIndex]:
-                                j+=1
-                           else:
-                               words[j].setSymbol(symbol, 2)
-                               connected = False
-                               i=j
+            j=0
+            cc = False
+            while j < wordLen:
+                if words[j].deprel == "cc":
+                    if words[words[j].head-1].head-1 == i:
+                        cc = True
+                        if j > scopeEnd:
+                            scopeEnd = j
+                        elif j < scopeStart:
+                            scopeStart = j
+                elif words[j].deprel == "conj":
+                    if words[j].head-1 == i:
+                        if j > scopeEnd:
+                            scopeEnd = j
+                        elif j < scopeStart:
+                            scopeStart = j
+                j += 1
+            
+            if scopeEnd - scopeStart != 0 and cc:
+                outOfScope = False
+                j = scopeStart
+                while j < scopeEnd:
+                    if (j!=i and words[j].deprel != "conj" 
+                                 and words[j].deprel != "punct" and words[j].deprel != "cc"):
+                        outOfScope = True
                         break
-                    else:
-                        j += 1 
-                        
-                if not conjugated:
-                    # print("This is not conjugated")
-                    words[i+2].setSymbol(symbol, 2)
-                    i += 2     
+                    j += 1
+
+                if not outOfScope:
+                    j = scopeStart
+                    while j < scopeEnd:
+                        if words[j].deprel == "cc":
+                            words[j].text = "["+ words[j].text.upper()+"]"
+                        j += 1
+                    words[scopeStart].setSymbol(symbol, 1)
+                    words[scopeEnd].setSymbol(symbol, 2)
+                    i = scopeEnd
+                else:
+                    words[i].setSymbol(symbol)
             else:
                 words[i].setSymbol(symbol)
+
         elif deprel == "root":
             symbol = "I"
 
-            # If there is a logical operator adjacent to the right
-            # Can potentially check for the dep_ "cc" instead to account for ","
-            if (i+1 < len(words) 
-                and (words[i+1].text.lower() == "or" 
-                or words[i+1].text.lower() == "and")):
+            # If there is a logical operator adjacent        
+            scopeStart = i
+            scopeEnd = i
 
-                # print(words[i+1].text)
-                j = i+2
-                conjugated = False
-                words[i].setSymbol(symbol, 1)
-                words[i+1].text = "[" + words[i+1].text.upper() + "]"
-
-                while j < len(words):
-                    # If the word has a conj dependency to the dobj, then add the text 
-                    # and set conjugated to true
-                    if words[j].deprel == "conj" and words[words[j].head-1] == words[i]:
-                        # print("This loop is active", words[j].deprel, words[words[j].head-1].text)
-                        depIndex = j
-                        conjugated = True
-                        connected = True
-
-                        k = i+2
-
-                        # If connected add the preceeding words to the tokenObject
-                        while k < j:
-                            k += 1
-
-                        # While the next word(s) are connected to the conj of the dobj, add them
-                        while connected:
-                           if j+1 < len(words) and words[words[j+1].head-1] ==  words[depIndex]:
-                                j+=1
-                           else:
-                               words[j].setSymbol(symbol, 2)
-                               connected = False
-                               i=j
+            j=0
+            cc = False
+            while j < wordLen:
+                if words[j].deprel == "cc":
+                    if words[words[j].head-1].head-1 == i:
+                        cc = True
+                        if j > scopeEnd:
+                            scopeEnd = j
+                        elif j < scopeStart:
+                            scopeStart = j
+                elif words[j].deprel == "conj":
+                    if words[j].head-1 == i:
+                        if j > scopeEnd:
+                            scopeEnd = j
+                        elif j < scopeStart:
+                            scopeStart = j
+                j += 1
+            
+            if scopeEnd - scopeStart != 0 and cc:
+                # Add the words as a Cex
+                outOfScope = False
+                j = scopeStart
+                while j < scopeEnd:
+                    if (j!=i and words[j].deprel != "conj" 
+                                 and words[j].deprel != "punct" and words[j].deprel != "cc"):
+                        outOfScope = True
                         break
-                    else:
+                    j += 1
+
+                if not outOfScope:
+                    j = scopeStart
+                    while j < scopeEnd:
+                        if words[j].deprel == "cc":
+                            words[j].text = "["+ words[j].text.upper()+"]"
                         j += 1
-                        
-                if not conjugated:
-                    # print("This is not conjugated")
-                    words[i+2].setSymbol(symbol, 2)
-                    i += 2     
+                    words[scopeStart].setSymbol(symbol, 1)
+                    words[scopeEnd].setSymbol(symbol, 2)
+                    i = scopeEnd
+                else:
+                    words[i].setSymbol(symbol)
             else:
                 words[i].setSymbol(symbol)
         
