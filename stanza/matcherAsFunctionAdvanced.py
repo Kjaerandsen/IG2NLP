@@ -345,7 +345,12 @@ def matchingFunction(words):
                         scopeEnd = j
                     elif j < scopeStart:
                         scopeStart = j
-                elif words[words[j].head-1].head-1 == i and words[j].deprel != "punct":
+                #elif words[words[j].head-1].head-1 == i and words[j].deprel != "punct":
+                #    if j > scopeEnd:
+                #        scopeEnd = j
+                #    elif j < scopeStart:
+                #        scopeStart = j
+                elif ifHeadRelation(words, j, i) and words[j].deprel != "punct":
                     if j > scopeEnd:
                         scopeEnd = j
                     elif j < scopeStart:
