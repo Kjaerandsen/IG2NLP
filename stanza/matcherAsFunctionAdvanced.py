@@ -273,7 +273,6 @@ def matchingFunction(words):
                     #actiWords = copy.deepcopy(words[:lastIndex])
                     #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
-                    print("Validating nested")
                     if validateNested(activationCondition):
                         words2.append(Word(
                         "","","",0,0,"","",0,0,0,"Cac",True,1
@@ -387,14 +386,17 @@ def matchingFunction(words):
         elif words[i].deprel == "amod":
             # If the word is directly connected to an obj (Bdir)
             if words[words[i].head-1].deprel == "obj":
-                words[i].setSymbol("Bdir,p")
+                smallLogicalOperator(words, i, "Bdir,p", wordLen)
+                #words[i].setSymbol("Bdir,p")
             # Else if the word is directly connected to an iobj (Bind)
             elif words[words[i].head-1].deprel == "iobj":
-                words[i].setSymbol("Bind,p")
+                smallLogicalOperator(words, i, "Bind,p", wordLen)
+                #words[i].setSymbol("Bind,p")
             # Else if the word is connected to a nsubj connected directly to root (Attribute)
             elif (words[words[i].head-1].deprel == "nsubj" 
                   and words[words[words[i].head-1].head-1].deprel == "root"):
-                words[i].setSymbol("A,p")
+                smallLogicalOperator(words, i, "A,p", wordLen)
+                #words[i].setSymbol("A,p")
 
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
