@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from matcherAsFunctionAdvanced import compoundWords
+from matcherAsFunctionAdvanced import compoundWordsMiddleware
 
 nlp = stanza.Pipeline('en', use_gpu=False)
 # Take the system arguments
@@ -33,7 +33,7 @@ depData = {"words":[],
 print('Now printing dependencies\n')
 df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency"])
 for sentence in doc.sentences:
-    sentence.words = compoundWords(sentence.words)
+    sentence.words = compoundWordsMiddleware(sentence.words)
     for word in sentence.words:
         df = df._append({
             "Word": word.text, "POS":word.pos, "Head id":word.head, 

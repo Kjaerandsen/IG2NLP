@@ -109,7 +109,7 @@ def MatcherMiddleware(jsonData):
     return jsonData
 
 def Matcher(text):
-    return WordsToSentence2(matchingFunction(compoundWords(nlpPipeline(text))))
+    return WordsToSentence2(matchingFunction(compoundWordsMiddleware(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
@@ -117,9 +117,7 @@ def nlpPipeline(text):
     doc = nlp(text)
     return doc.sentences[0].words
 
-# Takes the words from the nlp pipeline and combines combine words to a single word
-# Also converts the datatype to the Word class
-def compoundWords(words):
+def convertWordFormat(words):
     i = 0
     wordLen = len(words)
 
@@ -150,28 +148,76 @@ def compoundWords(words):
 
         i += 1
 
+    return customWords
+
+def compoundWordsMiddleware(words):
+    customWords = convertWordFormat(words)
+
+    customWords = compoundWords(customWords)
+    customWords = compoundWords(customWords)
+
+    return customWords
+
+# Takes the words from the nlp pipeline and combines combine words to a single word
+# Also converts the datatype to the Word class
+def compoundWords(customWords):
+    
+    wordLen = len(customWords)
+    '''
+    i = 0
+    customWords = []
+
+    while i < wordLen:
+        if i > 0:
+            spaces = words[i].start_char - words[i-1].end_char
+        else:
+            spaces = 0
+
+        customWords.append(
+            Word(
+                words[i].text,
+                words[i].pos,
+                words[i].deprel,
+                words[i].head,
+                words[i].id,
+                words[i].lemma,
+                words[i].xpos,
+                words[i].start_char,
+                words[i].end_char,
+                spaces
+            ))
+        
+        #print(customWords[i])
+        #print(words[i])
+
+        i += 1
+    '''
     i = 0
     #print("type is: ", type(words[0]), " " , wordLen)
     while i < wordLen:
         #print(words[i])
 
+        # Compound of three words in the form compound, punct, word
+        # Combines the punct and the compound first, then the main function combines the rest
+        # the compound and the word
+        if customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
+            if i < customWords[i].head-1:
+                if customWords[i+1].deprel == "punct":
+                    print("Compound-punct-compound")
+                    i, wordLen = removeWord(customWords, i+1, wordLen, 1)
+                    i-=1
+
         # If the word is a compound word
-        if customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
+        elif customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
             i, wordLen = removeWord(customWords, i, wordLen)
+
+        
         elif (customWords[i].deprel == "case" and customWords[i].head-1 == i-1 
               and customWords[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #customWords[i-1].text = customWords[i-1].text + customWords[i].text
             i, wordLen = removeWord(customWords, i, wordLen, 1)
 
-        # Compound of three words in the form compound, punct, word
-        # Combines the punct and the compound first, then the function above is used to combine
-        # the compound and the word
-        elif customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
-            if i < customWords[i].head-1:
-                if words[i+1].deprel == "punct":
-                    i, wordLen = removeWord(customWords, i+1, wordLen, 1)
-                    i-=1
         
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
@@ -281,7 +327,7 @@ def matchingFunction(words):
                     contents = []
 
                     activationCondition = matchingFunction(
-                        compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
+                        compoundWordsMiddleware(nlpPipeline(WordsToSentence(words[:lastIndex]))))
                     #actiWords = copy.deepcopy(words[:lastIndex])
                     #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
@@ -298,7 +344,7 @@ def matchingFunction(words):
                         words2[lastIndex-1].setSymbol("Cac",2)
                         words2.append(words[lastIndex])
 
-                    #contents = matchingFunction(compoundWords(nlpPipeline(
+                    #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
                     #    WordsToSentence(words[lastIndex+1:]))))
                     contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
                                                             wordLen-(lastIndex+1)))
@@ -578,7 +624,7 @@ def removeStart(words, offset, wordLen):
         i+=1
 
     if noRoot:
-        return compoundWords(nlpPipeline(WordsToSentence(words)))
+        return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
 
     return words
 
