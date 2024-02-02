@@ -178,13 +178,19 @@ def compoundWords(words):
             if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
                 i, wordLen = removeWord(customWords, i, wordLen)
+
+        # If the word is a compound part of the previous word, combine the previous and the current
+        elif customWords[i].deprel == "compound:prt" and customWords[i].head-1 == i-1:
+            i, wordLen = removeWord(customWords, i, wordLen, 1)
+
         i += 1
-        
+
     return customWords
 
         
 # Takes a list of words, an id, the length of the list of words and a direction
-# Combines the word with the next or previous word and removes the extra word from the list of words
+# Combines the word with the next (0) or 
+# previous (1) word and removes the extra word from the list of words
 def removeWord(words,i,wordLen,direction=0):
     if direction == 0:
         id = i+1
@@ -223,7 +229,8 @@ def matchingFunction(words):
 
         # For more complex dependencies
         if ":" in deprel:
-            print("\n", '":" dependency: ',words[i], "\n")
+            if deprel != "aux:pass" and deprel != "obl:tmod":
+                print("\n", '":" dependency: ',words[i], "\n")
 
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
