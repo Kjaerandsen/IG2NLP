@@ -1,5 +1,6 @@
 import stanza
 import time
+#import copy
 
 # Dictionary of symbols for parsing
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
@@ -268,10 +269,11 @@ def matchingFunction(words):
                     contents = []
 
                     activationCondition = matchingFunction(
-                        compoundWords(
-                            nlpPipeline(
-                                WordsToSentence(words[:lastIndex]))))
-                    
+                        compoundWords(nlpPipeline(WordsToSentence(words[:lastIndex]))))
+                    #actiWords = copy.deepcopy(words[:lastIndex])
+                    #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+
+                    print("Validating nested")
                     if validateNested(activationCondition):
                         words2.append(Word(
                         "","","",0,0,"","",0,0,0,"Cac",True,1
@@ -285,9 +287,9 @@ def matchingFunction(words):
                         words2[lastIndex-1].setSymbol("Cac",2)
                         words2.append(words[lastIndex])
 
-                    #contents = matchingFunction(compoundWords(nlpPipeline(WordsToSentence(words[lastIndex+1:]))))
-
-                    contents = matchingFunction(removeStart(words[lastIndex+1:], lastIndex+1, 
+                    #contents = matchingFunction(compoundWords(nlpPipeline(
+                    #    WordsToSentence(words[lastIndex+1:]))))
+                    contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
                                                             wordLen-(lastIndex+1)))
 
                     # Copy over the old placement information to the 
@@ -563,5 +565,37 @@ def removeStart(words, offset, wordLen):
 
     if noRoot:
         return compoundWords(nlpPipeline(WordsToSentence(words)))
+
+    return words
+
+def reusePart(words, offset, listLen):
+    i = 0
+    if offset == 0:
+        rootId = 0
+        while i < listLen:
+            if words[i].head > listLen and words[i].deprel != "punct":
+                words[i].deprel = "root"
+                words[i].head = 0
+                rootId = i
+            elif words[i].deprel == "root":
+                rootId = i
+            i+=1
+
+        i = 0
+        while i < listLen:
+            if words[i].head > listLen:
+                words[i].head = rootId
+            i+=1
+    else:
+        while i < listLen:
+            #print(words[i])
+            if words[i].head != 0:
+                words[i].head -= offset
+                if words[i].head < 0:
+                    words[i].deprel = "root"
+            words[i].id -= offset
+            #print(words[i].id, words[i].head)
+            #print(words[i])
+            i+=1
 
     return words
