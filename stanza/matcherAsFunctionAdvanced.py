@@ -3,7 +3,7 @@ import time
 #import copy
 
 # Dictionary of symbols for parsing
-SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
+SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A"}
 
 nlp = None
 
@@ -220,6 +220,11 @@ def matchingFunction(words):
 
     while i < wordLen:
         deprel = words[i].deprel
+
+        # For more complex dependencies
+        if ":" in deprel:
+            print("\n", '":" dependency: ',words[i], "\n")
+
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
         # If the word is recognized as a condition or constraint
