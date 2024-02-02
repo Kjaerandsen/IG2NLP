@@ -6,7 +6,8 @@ SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D","nsubj":"A"}
 
 nlp = None
 
-# Word for handling   
+# Word for handling words,
+# takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
     def __init__(self, text, pos, deprel, head, id, lemma, xpos, 
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0):
@@ -24,6 +25,7 @@ class Word:
         self.position = position
         self.spaces = spaces
 
+    # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
     def getContents(self):
         output = self.buildString
         if self.spaces > 0:
@@ -31,6 +33,7 @@ class Word:
         else:
             return output
         
+    # Builds the contents as a component with brackets, the symbol and proper spacing in string form
     def buildString(self):
         output = " " * self.spaces
         if self.symbol != "":
@@ -62,6 +65,8 @@ class Word:
         self.position = position
     
     # Function for combining two subsequent words into one
+    # Direction is a bool, True is left to right, False is right to left
+    # The direction defines which start and end position to keep, and the text concatenation order
     def combineWords(self, otherWord, direction):
         if direction:
             self.end = otherWord.end
@@ -71,6 +76,7 @@ class Word:
             self.text = otherWord.text + " " * self.spaces + self.text
             self.spaces = otherWord.spaces
     
+    # Potential future adjustment as all head id's are one (1) to high.
     def setHead(self, head):
         self.head = head-1
 
@@ -79,6 +85,8 @@ class Word:
                + " head: " + str(self.head) + " id: " + str(self.id)
                + " start: " + str(self.start) + " end: " + str(self.end))
 
+# MiddleWare for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
+# statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
     global nlp
     nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
@@ -100,24 +108,12 @@ def MatcherMiddleware(jsonData):
     return jsonData
 
 def Matcher(text):
-    #global nlp 
-    #nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
-    #nlp.processors.pop("sentiment")
-    #lp.processors.pop("constituency")
-
     return WordsToSentence2(matchingFunction(compoundWords(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
-    #print("Running the pipeline")
-    #nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
-    #print(nlp.processors["sentiment"])
-    #nlp.processors.pop("sentiment")
-    #nlp.processors.pop("constituency")
-
-    # Take the input string
+    # Run the nlp pipeline on the input text
     doc = nlp(text)
-
     return doc.sentences[0].words
 
 # Takes the words from the nlp pipeline and combines combine words to a single word
@@ -186,7 +182,8 @@ def compoundWords(words):
     return customWords
 
         
-
+# Takes a list of words, an id, the length of the list of words and a direction
+# Combines the word with the next or previous word and removes the extra word from the list of words
 def removeWord(words,i,wordLen,direction=0):
     if direction == 0:
         id = i+1
@@ -212,7 +209,8 @@ def removeWord(words,i,wordLen,direction=0):
     
     return words,i-1,wordLen-1
 
-
+# Matching function, takes a list of words with dependency parse and pos-tag data.
+# Returns a list of words with IG Script notation symbols.
 def matchingFunction(words):
     wordLen = len(words)
 
@@ -310,9 +308,8 @@ def matchingFunction(words):
 
                     return words2
 
-        
+        # Cex detection
         if deprel == "obl":
-            #words[i].setSymbol("Cex", 1)
             # Check for connections to the obl both before and after
             scopeStart = i
             scopeEnd = i
@@ -342,7 +339,8 @@ def matchingFunction(words):
                 words[scopeEnd].setSymbol("Cex", 2)
             
             i = scopeEnd
-
+    
+        # Cex detection 2
         elif deprel == "obl:tmod":
             i = words[i].head-1
 
@@ -375,24 +373,26 @@ def matchingFunction(words):
             
             i = scopeEnd
 
-        # If the word is an object
+        # Object detection
         elif deprel == "obj" :
            smallLogicalOperator(words, i, "Bdir", wordLen)
+
+        # Aim detection
         elif deprel == "root":
             smallLogicalOperator(words, i, "I", wordLen)
         
-        #  Else if the word has an amod dependency type, check if the head is a symbol
+        # Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
         elif words[i].deprel == "amod":
+            # If the word is directly connected to an obj (Bdir)
             if words[words[i].head-1].deprel == "obj":
-                #print(words[i].text, " Property of Bdir: ",  words[words[i].head-1].text)
                 words[i].setSymbol("Bdir,p")
+            # Else if the word is directly connected to an iobj (Bind)
             elif words[words[i].head-1].deprel == "iobj":
-                #print(words[i].text, " Property of Bind: ",  words[words[i].head-1].text)
                 words[i].setSymbol("Bind,p")
+            # Else if the word is connected to a nsubj connected directly to root (Attribute)
             elif (words[words[i].head-1].deprel == "nsubj" 
                   and words[words[words[i].head-1].head-1].deprel == "root"):
-                #print(words[i].text, " Property of A: ",  words[words[i].head-1].text)
                 words[i].setSymbol("A,p")
 
         # If the head of the word is the root, check the symbol dictionary for symbol matches
@@ -434,6 +434,7 @@ def tokenToText(tokens):
 
     return output
 
+# Reconstructs the base statement from the words maintaining original spacing.
 def WordsToSentence(words):
     wordLen = len(words)
     index = 0
@@ -452,6 +453,7 @@ def WordsToSentence(words):
 
     return sentence
 
+# Builds the final annotated statement.
 def WordsToSentence2(words):
     i = 0
 
@@ -463,6 +465,9 @@ def WordsToSentence2(words):
     
     return sentence
 
+# Validation function for nested components
+# Sets a requirement of both an Aim and an Attribute detected for a component to 
+# be regarded as nested.
 def validateNested(words):
     wordLen = len(words)
 
