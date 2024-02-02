@@ -24,13 +24,21 @@ func main() {
 	// If none found default to the autorunner with the default file path
 	switch *mode {
 	case 0:
-		statistics.AutoRunnerGeneric(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
+		statistics.AutoRunnerGeneric(
+			*inputFile+statistics.FILETYPE,
+			*outputFile+statistics.FILETYPE)
 	case 1:
-		statistics.RunStatistics(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
+		statistics.RunStatistics(
+			*inputFile+statistics.FILETYPE,
+			*outputFile+statistics.FILETYPE)
 	case 2:
-		statistics.CompareParsed(*inputFile, *outputFile)
+		statistics.CompareParsed(
+			*inputFile,
+			*outputFile)
 	case 3:
-		statistics.ReverseAnnotation(*inputFile+statistics.FILETYPE, *outputFile+statistics.FILETYPE)
+		statistics.ReverseAnnotation(
+			*inputFile+statistics.FILETYPE,
+			*outputFile+statistics.FILETYPE)
 	}
 
 	//statistics.RunStatistics()
