@@ -203,7 +203,6 @@ def compoundWords(customWords):
         if customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
             if i < customWords[i].head-1:
                 if customWords[i+1].deprel == "punct":
-                    print("Compound-punct-compound")
                     i, wordLen = removeWord(customWords, i+1, wordLen, 1)
                     i-=1
 
@@ -392,6 +391,14 @@ def matchingFunction(words):
                 j += 1
             
             if scopeEnd - scopeStart != 0:
+                # Look for symbols within
+                '''
+                j = scopeStart
+                while j < scopeEnd:
+                    if words[j].symbol != "":
+                        print("\n\nNot none\n\n", words[j].symbol)
+                    j += 1
+                '''
                 # Add the words as a Cex
                 words[scopeStart].setSymbol("Cex", 1)
                 words[scopeEnd].setSymbol("Cex", 2)
@@ -437,7 +444,21 @@ def matchingFunction(words):
 
         # Aim detection
         elif deprel == "root":
-            smallLogicalOperator(words, i, "I", wordLen)
+            # Look for logical operators
+            if not smallLogicalOperator2(words, i, "I", wordLen):
+                words[i].setSymbol("I")
+                
+                # Look for xcomp dependencies
+                k = 0
+
+                while k < wordLen:
+                    if words[k].deprel == "xcomp" and words[k].head-1 == i:
+                        print("XComp of I: ", words[k], k, i)
+                        if k-i == 2:
+                            words[i].setSymbol("I",1)
+                            words[i+2].setSymbol("I",2)
+                    k += 1
+            
         
         # Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
@@ -551,6 +572,8 @@ def validateNested(words):
 # Check if the word is connected to the headId through a head connection
 def ifHeadRelation(words, wordId, headId):
     while words[words[wordId].head-1].deprel != "root":
+        if words[wordId].deprel == "root":
+            return False
         if words[wordId].head-1 == headId:
             return True
         wordId = words[wordId].head-1
@@ -581,7 +604,6 @@ def smallLogicalOperator(words, i, symbol, wordLen):
         j += 1
             
     if scopeEnd - scopeStart != 0 and cc:
-        # Add the words as a Cex
         outOfScope = False
         j = scopeStart
         while j < scopeEnd:
@@ -604,6 +626,55 @@ def smallLogicalOperator(words, i, symbol, wordLen):
             words[i].setSymbol(symbol)
     else:
         words[i].setSymbol(symbol)
+
+# Finds and handles symbols with logical operators
+def smallLogicalOperator2(words, i, symbol, wordLen):
+    # If there is a logical operator adjacent        
+    scopeStart = i  
+    scopeEnd = i
+
+    j=0
+    cc = False
+    while j < wordLen:
+        if words[j].deprel == "cc":
+            if words[words[j].head-1].head-1 == i:
+                cc = True
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        elif words[j].deprel == "conj":
+            if words[j].head-1 == i:
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        j += 1
+            
+    if scopeEnd - scopeStart != 0 and cc:
+        outOfScope = False
+        j = scopeStart
+        while j < scopeEnd:
+            if (j!=i and words[j].deprel != "conj" 
+                         and words[j].deprel != "punct" and words[j].deprel != "cc"):
+                outOfScope = True
+                break
+            j += 1
+
+        if not outOfScope:
+            j = scopeStart
+            while j < scopeEnd:
+                if words[j].deprel == "cc":
+                    words[j].text = "["+ words[j].text.upper()+"]"
+                j += 1
+            words[scopeStart].setSymbol(symbol, 1)
+            words[scopeEnd].setSymbol(symbol, 2)
+            i = scopeEnd
+            return True
+        else:
+            return False
+    else:
+        return False
 
 # Function that tries to use the old dependency parse tree for the second part of sentences starting
 # with an activation condition. If the words do not include a root connection the words are
