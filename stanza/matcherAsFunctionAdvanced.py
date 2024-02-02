@@ -156,12 +156,12 @@ def compoundWords(words):
 
         # If the word is a compound word
         if customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
-            customWords, i, wordLen = removeWord(customWords, i, wordLen)
+            i, wordLen = removeWord(customWords, i, wordLen)
         elif (customWords[i].deprel == "case" and customWords[i].head-1 == i-1 
               and customWords[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #customWords[i-1].text = customWords[i-1].text + customWords[i].text
-            customWords, i, wordLen = removeWord(customWords, i, wordLen, 1)
+            i, wordLen = removeWord(customWords, i, wordLen, 1)
 
         # Compound of three words in the form compound, punct, word
         # Combines the punct and the compound first, then the function above is used to combine
@@ -169,14 +169,14 @@ def compoundWords(words):
         elif customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
             if i < customWords[i].head-1:
                 if words[i+1].deprel == "punct":
-                    customWords, i, wordLen = removeWord(customWords, i+1, wordLen, 1)
+                    i, wordLen = removeWord(customWords, i+1, wordLen, 1)
                     i-=1
         
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
             if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
                 # Combine the punct and following word
-                customWords, i, wordLen = removeWord(customWords, i, wordLen)
+                i, wordLen = removeWord(customWords, i, wordLen)
         i += 1
         
     return customWords
@@ -206,8 +206,7 @@ def removeWord(words,i,wordLen,direction=0):
 
     # Remove the extra word
     del words[i]
-    
-    return words,i-1,wordLen-1
+    return i-1, wordLen-1
 
 # Matching function, takes a list of words with dependency parse and pos-tag data.
 # Returns a list of words with IG Script notation symbols.
