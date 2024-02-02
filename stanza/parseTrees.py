@@ -2,7 +2,7 @@ import json
 import stanza
 from spacy import displacy
 
-from matcherAsFunctionAdvanced import compoundWords
+from matcherAsFunctionAdvanced import compoundWordsMiddleware
 
 filename = "../data/input.json"
 
@@ -31,7 +31,7 @@ with open(filename, "r") as input:
     # Based on the example found at: 
     # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
         for sentence in doc.sentences:
-            sentence.words = compoundWords(sentence.words)
+            sentence.words = compoundWordsMiddleware(sentence.words)
             for word in sentence.words:
                 # Generating the data structure for displacy visualization
                 depData["words"].append({"text":word.text, "tag": word.pos})
