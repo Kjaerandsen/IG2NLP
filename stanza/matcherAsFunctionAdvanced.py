@@ -5,6 +5,8 @@ import time
 # Dictionary of symbols for parsing
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A"}
 
+CombineObjandSingleWordProperty = True
+
 nlp = None
 
 # Word for handling words,
@@ -440,7 +442,19 @@ def matchingFunction(words):
 
         # Object detection
         elif deprel == "obj" :
-           smallLogicalOperator(words, i, "Bdir", wordLen)
+            iBak = i
+            smallLogicalOperator(words, i, "Bdir", wordLen)
+            # If the flag is True combine the object with single word properties preceeding 
+            # the object
+            if CombineObjandSingleWordProperty:
+                if (words[iBak-1].symbol == "Bdir,p" and words[iBak-1].deprel == "amod"
+                    and words[iBak-1].position == 0):
+                    if iBak != i:
+                        words[iBak].setSymbol("", 0)
+                        words[iBak-1].setSymbol("Bdir", 1)
+                    else:
+                        words[iBak].setSymbol("Bdir", 2)
+                        words[iBak-1].setSymbol("Bdir", 1)
 
         # Aim detection
         elif deprel == "root":
@@ -488,6 +502,12 @@ def matchingFunction(words):
                     words[i].setSymbol("Bdir,p")
             else:
                 print("\nWord is nmod:poss: ", words[i])
+        
+        # Too broad coverage in this case, detected instances which should be included in the main
+        # object in some instances, an instance of an indirect object component, and several 
+        # overlaps with execution constraints.
+        #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
+        #    words[i].setSymbol("Bdir,p")
 
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
