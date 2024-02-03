@@ -6,6 +6,7 @@ import time
 SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A"}
 
 CombineObjandSingleWordProperty = True
+minimumCexLength = 1
 
 nlp = None
 
@@ -392,7 +393,7 @@ def matchingFunction(words):
                         scopeStart = j
                 j += 1
             
-            if scopeEnd - scopeStart != 0:
+            if scopeEnd - scopeStart >= minimumCexLength:
                 # Look for symbols within
                 '''
                 j = scopeStart
