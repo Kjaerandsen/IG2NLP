@@ -3,7 +3,7 @@ import time
 #import copy
 
 # Dictionary of symbols for parsing
-SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A"}
+SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A", "nsubj:pass": "A"}
 
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
