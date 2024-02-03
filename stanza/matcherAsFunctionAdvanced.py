@@ -477,6 +477,18 @@ def matchingFunction(words):
                 smallLogicalOperator(words, i, "A,p", wordLen)
                 #words[i].setSymbol("A,p")
 
+        elif words[i].deprel == "nmod:poss":
+            if words[words[i].head-1].deprel == "obj" and words[i].head-1 == i+1:
+                # Check if there is a previous amod connection and add both
+                if words[i-1].deprel == "amod" and words[i-1].head-1 == i:
+                    words[i-1].setSymbol("Bdir,p", 1)
+                    words[i].setSymbol("Bdir,p", 2)
+                # Else only add the Bdir,p
+                else:
+                    words[i].setSymbol("Bdir,p")
+            else:
+                print("\nWord is nmod:poss: ", words[i])
+
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if words[i].deprel in SymbolDict:
