@@ -101,18 +101,17 @@ def MatcherMiddleware(jsonData):
     i = 0
     while i < len(jsonData): 
         base = jsonData[i]['baseTx']
+
         output = Matcher(base)
-
         print("\n"+ base + "\n" + jsonData[i]['manual'] + "\n" + output)
-
+        
         jsonData[i]["stanza"] = output
-
         i += 1
 
     return jsonData
 
 def Matcher(text):
-    return WordsToSentence2(matchingFunction(compoundWordsMiddleware(nlpPipeline(text))))
+    return WordsToSentence(matchingFunction(compoundWordsMiddleware(nlpPipeline(text))))
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
@@ -145,9 +144,6 @@ def convertWordFormat(words):
                 words[i].end_char,
                 spaces
             ))
-        
-        #print(customWords[i])
-        #print(words[i])
 
         i += 1
 
@@ -166,40 +162,9 @@ def compoundWordsMiddleware(words):
 def compoundWords(customWords):
     
     wordLen = len(customWords)
-    '''
-    i = 0
-    customWords = []
-
-    while i < wordLen:
-        if i > 0:
-            spaces = words[i].start_char - words[i-1].end_char
-        else:
-            spaces = 0
-
-        customWords.append(
-            Word(
-                words[i].text,
-                words[i].pos,
-                words[i].deprel,
-                words[i].head,
-                words[i].id,
-                words[i].lemma,
-                words[i].xpos,
-                words[i].start_char,
-                words[i].end_char,
-                spaces
-            ))
-        
-        #print(customWords[i])
-        #print(words[i])
-
-        i += 1
-    '''
     i = 0
     #print("type is: ", type(words[0]), " " , wordLen)
     while i < wordLen:
-        #print(words[i])
-
         # Compound of three words in the form compound, punct, word
         # Combines the punct and the compound first, then the main function combines the rest
         # the compound and the word
@@ -230,7 +195,6 @@ def compoundWords(customWords):
         # If the word is a compound part of the previous word, combine the previous and the current
         elif customWords[i].deprel == "compound:prt" and customWords[i].head-1 == i-1:
             i, wordLen = removeWord(customWords, i, wordLen, 1)
-
         i += 1
 
     return customWords
@@ -267,9 +231,7 @@ def removeWord(words,i,wordLen,direction=0):
 # Returns a list of words with IG Script notation symbols.
 def matchingFunction(words):
     wordLen = len(words)
-
     words2 = []
-
     i = 0
 
     while i < wordLen:
@@ -309,7 +271,6 @@ def matchingFunction(words):
                 k += 1
             
             lastIndex = 0
-
             k = i+1
             while k < len(words):
                 x = k
@@ -519,7 +480,7 @@ def matchingFunction(words):
         # overlaps with execution constraints.
         #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
         #    words[i].setSymbol("Bdir,p")
-
+                
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
             if "nsubj" in deprel:
@@ -561,27 +522,8 @@ def tokenToText(tokens):
 
     return output
 
-# Reconstructs the base statement from the words maintaining original spacing.
+# Builds the final annotated statement or reconstructs the base statement.
 def WordsToSentence(words):
-    wordLen = len(words)
-    index = 0
-    i = 0
-
-    sentence = ""
-
-    while i < wordLen:
-        if words[i].start > index:
-            sentence += " "*(words[i].start-index) + words[i].text
-            index += 1 + len(words[i].text)
-        elif words[i].start <= index:
-            sentence += words[i].text
-            index = len(sentence)
-        i += 1
-
-    return sentence
-
-# Builds the final annotated statement.
-def WordsToSentence2(words):
     i = 0
 
     sentence = ""
@@ -650,8 +592,9 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                 elif j < scopeStart:
                     scopeStart = j
         j += 1
-            
+        
     ccCount = len(ccLocs)
+
     # If the scope is larger than one word in length and there is a cc deprel in the scope (and/or)
     if scopeEnd - scopeStart != 0 and ccCount > 0:
         if ccCount == 1:
@@ -677,7 +620,6 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                         words[j].text = ""
                 elif words[j].deprel == "punct":
                     punctLocs.append(j)
-        
                 j += 1
 
             if not outOfScope:
@@ -745,8 +687,10 @@ def smallLogicalOperator2(words, i, symbol, wordLen):
             words[scopeEnd].setSymbol(symbol, 2)
             i = scopeEnd
             return True
+        
         else:
             return False
+        
     else:
         return False
 
@@ -758,14 +702,12 @@ def removeStart(words, offset, wordLen):
 
     noRoot = True
     while i < wordLen:
-        #print(words[i])
         if words[i].head != 0:
             words[i].head -= offset
         if words[i].deprel == "root":
             noRoot = False
-        words[i].id -= offset
-        #print(words[i].id, words[i].head)
 
+        words[i].id -= offset
         i+=1
 
     if noRoot:
@@ -784,23 +726,23 @@ def reusePart(words, offset, listLen):
                 rootId = i
             elif words[i].deprel == "root":
                 rootId = i
+
             i+=1
 
         i = 0
         while i < listLen:
             if words[i].head > listLen:
                 words[i].head = rootId
+
             i+=1
     else:
         while i < listLen:
-            #print(words[i])
             if words[i].head != 0:
                 words[i].head -= offset
                 if words[i].head < 0:
                     words[i].deprel = "root"
+
             words[i].id -= offset
-            #print(words[i].id, words[i].head)
-            #print(words[i])
             i+=1
 
     return words
