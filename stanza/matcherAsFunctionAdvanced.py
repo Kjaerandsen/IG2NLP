@@ -407,7 +407,14 @@ def matchingFunction(words):
                 words[scopeEnd].setSymbol("Cex", 2)
             
             i = scopeEnd
-    
+
+        # Advmod of Aim is correlated with execution constraints
+        # Might be too generic of a rule.
+        elif deprel == "advmod" and words[words[i].head-1].symbol == "I":
+            #print("\nadvmod connected to Aim(I): ", words[i])
+            if words[i+1].deprel == "punct":
+                words[i].setSymbol("Cex")
+
         # Cex detection 2
         elif deprel == "obl:tmod":
             i = words[i].head-1
@@ -440,6 +447,9 @@ def matchingFunction(words):
                 words[scopeEnd].setSymbol("Cex", 2)
             
             i = scopeEnd
+
+        elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
+            print("\nnmod connected to Attribute(A): ", words[i])
 
         # Object detection
         elif deprel == "obj" :
