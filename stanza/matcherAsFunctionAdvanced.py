@@ -522,8 +522,10 @@ def matchingFunction(words):
 
         # If the head of the word is the root, check the symbol dictionary for symbol matches
         elif words[words[i].head-1].deprel == "root":
-            if words[i].deprel in SymbolDict:
-                words[i].setSymbol(SymbolDict[words[i].deprel])
+            if "nsubj" in deprel:
+                smallLogicalOperator3(words, i, "A", wordLen)
+            elif deprel in SymbolDict:
+                words[i].setSymbol(SymbolDict[deprel])
         
         # If the relation is a ccomp then handle it as a direct object
                 '''
@@ -718,6 +720,96 @@ def smallLogicalOperator2(words, i, symbol, wordLen):
             return False
     else:
         return False
+    
+# Finds and handles symbols with logical operators
+def smallLogicalOperator3(words, i, symbol, wordLen):
+    # If there is a logical operator adjacent        
+    scopeStart = i  
+    scopeEnd = i
+
+    j=0
+    ccCount = 0
+
+    # Go through the word list and find the scope of the component
+    while j < wordLen:
+        if words[j].deprel == "cc":
+            if words[words[j].head-1].head-1 == i:
+                ccCount += 1
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        elif words[j].deprel == "conj":
+            if words[j].head-1 == i:
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
+        j += 1
+            
+    # If the scope is larger than one word in length and there is a cc deprel in the scope (and/or)
+    if scopeEnd - scopeStart != 0 and ccCount > 0:
+        if ccCount == 1:
+            outOfScope = False
+            # Go through the scope, if a deprel other than conj, cc and det is found
+            # then handle it as a single word component instead.
+            j = scopeStart
+            while j < scopeEnd:
+                if (j!=i and words[j].deprel != "conj" 
+                            and words[j].deprel != "punct" and words[j].deprel != "cc" 
+                            and words[j].deprel != "det"):
+                    outOfScope = True
+                    break
+                if words[j].deprel == "det":
+                    #if j+1 < scopeEnd:
+                        words[j+1].spaces = words[j].spaces
+                        words[j].spaces = 0
+                        words[j].text = ""
+                j += 1
+
+            if not outOfScope:
+                j = scopeStart
+                while j < scopeEnd:
+                    if words[j].deprel == "cc":
+                        words[j].text = "["+ words[j].text.upper()+"]"
+                    j += 1
+                words[scopeStart].setSymbol(symbol, 1)
+                words[scopeEnd].setSymbol(symbol, 2)
+                i = scopeEnd
+            else:
+                words[i].setSymbol(symbol)
+        else:
+            print("More than one CC")
+            outOfScope = False
+            # Go through the scope, if a deprel other than conj, cc and det is found
+            # then handle it as a single word component instead.
+            j = scopeStart
+            while j < scopeEnd:
+                if (j!=i and words[j].deprel != "conj" 
+                            and words[j].deprel != "punct" and words[j].deprel != "cc" 
+                            and words[j].deprel != "det"):
+                    outOfScope = True
+                    break
+                if words[j].deprel == "det":
+                    #if j+1 < scopeEnd:
+                        words[j+1].spaces = words[j].spaces
+                        words[j].spaces = 0
+                        words[j].text = ""
+                j += 1
+
+            if not outOfScope:
+                j = scopeStart
+                while j < scopeEnd:
+                    if words[j].deprel == "cc":
+                        words[j].text = "["+ words[j].text.upper()+"]"
+                    j += 1
+                words[scopeStart].setSymbol(symbol, 1)
+                words[scopeEnd].setSymbol(symbol, 2)
+                i = scopeEnd
+            else:
+                words[i].setSymbol(symbol)
+    else:
+        words[i].setSymbol(symbol)
 
 # Function that tries to use the old dependency parse tree for the second part of sentences starting
 # with an activation condition. If the words do not include a root connection the words are
