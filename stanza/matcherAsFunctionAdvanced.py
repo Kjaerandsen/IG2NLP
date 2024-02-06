@@ -248,9 +248,7 @@ def matchingFunction(words):
         # If the word is recognized as a condition or constraint
         if words[i].deprel == "advcl":
             words2 = []
-            success = handleActivationCondition(words, wordsBak, i, wordLen, words2)
-
-            if success:
+            if handleActivationCondition(words, wordsBak, i, wordLen, words2):
                 return words2
 
         # Cex detection
@@ -419,6 +417,9 @@ def matchingFunction(words):
         elif "nsubj" in deprel:
             if words[i].pos != "PRON":
                 smallLogicalOperator(words, i, "A", wordLen)
+            # If the nsubj is a pronoun connected to root then handle it as an attribute
+            # This may need to be reverted in the future if coreference resolution is used
+            # in that case, the coreference resolution will be used to add the appropriate attribute
             elif words[words[i].head-1].deprel == "root":
                 smallLogicalOperator(words, i, "A", wordLen)
 
@@ -713,6 +714,88 @@ def reusePart(words, offset, listLen):
     return words
 
 def handleActivationCondition(words, wordsBak, i, wordLen, words2):
+    firstVal = -1
+    
+    # Go through the statement until the word is connected to the advcl directly or indirectly
+    k = 0
+    while k < i:
+        # If connected to the advcl then set firstVal to the id and break the loop
+        if ifHeadRelation(words, k, i):
+            firstVal = k
+            break
+        k += 1
+
+    # If no firstVal is found return False
+    if firstVal == -1:
+        print("Found no firstVal")
+        return False
+
+    # Go through again from the activation condition++
+    # Until the word is no longer connected to the advcl
+        
+    # Set the lastVal to the current id -1
+            
+    lastIndex = 0
+    k = i+1
+    while k < len(words):
+        if not ifHeadRelation(words, k, i):
+            lastIndex = k-1
+            break
+        k += 1
+
+    if words[lastIndex].deprel != "punct":
+        if words[lastIndex+1].deprel == "punct":
+            lastIndex += 1
+        else:
+            print("Last val was not punct", words[lastIndex])
+            return False
+
+    if firstVal == 0:
+        contents = []
+
+        activationCondition = matchingFunction(
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
+        #actiWords = copy.deepcopy(words[:lastIndex])
+        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+
+        if validateNested(activationCondition):
+            words2.append(Word(
+            "","","",0,0,"","",0,0,0,"Cac",True,1
+            ))
+            words2 += activationCondition
+            words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
+            words2.append(words[lastIndex])
+        else:
+            words2 += words[:lastIndex]
+            words2[0].setSymbol("Cac",1)
+            words2[lastIndex-1].setSymbol("Cac",2)
+            words2.append(words[lastIndex])
+
+        #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
+        #    WordsToSentence(words[lastIndex+1:]))))
+        contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
+                                                    wordLen-(lastIndex+1)))
+
+        # Copy over the old placement information to the 
+        # newly generated words for proper formatting
+        k = lastIndex +1
+        while k < len(words):
+            index = k-lastIndex-1
+            contents[index].id = words[k].id
+            contents[index].start = words[k].start
+            contents[index].end = words[k].end
+            contents[index].spaces = words[k].spaces
+
+            k += 1
+
+        # print("Contents are: '", contents[0].text, "'")
+        words2 += contents
+
+        return True
+    print("First val was not id 0", words[lastIndex])
+    return False
+
+def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
     firstVal = 0
     firstValFilled = False
 
