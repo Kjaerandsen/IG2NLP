@@ -714,7 +714,7 @@ def reusePart(words, offset, listLen):
     return words
 
 def handleActivationCondition(words, wordsBak, i, wordLen, words2):
-    firstVal = -1
+    firstVal = i
     
     # Go through the statement until the word is connected to the advcl directly or indirectly
     k = 0
@@ -724,11 +724,6 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
             firstVal = k
             break
         k += 1
-
-    # If no firstVal is found return False
-    if firstVal == -1:
-        print("Found no firstVal")
-        return False
 
     # Go through again from the activation condition++
     # Until the word is no longer connected to the advcl
@@ -792,8 +787,73 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
         words2 += contents
 
         return True
-    print("First val was not id 0", words[lastIndex])
-    return False
+    elif words[firstVal].deprel == "mark":
+        print("First val was not id 0 and deprel was mark", words[lastIndex])
+        # Do the same as above, but also with the words before this advcl
+        contents = []
+
+        preActivationCondition = matchingFunction(
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+        words2 += preActivationCondition
+
+        activationCondition = matchingFunction(
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
+        
+        #actiWords = copy.deepcopy(words[:lastIndex])
+        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+        j = 0
+        oblCount = 0
+        while j < len(activationCondition):
+            if "obl" in activationCondition[j].deprel:
+                oblCount+=1
+            j+=1
+
+        if oblCount > 1:
+            symbol = "Cex"
+        else:
+            symbol = "Cac"
+
+        if validateNested(activationCondition):
+            words2.append(Word(
+            "","","",0,0,"","",0,0,1,symbol,True,1
+            ))
+            words2 += activationCondition
+            words2.append(Word("","","",0,0,"","",0,0,0,symbol,True,2))
+            words2.append(words[lastIndex])
+        else:
+            words2 += wordsBak[firstVal:lastIndex]
+            words2[firstVal].setSymbol(symbol,1)
+            words2[lastIndex-1].setSymbol(symbol,2)
+            words2.append(words[lastIndex])
+
+        #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
+        #    WordsToSentence(words[lastIndex+1:]))))
+        #contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
+        #                                            wordLen-(lastIndex+1)))
+        
+        if len(wordsBak) > lastIndex+1:
+            contents = matchingFunction(
+                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[lastIndex+1:]))))
+
+            # Copy over the old placement information to the 
+            # newly generated words for proper formatting
+            k = lastIndex +1
+            while k < len(words):
+                index = k-lastIndex-1
+                contents[index].id = words[k].id
+                contents[index].start = words[k].start
+                contents[index].end = words[k].end
+                contents[index].spaces = words[k].spaces
+
+                k += 1
+
+            # print("Contents are: '", contents[0].text, "'")
+            words2 += contents
+
+        return True
+    else:
+        print("First val was not id 0 and deprel was not mark", words[lastIndex])
+        return False
 
 def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
     firstVal = 0
