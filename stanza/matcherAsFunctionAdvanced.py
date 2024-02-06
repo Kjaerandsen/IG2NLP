@@ -246,13 +246,18 @@ def matchingFunction(words):
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
         # If the word is recognized as a condition or constraint
-        if words[i].deprel == "advcl":
+        if deprel == "advcl":
             words2 = []
             if handleActivationCondition(words, wordsBak, i, wordLen, words2):
                 return words2
 
+        elif deprel == "cc" and words[i+1].text == "else":
+            words2 = []
+            orElseHandler(words, wordsBak, wordLen, words2, i)
+            return words2
+
         # Cex detection
-        if deprel == "obl":
+        elif deprel == "obl":
             # Check for connections to the obl both before and after
             scopeStart = i
             scopeEnd = i
@@ -295,8 +300,9 @@ def matchingFunction(words):
         # Might be too generic of a rule.
         elif deprel == "advmod" and words[words[i].head-1].symbol == "I":
             #print("\nadvmod connected to Aim(I): ", words[i])
-            if words[i+1].deprel == "punct":
-                words[i].setSymbol("Cex")
+            if i+1 < wordLen:
+                if words[i+1].deprel == "punct":
+                    words[i].setSymbol("Cex")
 
         # Cex detection 2
         elif deprel == "obl:tmod":
@@ -368,6 +374,9 @@ def matchingFunction(words):
 
         # Aim detection
         elif deprel == "root":
+            # Potentially unmatch all occurences where the aim is not a verb
+            #if words[i].pos != "VERB":
+            #    print("Aim is not VERB:", words[i].pos, words[i])
             # Look for logical operators
             if not smallLogicalOperator2(words, i, "I", wordLen):
                 words[i].setSymbol("I")
@@ -742,7 +751,7 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
         if words[lastIndex+1].deprel == "punct":
             lastIndex += 1
         else:
-            print("Last val was not punct", words[lastIndex])
+            #print("Last val was not punct", words[lastIndex])
             return False
 
     if firstVal == 0:
@@ -788,7 +797,7 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
 
         return True
     elif words[firstVal].deprel == "mark":
-        print("First val was not id 0 and deprel was mark", words[lastIndex])
+        #print("First val was not id 0 and deprel was mark", words[lastIndex])
         # Do the same as above, but also with the words before this advcl
         contents = []
 
@@ -852,7 +861,7 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
 
         return True
     else:
-        print("First val was not id 0 and deprel was not mark", words[lastIndex])
+        #print("First val was not id 0 and deprel was not mark", words[lastIndex])
         return False
 
 def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
@@ -938,3 +947,31 @@ def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
         else:
             return False
     return False
+
+def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
+    # Go through again from the activation condition++
+    # Until the word is no longer connected to the advcl
+        
+    if words[wordLen-1].deprel == "punct":
+        lastIndex = wordLen -1
+    else:
+        lastIndex = wordLen
+
+    contents = []
+
+    words2 += matchingFunction(
+        compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+
+    print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
+    activationCondition = matchingFunction(
+        compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+    #actiWords = copy.deepcopy(words[:lastIndex])
+    #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+
+    words2.append(Word(
+    "","","",0,0,"","",0,0,1,"O",True,1
+    ))
+    words2 += activationCondition
+    words2.append(Word("","","",0,0,"","",0,0,0,"O",True,2))
+    if words[wordLen-1].deprel == "punct":
+        words2.append(words[wordLen-1])
