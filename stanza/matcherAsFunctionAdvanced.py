@@ -1,9 +1,9 @@
 import stanza
 import time
-#import copy
+import copy
 
 # Dictionary of symbols for parsing
-SymbolDict = {"aux":"D", "aux:pass":"D","nsubj":"A", "nsubj:pass": "A"}
+SymbolDict = {"aux":"D", "aux:pass":"D"}
 
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
@@ -233,6 +233,7 @@ def removeWord(words,i,wordLen,direction=0):
 def matchingFunction(words):
     wordLen = len(words)
     words2 = []
+    wordsBak = copy.deepcopy(words)
     i = 0
 
     while i < wordLen:
@@ -291,7 +292,7 @@ def matchingFunction(words):
                     contents = []
 
                     activationCondition = matchingFunction(
-                        compoundWordsMiddleware(nlpPipeline(WordsToSentence(words[:lastIndex]))))
+                        compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
                     #actiWords = copy.deepcopy(words[:lastIndex])
                     #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
@@ -476,7 +477,8 @@ def matchingFunction(words):
                 #words[i].setSymbol("Bind,p")
             # Else if the word is connected to a nsubj connected directly to root (Attribute)
             elif (words[words[i].head-1].deprel == "nsubj" 
-                  and words[words[words[i].head-1].head-1].deprel == "root"):
+                  and (words[words[words[i].head-1].head-1].deprel == "root" or 
+                  words[words[words[i].head-1].head-1].symbol == "A")):
                 smallLogicalOperator(words, i, "A,p", wordLen)
                 #words[i].setSymbol("A,p")
 
@@ -492,21 +494,14 @@ def matchingFunction(words):
             else:
                 print("\nWord is nmod:poss: ", words[i])
         
-        # Too broad coverage in this case, detected instances which should be included in the main
-        # object in some instances, an instance of an indirect object component, and several 
-        # overlaps with execution constraints.
-        #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
-        #    words[i].setSymbol("Bdir,p")
-                
-        # If the head of the word is the root, check the symbol dictionary for symbol matches
-        elif words[words[i].head-1].deprel == "root":
-            if "nsubj" in deprel:
+        elif "nsubj" in deprel:
+            if words[i].pos != "PRON":
                 smallLogicalOperator(words, i, "A", wordLen)
-            elif deprel in SymbolDict:
-                words[i].setSymbol(SymbolDict[deprel])
-        
-        # If the relation is a ccomp then handle it as a direct object
-                '''
+            elif words[words[i].head-1].deprel == "root":
+                smallLogicalOperator(words, i, "A", wordLen)
+
+         # If the relation is a ccomp then handle it as a direct object
+            '''
         elif (words[i].deprel == "amod" 
               and words[words[i].head-1].deprel == "nsubj" 
               and words[words[words[i].head-1].head-1].deprel == "ccomp"):
@@ -517,6 +512,17 @@ def matchingFunction(words):
             '''
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             print("\n\nNSUBJ CCOMP OBJ\n\n")
+
+        # Too broad coverage in this case, detected instances which should be included in the main
+        # object in some instances, an instance of an indirect object component, and several 
+        # overlaps with execution constraints.
+        #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
+        #    words[i].setSymbol("Bdir,p")
+                
+        # If the head of the word is the root, check the symbol dictionary for symbol matches
+        elif words[words[i].head-1].deprel == "root":
+            if deprel in SymbolDict:
+                words[i].setSymbol(SymbolDict[deprel])
         
         i += 1
 
