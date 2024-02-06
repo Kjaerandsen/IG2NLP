@@ -598,6 +598,7 @@ def smallLogicalOperator(words, i, symbol, wordLen):
     j=0
     ccLocs = []
     punctLocs = []
+    detLocs = []
 
     # Go through the word list and find the scope of the component
     while j < wordLen:
@@ -614,6 +615,13 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                     scopeEnd = j
                 elif j < scopeStart:
                     scopeStart = j
+        # Also include advmod dependencies
+        elif words[j].deprel == "advmod":
+            if words[words[j].head-1].head-1 == i:
+                if j > scopeEnd:
+                    scopeEnd = j
+                elif j < scopeStart:
+                    scopeStart = j
         j += 1
         
     ccCount = len(ccLocs)
@@ -626,17 +634,17 @@ def smallLogicalOperator(words, i, symbol, wordLen):
             # then handle it as a single word component instead.
             j = scopeStart
             while j < scopeEnd:
+                '''
                 if (j!=i and words[j].deprel != "conj" 
                             and words[j].deprel != "punct" and words[j].deprel != "cc" 
                             and words[j].deprel != "det"):
-                    outOfScope = True
+                    print(words[j], words[j].pos, words[j].deprel)
+                    #outOfScope = True
                     break
-                elif words[j].deprel == "det":
-                    #if j+1 < scopeEnd:
-                        words[j+1].spaces = words[j].spaces
-                        words[j].spaces = 0
-                        words[j].text = ""
-                                # Remove additional puncts (i.e. "x, and y" -> "x and y")
+                '''
+                if words[j].deprel == "det":
+                    detLocs.append(j)
+                # Remove additional puncts (i.e. "x, and y" -> "x and y")
                 elif words[j].deprel == "punct" and words[j+1].deprel == "cc":
                     #if j+1 < scopeEnd:
                         words[j].spaces = 0
@@ -649,6 +657,18 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                 # Set the contents of the cc to be a logical operator
                 words[ccLocs[0]].text = "["+ words[ccLocs[0]].text.upper()+"]"
 
+                j = 0
+                while j < len(detLocs):
+                    k = detLocs[j]
+                    if k+1 < scopeEnd:
+                        words[k+1].spaces = words[k].spaces
+                        words[k].spaces = 0
+                        words[k].text = ""
+                    else:
+                        words[k].spaces = 0
+                        words[k].text = ""
+                    j += 1
+
                 # Turn all extra punct deprels into the same logical operator as above
                 j = 0
                 while j < len(punctLocs):
@@ -660,6 +680,7 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                 words[scopeEnd].setSymbol(symbol, 2)
                 i = scopeEnd
             else:
+                print("Out of scope")
                 words[i].setSymbol(symbol)
         else:
             print("More than one CC")
@@ -710,7 +731,6 @@ def smallLogicalOperator2(words, i, symbol, wordLen):
             words[scopeEnd].setSymbol(symbol, 2)
             i = scopeEnd
             return True
-        
         else:
             return False
         
