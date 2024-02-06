@@ -3,7 +3,7 @@ import time
 #import copy
 
 # Dictionary of symbols for parsing
-SymbolDict = {"iobj":"Bind","obj":"Bdir","aux":"D", "aux:pass":"D","nsubj":"A", "nsubj:pass": "A"}
+SymbolDict = {"aux":"D", "aux:pass":"D","nsubj":"A", "nsubj:pass": "A"}
 
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
@@ -103,7 +103,8 @@ def MatcherMiddleware(jsonData):
         base = jsonData[i]['baseTx']
 
         output = Matcher(base)
-        print("\n"+ base + "\n" + jsonData[i]['manual'] + "\n" + output)
+        print("\nStatement", str(i) + ": " + jsonData[i]['name'])
+        print(base + "\n" + jsonData[i]['manual'] + "\n" + output)
         
         jsonData[i]["stanza"] = output
         i += 1
@@ -413,7 +414,7 @@ def matchingFunction(words):
             print("\nnmod connected to Attribute(A): ", words[i])
 
         # Object detection
-        elif deprel == "obj" :
+        elif deprel == "obj":
             iBak = i
             smallLogicalOperator(words, i, "Bdir", wordLen)
             # If the flag is True combine the object with single word properties preceeding 
@@ -427,6 +428,22 @@ def matchingFunction(words):
                     else:
                         words[iBak].setSymbol("Bdir", 2)
                         words[iBak-1].setSymbol("Bdir", 1)
+
+        elif deprel == "iobj":
+            iBak = i
+            smallLogicalOperator(words, i, "Bind", wordLen)
+            # If the flag is True combine the object with single word properties preceeding 
+            # the object
+            if CombineObjandSingleWordProperty:
+                if (words[iBak-1].symbol == "Bind,p" and words[iBak-1].deprel == "amod"
+                    and words[iBak-1].position == 0):
+                    if iBak != i:
+                        words[iBak].setSymbol("", 0)
+                        words[iBak-1].setSymbol("Bind", 1)
+                    else:
+                        words[iBak].setSymbol("Bind", 2)
+                        words[iBak-1].setSymbol("Bind", 1)
+
 
         # Aim detection
         elif deprel == "root":
