@@ -2,9 +2,6 @@ import stanza
 import time
 import copy
 
-# Dictionary of symbols for parsing
-SymbolDict = {"aux":"D", "aux:pass":"D"}
-
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 
@@ -451,10 +448,13 @@ def matchingFunction(words):
         #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
         #    words[i].setSymbol("Bdir,p")
                 
-        # If the head of the word is the root, check the symbol dictionary for symbol matches
+        # If the head of the word is the root, check for deontic match
         elif words[words[i].head-1].deprel == "root":
-            if deprel in SymbolDict:
-                words[i].setSymbol(SymbolDict[deprel])
+            if "aux" in deprel:
+                if words[words[i].head-1].pos == "VERB":
+                    words[i].setSymbol(SymbolDict[deprel])
+                else:
+                    print("Deontic, no verb")
         
         i += 1
 
