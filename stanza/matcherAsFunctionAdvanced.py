@@ -452,7 +452,7 @@ def matchingFunction(words):
         elif words[words[i].head-1].deprel == "root":
             if "aux" in deprel:
                 if words[words[i].head-1].pos == "VERB":
-                    words[i].setSymbol(SymbolDict[deprel])
+                    words[i].setSymbol("D")
                 else:
                     print("Deontic, no verb")
         
