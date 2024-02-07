@@ -2,9 +2,12 @@ import stanza
 import time
 import copy
 
+# Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 
+# Global variable for the nlp pipeline, allows for reusing the pipeline 
+# without multiple initializations
 nlp = None
 
 # Word for handling words,
@@ -108,6 +111,9 @@ def MatcherMiddleware(jsonData):
 
     return jsonData
 
+# Matcher function
+# Performs all steps for automatically annotating a sentence, from running the pipeline on the text
+# to handling the data, matching the dependencies to components and writing the final string.
 def Matcher(text):
     return WordsToSentence(matchingFunction(compoundWordsMiddleware(nlpPipeline(text))))
 
@@ -147,6 +153,8 @@ def convertWordFormat(words):
 
     return customWords
 
+# Middleware function for compounding words (multi-word expressions) into single words
+# Converts the word datatype to the custom class and runs the compoundWords function twice
 def compoundWordsMiddleware(words):
     customWords = convertWordFormat(words)
 
@@ -235,25 +243,26 @@ def matchingFunction(words):
     while i < wordLen:
         deprel = words[i].deprel
 
-        # For more complex dependencies
+        # Print out more complex dependencies for future handling
         if ":" in deprel:
             if deprel != "aux:pass" and deprel != "obl:tmod":
                 print("\n", '":" dependency: ',words[i], "\n")
 
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
-        # If the word is recognized as a condition or constraint
+        # (Cac, Cex) Condition detection 
         if deprel == "advcl":
             words2 = []
-            if handleActivationCondition(words, wordsBak, i, wordLen, words2):
+            if handleCondition(words, wordsBak, i, wordLen, words2):
                 return words2
 
+        # (O) Or else detection
         elif deprel == "cc" and words[i+1].text == "else":
             words2 = []
             orElseHandler(words, wordsBak, wordLen, words2, i)
             return words2
 
-        # Cex detection
+        # (Cex) Execution constraint detection
         elif deprel == "obl":
             # Check for connections to the obl both before and after
             scopeStart = i
@@ -301,7 +310,7 @@ def matchingFunction(words):
                 if words[i+1].deprel == "punct":
                     words[i].setSymbol("Cex")
 
-        # Cex detection 2
+        # (Cex) Execution constraint detection 2
         elif deprel == "obl:tmod":
             i = words[i].head-1
 
@@ -337,7 +346,7 @@ def matchingFunction(words):
         elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
             print("\nnmod connected to Attribute(A): ", words[i])
 
-        # Object detection
+        # (Bdir) Object detection
         elif deprel == "obj":
             iBak = i
             smallLogicalOperator(words, i, "Bdir", wordLen)
@@ -353,6 +362,7 @@ def matchingFunction(words):
                         words[iBak].setSymbol("Bdir", 2)
                         words[iBak-1].setSymbol("Bdir", 1)
 
+        # (Bind) Indirect object detection
         elif deprel == "iobj":
             iBak = i
             smallLogicalOperator(words, i, "Bind", wordLen)
@@ -369,7 +379,7 @@ def matchingFunction(words):
                         words[iBak-1].setSymbol("Bind", 1)
 
 
-        # Aim detection
+        # (I) Aim detection
         elif deprel == "root":
             # Potentially unmatch all occurences where the aim is not a verb
             #if words[i].pos != "VERB":
@@ -392,6 +402,7 @@ def matchingFunction(words):
         
         # Else if the word has an amod dependency type, check if the head is a symbol
         # that supports properties, if so, the word is a property of that symbol
+        # (Bdir,p, Bind,p, A,p)
         elif words[i].deprel == "amod":
             # If the word is directly connected to an obj (Bdir)
             if words[words[i].head-1].deprel == "obj":
@@ -408,6 +419,7 @@ def matchingFunction(words):
                 smallLogicalOperator(words, i, "A,p", wordLen)
                 #words[i].setSymbol("A,p")
 
+        # (Bdir,p) Direct object property detection 2
         elif words[i].deprel == "nmod:poss":
             if words[words[i].head-1].deprel == "obj" and words[i].head-1 == i+1:
                 # Check if there is a previous amod connection and add both
@@ -420,6 +432,7 @@ def matchingFunction(words):
             else:
                 print("\nWord is nmod:poss: ", words[i])
         
+        # (A) Attribute detection
         elif "nsubj" in deprel:
             if words[i].pos != "PRON":
                 smallLogicalOperator(words, i, "A", wordLen)
@@ -448,7 +461,7 @@ def matchingFunction(words):
         #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
         #    words[i].setSymbol("Bdir,p")
                 
-        # If the head of the word is the root, check for deontic match
+        # (D) Deontic detection
         elif words[words[i].head-1].deprel == "root":
             if "aux" in deprel:
                 if words[words[i].head-1].pos == "VERB":
@@ -490,7 +503,7 @@ def WordsToSentence(words):
     return sentence
 
 # Validation function for nested components
-# Sets a requirement of both an Aim and an Attribute detected for a component to 
+# Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to 
 # be regarded as nested.
 def validateNested(words):
     wordLen = len(words)
@@ -528,8 +541,11 @@ def smallLogicalOperator(words, i, symbol, wordLen):
     scopeEnd = i
 
     j=0
+    # Locations (ids) of cc dependent words
     ccLocs = []
+    # Locations (ids) of puncts
     punctLocs = []
+    # Locations (ids) of determiners
     detLocs = []
 
     # Go through the word list and find the scope of the component
@@ -690,6 +706,8 @@ def removeStart(words, offset, wordLen):
 
     return words
 
+# Function that takes a list of words and tries to reuse the list for further matching by
+# updating the root of this subset of words.
 def reusePart(words, offset, listLen):
     i = 0
     if offset == 0:
@@ -722,7 +740,8 @@ def reusePart(words, offset, listLen):
 
     return words
 
-def handleActivationCondition(words, wordsBak, i, wordLen, words2):
+# Handler function for the matching and encapsulation of conditions (Cac, Cex)
+def handleCondition(words, wordsBak, i, wordLen, words2):
     firstVal = i
     
     # Go through the statement until the word is connected to the advcl directly or indirectly
@@ -762,17 +781,29 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
         #actiWords = copy.deepcopy(words[:lastIndex])
         #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
+        j = 0
+        oblCount = 0
+        while j < len(activationCondition):
+            if "obl" in activationCondition[j].deprel:
+                oblCount+=1
+            j+=1
+
+        if oblCount > 1 and words[0].deprel == "mark":
+            symbol = "Cex"
+        else:
+            symbol = "Cac"
+
         if validateNested(activationCondition):
             words2.append(Word(
-            "","","",0,0,"","",0,0,0,"Cac",True,1
+            "","","",0,0,"","",0,0,0,symbol,True,1
             ))
             words2 += activationCondition
-            words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
+            words2.append(Word("","","",0,0,"","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
         else:
             words2 += words[:lastIndex]
-            words2[0].setSymbol("Cac",1)
-            words2[lastIndex-1].setSymbol("Cac",2)
+            words2[0].setSymbol(symbol,1)
+            words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
 
         #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
@@ -864,6 +895,7 @@ def handleActivationCondition(words, wordsBak, i, wordLen, words2):
         #print("First val was not id 0 and deprel was not mark", words[lastIndex])
         return False
 
+# Backup of the old activation condition handler
 def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
     firstVal = 0
     firstValFilled = False
@@ -948,6 +980,7 @@ def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
             return False
     return False
 
+# Handler function for the Or else (O) component
 def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     # Go through again from the activation condition++
     # Until the word is no longer connected to the advcl
