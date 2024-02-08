@@ -39,16 +39,17 @@ depData = {"words":[],
 # Based on the example found at: 
 # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
 print('Now printing dependencies\n')
-#df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency"])
+
+pd.set_option('display.max_rows', None)
 
 for sentence in doc.sentences:
-    df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency"])
+    df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency", "Lemma", "Feats"])
     sentence.words = compoundWordsMiddleware(sentence.words)
     for word in sentence.words:
         df = df._append({
             "Word": word.text, "POS":word.pos, "Head id":word.head, 
             "Head word":sentence.words[word.head-1].text if word.head > 0 else "root", 
-            "Dependency": word.deprel}, ignore_index=True)
+            "Dependency": word.deprel, "Lemma": word.lemma, "Feats":word.feats}, ignore_index=True)
     
     # Generating the data structure for displacy visualization
         depData["words"].append({"text":word.text, "tag": word.pos})
