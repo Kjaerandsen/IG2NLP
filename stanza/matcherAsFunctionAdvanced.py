@@ -350,6 +350,25 @@ def matchingFunction(words):
         elif deprel == "obj":
             iBak = i
             smallLogicalOperator(words, i, "Bdir", wordLen)
+            # Positive lookahead for nmod to include:
+            # May need future refinement
+            if words[i].position == 0:
+                j=i
+                while j < wordLen:
+                    if words[j].deprel == "nmod" and words[j].head-1 == i:
+                        if j+1 < wordLen:
+                            if not ifHeadRelation(words, j+1, j):
+                                words[i].setSymbol("Bdir", 1)
+                                words[j].setSymbol("Bdir", 2)
+                                i = j
+                            break
+                        else:
+                            words[i].setSymbol("Bdir", 1)
+                            words[j].setSymbol("Bdir", 2)
+                            i = j
+                            break
+                    j += 1
+
             # If the flag is True combine the object with single word properties preceeding 
             # the object
             if CombineObjandSingleWordProperty:
@@ -368,6 +387,7 @@ def matchingFunction(words):
             smallLogicalOperator(words, i, "Bind", wordLen)
             # If the flag is True combine the object with single word properties preceeding 
             # the object
+
             if CombineObjandSingleWordProperty:
                 if (words[iBak-1].symbol == "Bind,p" and words[iBak-1].deprel == "amod"
                     and words[iBak-1].position == 0):
