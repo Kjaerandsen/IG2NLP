@@ -415,6 +415,8 @@ def matchingFunction(words):
                     if words[k].deprel == "xcomp" and words[k].head-1 == i:
                         print("XComp of I: ", words[k], k, i)
                         if k-i == 2:
+                            #words[i].setSymbol("")
+                            #words[i+2].setSymbol("I")
                             words[i].setSymbol("I",1)
                             words[i+2].setSymbol("I",2)
                             break
@@ -477,17 +479,39 @@ def matchingFunction(words):
                 other = False
                 while j < wordLen:
                     if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
+                        print("A with xpos: ", words[j], words[j].xpos)
                         #print("Nmod head relation to a: ", words[j], words[i])
                         smallLogicalOperator(words, j, "A", wordLen)
                         other = True
+                        if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+                            if words[i].position == 2:
+                                words[i].setSymbol("")
+                                words[i+1].setSymbol("A",2)
+                            else:
+                                words[i].setSymbol("A",1)
+                                words[i+1].setSymbol("A",2)
                     j+=1 
                 if not other:
                     smallLogicalOperator(words, i, "A", wordLen)
+                    if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+                        if words[i].position == 2:
+                            words[i].setSymbol("")
+                            words[i+1].setSymbol("A",2)
+                        else:
+                            words[i].setSymbol("A",1)
+                            words[i+1].setSymbol("A",2)
             # If the nsubj is a pronoun connected to root then handle it as an attribute
             # This may need to be reverted in the future if coreference resolution is used
             # in that case, the coreference resolution will be used to add the appropriate attribute
             elif words[words[i].head-1].deprel == "root":
                 smallLogicalOperator(words, i, "A", wordLen)
+                if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+                    if words[i].position == 2:
+                        words[i].setSymbol("")
+                        words[i+1].setSymbol("A",2)
+                    else:
+                        words[i].setSymbol("A",1)
+                        words[i+1].setSymbol("A",2)
 
          # If the relation is a ccomp then handle it as a direct object
             '''
