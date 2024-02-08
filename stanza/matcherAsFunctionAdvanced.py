@@ -417,6 +417,22 @@ def matchingFunction(words):
                         if k-i == 2:
                             words[i].setSymbol("I",1)
                             words[i+2].setSymbol("I",2)
+                            break
+                        else:
+                            j = i+1
+                            while j < k-1:
+                                if words[j].head-1 != k:
+                                    words[i].text = (words[i].text + " " * words[k].spaces + "[" + 
+                                                     words[k].text + "]")
+                                    words[i].setSymbol("I")
+                                    j = k
+                                    break
+                                j+=1
+                            if j == k-1:
+                                words[i].setSymbol("I",1)
+                                words[k].setSymbol("I",2)
+                            
+                        
                     k += 1
             
         
