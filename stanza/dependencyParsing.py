@@ -5,7 +5,10 @@ from spacy import displacy
 
 from matcherAsFunctionAdvanced import compoundWordsMiddleware
 
-nlp = stanza.Pipeline('en', use_gpu=False, processors='tokenize,pos,lemma,constituency,depparse,ner', package={"ner": ["ontonotes_charlm","conll03_charlm"]})
+nlp = stanza.Pipeline('en', use_gpu=False, 
+    processors='tokenize,pos,lemma,constituency,depparse,ner', 
+    package={"ner": ["ontonotes_charlm","conll03_charlm"]},
+    download_method=stanza.DownloadMethod.REUSE_RESOURCES)
 # Take the system arguments
 args = sys.argv
 

@@ -7,7 +7,8 @@ from matcherAsFunctionAdvanced import compoundWordsMiddleware
 filename = "../data/input.json"
 
 global nlp
-nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+nlp = stanza.Pipeline('en', use_gpu=False, 
+                      download_method=stanza.DownloadMethod.REUSE_RESOURCES)
 
 nlp.processors.pop("sentiment")
 nlp.processors.pop("constituency")

@@ -95,7 +95,8 @@ class Word:
 # statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
     global nlp
-    nlp = stanza.Pipeline('en', use_gpu=False, download_method=None)
+    nlp = stanza.Pipeline('en', use_gpu=False, 
+                          download_method=stanza.DownloadMethod.REUSE_RESOURCES)
     #print(nlp.processors["sentiment"])
     nlp.processors.pop("sentiment")
     nlp.processors.pop("constituency")
