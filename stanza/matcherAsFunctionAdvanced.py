@@ -465,7 +465,12 @@ def matchingFunction(words):
         elif words[words[i].head-1].deprel == "root":
             if "aux" in deprel:
                 if words[words[i].head-1].pos == "VERB":
-                    words[i].setSymbol("D")
+                    # Combine two adjacent deontics if present.
+                    if words[i-1].symbol == "D":
+                        words[i-1].setSymbol("D",1)
+                        words[i].setSymbol("D",2)
+                    else:
+                        words[i].setSymbol("D")
                 else:
                     print("Deontic, no verb")
         
@@ -591,14 +596,20 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                     break
                 '''
                 if words[j].deprel == "det":
-                    detLocs.append(j)
+                    if j == scopeStart:
+                        detLocs.append(j)
+                    elif words[j-1].deprel == "cc":
+                        detLocs.append(j)
                 # Remove additional puncts (i.e. "x, and y" -> "x and y")
-                elif words[j].deprel == "punct" and words[j+1].deprel == "cc":
-                    #if j+1 < scopeEnd:
-                        words[j].spaces = 0
-                        words[j].text = ""
-                elif words[j].deprel == "punct":
-                    punctLocs.append(j)
+                elif words[j].deprel == "punct" and words[j].text == ",":
+                    if words[j+1].deprel == "cc":
+                        #if j+1 < scopeEnd:
+                            words[j].spaces = 0
+                            words[j].text = ""
+                    # If the word is a punct connected to the conj, then it should be replaced by a
+                            # logical operator
+                    elif words[words[j].head-1].deprel == "conj":
+                        punctLocs.append(j)
                 j += 1
 
             if not outOfScope:
