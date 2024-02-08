@@ -13,8 +13,8 @@ nlp = None
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
-    def __init__(self, text, pos, deprel, head, id, lemma, xpos, 
-                 start=0, end=0, spaces=0, symbol="", nested = False, position = 0):
+    def __init__(self, text, pos, deprel, head, id, lemma, xpos, feats,
+                 start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner=""):
         self.id = id
         self.text = text
         self.deprel = deprel
@@ -28,6 +28,8 @@ class Word:
         self.nested = nested
         self.position = position
         self.spaces = spaces
+        self.feats = feats
+        self.ner = ner
 
     # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
     def getContents(self):
@@ -144,6 +146,7 @@ def convertWordFormat(words):
                 words[i].id,
                 words[i].lemma,
                 words[i].xpos,
+                words[i].feats,
                 words[i].start_char,
                 words[i].end_char,
                 spaces
@@ -157,6 +160,14 @@ def convertWordFormat(words):
 # Converts the word datatype to the custom class and runs the compoundWords function twice
 def compoundWordsMiddleware(words):
     customWords = convertWordFormat(words)
+
+    customWords = compoundWords(customWords)
+    customWords = compoundWords(customWords)
+
+    return customWords
+
+def compoundWordsMiddlewareAdvanced(words, tokens):
+    #customWords = convertWordFormatAdvanced(words, tokens)
 
     customWords = compoundWords(customWords)
     customWords = compoundWords(customWords)
@@ -881,10 +892,10 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
 
         if validateNested(activationCondition):
             words2.append(Word(
-            "","","",0,0,"","",0,0,0,symbol,True,1
+            "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
             words2 += activationCondition
-            words2.append(Word("","","",0,0,"","",0,0,0,symbol,True,2))
+            words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
         else:
             words2 += words[:lastIndex]
@@ -941,10 +952,10 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
 
         if validateNested(activationCondition):
             words2.append(Word(
-            "","","",0,0,"","",0,0,1,symbol,True,1
+            "","","",0,0,"","","",0,0,1,symbol,True,1
             ))
             words2 += activationCondition
-            words2.append(Word("","","",0,0,"","",0,0,0,symbol,True,2))
+            words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
         else:
             words2 += wordsBak[firstVal:lastIndex]
@@ -1030,10 +1041,10 @@ def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
 
             if validateNested(activationCondition):
                 words2.append(Word(
-                "","","",0,0,"","",0,0,0,"Cac",True,1
+                "","","",0,0,"","","",0,0,0,"Cac",True,1
                 ))
                 words2 += activationCondition
-                words2.append(Word("","","",0,0,"","",0,0,0,"Cac",True,2))
+                words2.append(Word("","","",0,0,"","","",0,0,0,"Cac",True,2))
                 words2.append(words[lastIndex])
             else:
                 words2 += words[:lastIndex]
@@ -1088,9 +1099,9 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
     words2.append(Word(
-    "","","",0,0,"","",0,0,1,"O",True,1
+    "","","",0,0,"","","",0,0,1,"O",True,1
     ))
     words2 += activationCondition
-    words2.append(Word("","","",0,0,"","",0,0,0,"O",True,2))
+    words2.append(Word("","","",0,0,"","","",0,0,0,"O",True,2))
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])

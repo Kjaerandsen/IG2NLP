@@ -6,8 +6,8 @@ args = sys.argv
 
 # Check if an input was given
 if len(args)<2:
-    print('Error: a string must be passed with the function in the format:\n'+
-          'dependencyParsing "Input string here"')
+    print('Error: a integer must be passed with the function in the format:\n'+
+          'runnerAdvanced <integer here>')
     sys.exit()
 
 number = int(args[1])
