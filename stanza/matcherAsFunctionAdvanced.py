@@ -22,22 +22,24 @@ def MatcherMiddleware(jsonData):
                           )
 
     i = 0
-    while i < len(jsonData): 
-        base = jsonData[i]['baseTx']
-        print("\nStatement", str(i) + ": " + jsonData[i]['name'])
-        output = Matcher(base)
-        print(base + "\n" + jsonData[i]['manual'] + "\n" + output)
-        
-        jsonData[i]["stanza"] = output
+    textDocs=[]
+    while i < len(jsonData):
+        textDocs.append(jsonData[i]['baseTx'])
         i += 1
 
-    return jsonData
+    docs = nlpPipelineMulti(textDocs)
 
-# Matcher function
-# Performs all steps for automatically annotating a sentence, from running the pipeline on the text
-# to handling the data, matching the dependencies to components and writing the final string.
-def Matcher(text):
-    return WordsToSentence(matchingFunction(compoundWordsMiddleware(nlpPipeline(text))))
+    i = 0
+    while i < len(docs):
+        print("\nStatement", str(i) + ": " + jsonData[i]['name'])
+        output = WordsToSentence(
+            matchingFunction(compoundWordsMiddleware(docs[i].sentences[0].words)))
+        print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
+        
+        jsonData[i]["stanza"] = output
+        i+=1
+
+    return jsonData
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
