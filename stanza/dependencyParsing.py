@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from matcherAsFunctionAdvanced import compoundWordsMiddleware
+from utility import compoundWordsMiddleware
 
 nlp = stanza.Pipeline('en', use_gpu=False, 
     processors='tokenize,pos,lemma,constituency,depparse,ner', 

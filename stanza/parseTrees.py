@@ -2,7 +2,7 @@ import json
 import stanza
 from spacy import displacy
 
-from matcherAsFunctionAdvanced import compoundWordsMiddleware
+from utility import compoundWordsMiddleware
 
 filename = "../data/input.json"
 

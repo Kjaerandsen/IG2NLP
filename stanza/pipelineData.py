@@ -2,7 +2,7 @@ import json
 import stanza
 import pandas as pd
 
-from matcherAsFunctionAdvanced import compoundWordsMiddleware
+from utility import compoundWordsMiddleware
 
 filename = "../data/input.json"
 
