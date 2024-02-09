@@ -87,9 +87,13 @@ class Word:
         self.head = head-1
 
     def __str__(self):
-        return("Word: "+ self.text + " pos: "+ self.pos + " deprel: "+ str(self.deprel) 
-               + " head: " + str(self.head) + " id: " + str(self.id)
-               + " start: " + str(self.start) + " end: " + str(self.end))
+        return("Word: "+ self.text + " | pos: "+ self.pos + " | " + self.xpos  
+               + " | deprel: "+ str(self.deprel) + " | id: " + str(self.id)
+               + " | head: " + str(self.head) 
+               + " | start: " + str(self.start) + " | end: " + str(self.end)
+               + "\nLemma: " + self.lemma + " | Symbol: " + self.symbol + " "
+               + str(self.position) + " " + str(self.nested) + " | NER:" + self.ner 
+               + "\nFeats: " + self.feats)
 
 # MiddleWare for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
 # statements and runs through all included statements.
@@ -103,9 +107,8 @@ def MatcherMiddleware(jsonData):
     i = 0
     while i < len(jsonData): 
         base = jsonData[i]['baseTx']
-
-        output = Matcher(base)
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
+        output = Matcher(base)
         print(base + "\n" + jsonData[i]['manual'] + "\n" + output)
         
         jsonData[i]["stanza"] = output
