@@ -16,7 +16,10 @@ nlp = None
 def MatcherMiddleware(jsonData):
     global nlp
     nlp = stanza.Pipeline('en', use_gpu=True,
-                          processors='tokenize,lemma,pos,depparse', 
+                          processors='tokenize,lemma,pos,depparse',
+                          #package={"pos": "combined_electra-large",
+                          #         "depparse": "combined_electra-large",
+                          #         "lemma": "combined_charlm"},
                           download_method=stanza.DownloadMethod.REUSE_RESOURCES,
                           logging_level="fatal"
                           )
@@ -44,6 +47,7 @@ def MatcherMiddleware(jsonData):
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     # Run the nlp pipeline on the input text
+    print("TEXT:\n",text)
     doc = nlp(text)
     return doc.sentences[0].words
 
@@ -598,9 +602,8 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
     # Go through again from the activation condition++
     # Until the word is no longer connected to the advcl
         
-    # Set the lastVal to the current id -1
-            
-    lastIndex = 0
+    # Set the lastVal to the current id -1    
+    lastIndex = i+1
     k = i+1
     while k < len(words):
         if not ifHeadRelation(words, k, i):
