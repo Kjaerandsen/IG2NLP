@@ -300,6 +300,9 @@ def matchingFunction(words):
                 j += 1
             
             if scopeEnd - scopeStart >= minimumCexLength:
+                # Reconsider the two lines below in the future
+                #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
+                #    scopeStart += 2
                 # Look for symbols within
                 '''
                 j = scopeStart
@@ -349,6 +352,9 @@ def matchingFunction(words):
                 j += 1
             
             if scopeEnd - scopeStart != 0:
+                # Reconsider the two lines below in the future
+                #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
+                #    scopeStart += 2
                 # Add the words as a Cex
                 words[scopeStart].setSymbol("Cex", 1)
                 words[scopeEnd].setSymbol("Cex", 2)
@@ -548,6 +554,7 @@ def matchingFunction(words):
         elif words[words[i].head-1].deprel == "root":
             if "aux" in deprel:
                 if words[words[i].head-1].pos == "VERB":
+                    print("Deontic: ", words[i].xpos)
                     # Combine two adjacent deontics if present.
                     if words[i-1].symbol == "D":
                         words[i-1].setSymbol("D",1)
