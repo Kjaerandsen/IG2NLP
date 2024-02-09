@@ -164,7 +164,8 @@ def compoundWords(customWords):
         
         # If the word is a "PART" case dependency
         elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
-            if customWords[i+2].deprel == "punct" and customWords[i+2].head-1 == i+1:
+            if (i+2 < wordLen and customWords[i+2].deprel == "punct" and 
+                customWords[i+2].head-1 == i+1):
                 # Combine the punct and following word
                 i, wordLen = removeWord(customWords, i, wordLen)
 
