@@ -47,6 +47,7 @@ def nlpPipeline(text):
     doc = nlp(text)
     return doc.sentences[0].words
 
+# Takes a list of sentences as strings, returns the nlp pipeline results for the sentences
 def nlpPipelineMulti(textDocs):
     docs = nlp.bulk_process(textDocs)
     return docs

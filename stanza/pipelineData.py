@@ -10,13 +10,13 @@ global nlp
 
 pd.set_option('display.max_rows', None)
 
-nlp = stanza.Pipeline('en', use_gpu=False, 
+nlp = stanza.Pipeline('en', use_gpu=True, 
     processors='tokenize,pos,lemma,depparse,ner', 
     package={"ner": ["ontonotes_charlm"]},
     download_method=stanza.DownloadMethod.REUSE_RESOURCES,
     logging_level="fatal")
 
-nlp2 = stanza.Pipeline('en', use_gpu=False, 
+nlp2 = stanza.Pipeline('en', use_gpu=True, 
     processors='tokenize,pos,lemma,ner', 
     package={"ner": ["conll03_charlm"]},
     download_method=stanza.DownloadMethod.REUSE_RESOURCES,
@@ -32,11 +32,18 @@ with open(filename, "r") as input:
 
     with open("../data/pipeline.txt", "w") as outputFile:
     
+        textDocs = []
         while i < len(jsonData): 
-            base = jsonData[i]['baseTx']
-            
-            doc = nlp(base)
-            doc2 = nlp(base)
+            textDocs.append(jsonData[i]['baseTx'])
+            i+=1
+
+        docs = nlp.bulk_process(textDocs)
+        docs2 = nlp2.bulk_process(textDocs)
+
+        i = 0
+        while i < len(docs):
+            doc = docs[i]
+            doc2 = docs2[i]
             
             print(doc.text)
             outputFile.write("Name: "+ str(i)+"-"+jsonData[i]['name']+ "\n")

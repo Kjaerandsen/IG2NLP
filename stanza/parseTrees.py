@@ -7,13 +7,10 @@ from utility import compoundWordsMiddleware
 filename = "../data/input.json"
 
 global nlp
-nlp = stanza.Pipeline('en', use_gpu=False,
+nlp = stanza.Pipeline('en', use_gpu=True,
     processors='tokenize,pos,lemma,depparse,ner', 
     download_method=stanza.DownloadMethod.REUSE_RESOURCES,
     logging_level="fatal")
-
-nlp.processors.pop("sentiment")
-nlp.processors.pop("constituency")
 
 with open(filename, "r") as input:
     
@@ -22,11 +19,18 @@ with open(filename, "r") as input:
     i = 0
 
     print("Running with ", len(jsonData), " items.")
-    
+    textDocs = []
     while i < len(jsonData): 
+        textDocs.append(jsonData[i]['baseTx'])
+        i+=1
+
+    docs = nlp.bulk_process(textDocs)
+
+    i = 0
+    while i < len(docs):
         base = jsonData[i]['baseTx']
         
-        doc = nlp(base)
+        doc = docs[i]
 
         depData = {"words":[],
            "arcs":[]}
