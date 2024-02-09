@@ -505,9 +505,11 @@ def matchingFunction(words):
                             if words[i].position == 2:
                                 words[i].setSymbol("")
                                 words[i+1].setSymbol("A",2)
+                                i+=1
                             else:
                                 words[i].setSymbol("A",1)
                                 words[i+1].setSymbol("A",2)
+                                i+=1
                     j+=1 
                 if not other:
                     smallLogicalOperator(words, i, "A", wordLen)
@@ -515,9 +517,11 @@ def matchingFunction(words):
                         if words[i].position == 2:
                             words[i].setSymbol("")
                             words[i+1].setSymbol("A",2)
+                            i+=1
                         else:
                             words[i].setSymbol("A",1)
                             words[i+1].setSymbol("A",2)
+                            i+=1
             # If the nsubj is a pronoun connected to root then handle it as an attribute
             # This may need to be reverted in the future if coreference resolution is used
             # in that case, the coreference resolution will be used to add the appropriate attribute
@@ -527,9 +531,11 @@ def matchingFunction(words):
                     if words[i].position == 2:
                         words[i].setSymbol("")
                         words[i+1].setSymbol("A",2)
+                        i+=1
                     else:
                         words[i].setSymbol("A",1)
                         words[i+1].setSymbol("A",2)
+                        i+=1
 
          # If the relation is a ccomp then handle it as a direct object
             '''
@@ -554,7 +560,8 @@ def matchingFunction(words):
         elif words[words[i].head-1].deprel == "root":
             if "aux" in deprel:
                 if words[words[i].head-1].pos == "VERB":
-                    print("Deontic: ", words[i].xpos)
+                    #print("Deontic: ", words[i].xpos) 
+                    #Might be worth looking into deontics that do not have xpos of MD
                     # Combine two adjacent deontics if present.
                     if words[i-1].symbol == "D":
                         words[i-1].setSymbol("D",1)
