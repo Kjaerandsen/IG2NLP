@@ -98,11 +98,27 @@ Opens `input.json` with the structure:
   {
     "name": "Custom name for the statement",
     "baseTx": "Base statement text",
-    "manual": "Manually annotated statement",
-    "stanza": "Automatically annotated statement using stanza",
+    ...
   },
 ]
 ```
 
 Goes through all base statement texts and creates displacy visualizations of 
 their dependency parse trees. These trees are written to html documents in the data directory.
+
+### pipelineData.py
+
+Opens `input.json` with the structure:
+
+```
+[
+  {
+    "name": "Custom name for the statement",
+    "baseTx": "Base statement text",
+    ...
+  },
+]
+```
+
+Goes through all base statement texts, runs a Stanza pipeline on the statement texts and writes
+the data to tables in a pipeline.txt file.
