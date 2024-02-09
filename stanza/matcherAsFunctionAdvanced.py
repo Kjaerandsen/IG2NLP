@@ -11,14 +11,15 @@ minimumCexLength = 1
 # without multiple initializations
 nlp = None
 
-# MiddleWare for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
+# Middleware for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
 # statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
     global nlp
-    nlp = stanza.Pipeline('en', use_gpu=False,
+    nlp = stanza.Pipeline('en', use_gpu=True,
                           processors='tokenize,lemma,pos,depparse', 
                           download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-                          logging_level="fatal")
+                          logging_level="fatal"
+                          )
 
     i = 0
     while i < len(jsonData): 
@@ -44,6 +45,10 @@ def nlpPipeline(text):
     doc = nlp(text)
     return doc.sentences[0].words
 
+def nlpPipelineMulti(textDocs):
+    docs = nlp.bulk_process(textDocs)
+    return docs
+
 # Matching function, takes a list of words with dependency parse and pos-tag data.
 # Returns a list of words with IG Script notation symbols.
 def matchingFunction(words):
@@ -55,9 +60,9 @@ def matchingFunction(words):
         deprel = words[i].deprel
 
         # Print out more complex dependencies for future handling
-        if ":" in deprel:
-            if deprel != "aux:pass" and deprel != "obl:tmod":
-                print("\n", '":" dependency: ',words[i], "\n")
+        #if ":" in deprel:
+        #    if deprel != "aux:pass" and deprel != "obl:tmod":
+        #        print("\n", '":" dependency: ',words[i], "\n")
 
         #print(words[words[i].head-1], words[i].deprel, words[i].text)
 
@@ -160,8 +165,8 @@ def matchingFunction(words):
             
             i = scopeEnd
 
-        elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
-            print("\nnmod connected to Attribute(A): ", words[i])
+        #elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
+            #print("\nnmod connected to Attribute(A): ", words[i])
 
         # (Bdir) Object detection
         elif deprel == "obj":
@@ -230,7 +235,7 @@ def matchingFunction(words):
 
                 while k < wordLen:
                     if words[k].deprel == "xcomp" and words[k].head-1 == i:
-                        print("XComp of I: ", words[k], k, i)
+                        #print("XComp of I: ", words[k], k, i)
                         if k-i == 2:
                             #words[i].setSymbol("")
                             #words[i+2].setSymbol("I")
@@ -284,8 +289,8 @@ def matchingFunction(words):
                 # Else only add the Bdir,p
                 else:
                     words[i].setSymbol("Bdir,p")
-            else:
-                print("\nWord is nmod:poss: ", words[i])
+            #else:
+                #print("\nWord is nmod:poss: ", words[i])
         
         # (A) Attribute detection
         elif "nsubj" in deprel:
@@ -296,7 +301,7 @@ def matchingFunction(words):
                 other = False
                 while j < wordLen:
                     if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
-                        print("A with xpos: ", words[j], words[j].xpos)
+                        #print("A with xpos: ", words[j], words[j].xpos)
                         #print("Nmod head relation to a: ", words[j], words[i])
                         smallLogicalOperator(words, j, "A", wordLen)
                         other = True
@@ -610,15 +615,15 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
     if firstVal == 0:
         contents = []
 
-        activationCondition = matchingFunction(
+        condition = matchingFunction(
             compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
         #actiWords = copy.deepcopy(words[:lastIndex])
-        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+        #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
         j = 0
         oblCount = 0
-        while j < len(activationCondition):
-            if "obl" in activationCondition[j].deprel:
+        while j < len(condition):
+            if "obl" in condition[j].deprel:
                 oblCount+=1
             j+=1
 
@@ -627,11 +632,11 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         else:
             symbol = "Cac"
 
-        if validateNested(activationCondition):
+        if validateNested(condition):
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
-            words2 += activationCondition
+            words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
         else:
@@ -666,19 +671,19 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         # Do the same as above, but also with the words before this advcl
         contents = []
 
-        preActivationCondition = matchingFunction(
+        preCondition = matchingFunction(
             compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
-        words2 += preActivationCondition
+        words2 += preCondition
 
-        activationCondition = matchingFunction(
+        condition = matchingFunction(
             compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
         
         #actiWords = copy.deepcopy(words[:lastIndex])
-        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+        #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
         j = 0
         oblCount = 0
-        while j < len(activationCondition):
-            if "obl" in activationCondition[j].deprel:
+        while j < len(condition):
+            if "obl" in condition[j].deprel:
                 oblCount+=1
             j+=1
 
@@ -687,11 +692,11 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         else:
             symbol = "Cac"
 
-        if validateNested(activationCondition):
+        if validateNested(condition):
             words2.append(Word(
             "","","",0,0,"","","",0,0,1,symbol,True,1
             ))
-            words2 += activationCondition
+            words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
         else:
@@ -827,7 +832,7 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     words2 += matchingFunction(
         compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
 
-    print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
+    #print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
     activationCondition = matchingFunction(
         compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
     #actiWords = copy.deepcopy(words[:lastIndex])
@@ -840,6 +845,22 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     words2.append(Word("","","",0,0,"","","",0,0,0,"O",True,2))
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])
+
+def findInternalLogicalOperators(words, start, end):
+    j = start
+
+    while j < end:
+        if words[j].deprel == "cc":
+            print("CC", words[j])
+            # Need to handle cases such as:
+            '''
+            a and b
+            a, b, and c
+            a, b and c, or d
+            '''
+        else:
+            print(words[j].text)
+        j += 1
 
 # Function that tries to use the old dependency parse tree for the second part of sentences starting
 # with an activation condition. If the words do not include a root connection the words are
