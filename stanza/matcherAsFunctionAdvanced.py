@@ -28,7 +28,8 @@ class Word:
         self.nested = nested
         self.position = position
         self.spaces = spaces
-        self.feats = feats
+        if feats != None: self.feats = feats
+        else: self.feats = ""
         self.ner = ner
 
     # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
@@ -538,6 +539,12 @@ def matchingFunction(words):
                         words[i].setSymbol("A",1)
                         words[i+1].setSymbol("A",2)
                         i+=1
+
+            # (A,p) detection mechanism, might be too specific. 
+            # Is overwritten by Aim (I) component in several cases
+            if words[i+1].deprel == "advcl" and words[words[i+1].head-1].deprel == "root":
+                #print("ADVCL")
+                words[i+1].setSymbol("A,p")
 
          # If the relation is a ccomp then handle it as a direct object
             '''
