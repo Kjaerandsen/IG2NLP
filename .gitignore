@@ -1,0 +1,15 @@
+**.venv/
+**.env/
+**env/
+**/.venv/
+**/.env/
+.venv/
+.env/
+env/
+**.env
+**/corenlp/
+**.json
+**.txt
+**__pycache__/
+**/IG-Parser
+**.html
