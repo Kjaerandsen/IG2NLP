@@ -7,6 +7,8 @@ To install the dependencies run
 
 `pip install -r requirements.txt`
 
+Alternatively see the dependencies section below.
+
 I recommend using a virtual environment.
 
 Tested using Python 3.11, models used do not support Python 3.12 as of the time of writing.
@@ -122,3 +124,19 @@ Opens `input.json` with the structure:
 
 Goes through all base statement texts, runs a Stanza pipeline on the statement texts and writes
 the data to tables in a pipeline.txt file.
+
+## Dependencies
+
+Dependencies are Stanza, Spacy and Pandas. They can be installed using the command:
+
+```
+pip install stanza 
+pip install spacy
+pip install pandas
+pip install pyarrow
+pip install transformers
+pip install peft
+```
+
+Further for GPU processing Cuda is required, and PyTorch with Cuda.
+See `https://pytorch.org/get-started/locally/`.
