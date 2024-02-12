@@ -91,10 +91,16 @@ def convertWordFormat(words):
     customWords = []
 
     while i < wordLen:
+        token = words[i].parent
+        # This may need separate handling for MWT's to handle the BIE formatting
+        if token.multi_ner != None and token.multi_ner[0] != 'O':
+            if len(token.multi_ner) > 1 and token.multi_ner[0] != token.multi_ner[1]:
+                    print("Different annotations: ",token.multi_ner[0], ", ", token.multi_ner[1])
+            #print("Ner: ", token.multi_ner, token.text)
+
         # If no start char then it is a mwt
         # Handle the words of the mwt then iterate
         if words[i].start_char == None:
-            token = words[i].parent
 
             # Get the amount of words to handle
             tokenSize = len(token.id)-1
@@ -115,6 +121,7 @@ def convertWordFormat(words):
             
 
             addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+            customWords[i].ner = words[i].parent.multi_ner[0]
             i+=1
 
             j=0
@@ -131,6 +138,7 @@ def convertWordFormat(words):
                 tokenText = tokenText[endChar:]
                 
                 addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+                customWords[i].ner = words[i].parent.multi_ner[0]
                 i+=1
                 j+=1
 
@@ -145,6 +153,7 @@ def convertWordFormat(words):
 
         addToCustomWords(customWords, words[i], words[i].text, words[i].start_char, 
                          words[i].end_char, spaces)
+        customWords[i].ner = words[i].parent.multi_ner[0]
 
         i += 1
 
