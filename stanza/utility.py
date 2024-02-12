@@ -91,29 +91,82 @@ def convertWordFormat(words):
     customWords = []
 
     while i < wordLen:
+        # If no start char then it is a mwt
+        # Handle the words of the mwt then iterate
+        if words[i].start_char == None:
+            token = words[i].parent
+
+            # Get the amount of words to handle
+            tokenSize = len(token.id)-1
+
+            tokenText = token.text
+
+            startChar = token.start_char
+            endChar = startChar + len(words[i].text)
+
+            wordText = tokenText[:endChar]
+            tokenText = tokenText[len(words[i].text):]
+
+            if i > 0:
+                spaces = startChar - customWords[i-1].end
+            else:
+                spaces = 0
+
+            
+
+            addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+            i+=1
+
+            j=0
+            while j < tokenSize:
+                word = words[i]
+
+                startLoc = tokenText.find(word.text)
+
+                spaces = startLoc
+                startChar = endChar + spaces
+                endChar = startChar + len(word.text)
+
+                wordText = tokenText[startChar:endChar]
+                tokenText = tokenText[endChar:]
+                
+                addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+                i+=1
+                j+=1
+
+            # Go to the next iteration
+            continue
+        
+        # Else calculate the number of spaces and add the word to the list
         if i > 0:
-            spaces = words[i].start_char - words[i-1].end_char
+            spaces = words[i].start_char - customWords[i-1].end
         else:
             spaces = 0
 
-        customWords.append(
-            Word(
-                words[i].text,
-                words[i].pos,
-                words[i].deprel,
-                words[i].head,
-                words[i].id,
-                words[i].lemma,
-                words[i].xpos,
-                words[i].feats,
-                words[i].start_char,
-                words[i].end_char,
-                spaces
-            ))
+        addToCustomWords(customWords, words[i], words[i].text, words[i].start_char, 
+                         words[i].end_char, spaces)
 
         i += 1
 
     return customWords
+
+# Simple function for appending to the customWords list. Takes text, start and end parameters 
+# to facilitate multi word tokens(MWTs).
+def addToCustomWords(customWords, word, text, start, end, spaces):
+    customWords.append(
+            Word(
+                text,
+                word.pos,
+                word.deprel,
+                word.head,
+                word.id,
+                word.lemma,
+                word.xpos,
+                word.feats,
+                start,
+                end,
+                spaces
+            ))
 
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
