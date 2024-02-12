@@ -16,12 +16,17 @@ nlp = None
 def MatcherMiddleware(jsonData):
     global nlp
     nlp = stanza.Pipeline('en', use_gpu=True,
-                          processors='tokenize,lemma,pos,depparse',
-                          #package={"pos": "combined_electra-large",
-                          #         "depparse": "combined_electra-large",
-                          #         "lemma": "combined_charlm"},
-                          download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-                          logging_level="fatal"
+                          processors='tokenize,lemma,pos,depparse, mwt, ner',
+                          package={
+                                "tokenize": "combined",
+                                "mwt": "combined",
+                                "pos": "combined_electra-large",
+                                #"depparse": "combined_electra-large",
+                                "lemma": "combined_charlm",
+                                "ner": "ontonotes-ww-multi_charlm"
+                          },
+                          #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
+                          #logging_level="fatal"
                           )
 
     i = 0
@@ -47,7 +52,6 @@ def MatcherMiddleware(jsonData):
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     # Run the nlp pipeline on the input text
-    print("TEXT:\n",text)
     doc = nlp(text)
     return doc.sentences[0].words
 
