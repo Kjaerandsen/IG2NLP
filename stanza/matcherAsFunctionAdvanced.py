@@ -290,6 +290,10 @@ def matchingFunction(words):
                 smallLogicalOperator(words, i, "A,p", wordLen)
                 #words[i].setSymbol("A,p")
 
+        # (A,p) Attribute property detection 2
+        elif words[i].deprel == "acl" and words[words[i].head-1].symbol == "A":
+            words[i].setSymbol("A,p")
+
         # (Bdir,p) Direct object property detection 2
         elif words[i].deprel == "nmod:poss":
             if words[words[i].head-1].deprel == "obj" and words[i].head-1 == i+1:
