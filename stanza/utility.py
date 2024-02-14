@@ -2,7 +2,8 @@
 # takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
     def __init__(self, text, pos, deprel, head, id, lemma, xpos, feats,
-                 start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner=""):
+                 start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
+                 logical=0):
         self.id = id
         self.text = text
         self.deprel = deprel
@@ -19,6 +20,7 @@ class Word:
         if feats != None: self.feats = feats
         else: self.feats = ""
         self.ner = ner
+        self.logical = 0 # 1 for left and right bracket, 2 for left, 3 for right, 4 for the operator
 
     # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
     def getContents(self):
@@ -49,6 +51,11 @@ class Word:
         else:
             output += self.text
         return output
+    
+    def toLogical(self):
+        if self.logical == 0:
+            self.text = "[" + self.text.upper() + "]"
+            self.logical = 4
     
     # Function to set the symbol of the word,
     # Position defines whether the symbol encapsulates only the word (0),
