@@ -16,7 +16,7 @@ nlp = None
 def MatcherMiddleware(jsonData):
     global nlp
     nlp = stanza.Pipeline('en', use_gpu=True,
-                          processors='tokenize,lemma,pos,depparse, mwt, ner',
+                          processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
                           package={
                                 "tokenize": "combined",
                                 "mwt": "combined",
@@ -41,7 +41,10 @@ def MatcherMiddleware(jsonData):
     while i < len(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
         output = WordsToSentence(
-            matchingFunction(compoundWordsMiddleware(docs[i].sentences[0].words)))
+            corefReplace(
+                matchingFunction(
+                    compoundWordsMiddleware(
+                        docs[i].sentences[0].words))))
         print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
         
         jsonData[i]["stanza"] = output
@@ -1127,4 +1130,22 @@ def removeStart(words, offset, wordLen):
     if noRoot:
         return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
 
+    return words
+
+def corefReplace(words):
+    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
+    i = 0
+    wordLen = len(words)
+    while i < wordLen:
+        if words[i].symbol == "A" and words[i].pos == "PRON" and words[i].coref != "":
+            #print(words[i].text, i)
+            words = addWord(words, i, words[i].text, wordLen)
+            i+=1
+            wordLen += 1
+            #print("word has coref", words[i].text, "Coref is: ", words[i].coref)
+            words[i].text = "["+words[i].coref+"]"
+            words[i].spaces = 1
+            #print(words[i+1].text, i, "\n\n")
+        i+=1
+    
     return words

@@ -3,7 +3,7 @@
 class Word:
     def __init__(self, text, pos, deprel, head, id, lemma, xpos, feats,
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
-                 logical=0):
+                 logical=0, corefid = -1, coref = "", corefScope = 0, isRepresentative=False):
         self.id = id
         self.text = text
         self.deprel = deprel
@@ -20,7 +20,11 @@ class Word:
         if feats != None: self.feats = feats
         else: self.feats = ""
         self.ner = ner
-        self.logical = 0 # 1 for left and right bracket, 2 for left, 3 for right, 4 for the operator
+        self.logical = logical # 1 for left and right bracket, 2 for left, 3 for right, 4 for the operator
+        self.coref = coref
+        self.corefid = corefid
+        self.corefScope = corefScope
+        self.isRepresentative = isRepresentative
 
     # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
     def getContents(self):
@@ -162,6 +166,47 @@ def convertWordFormat(words):
                          words[i].end_char, spaces)
         customWords[i].ner = words[i].parent.multi_ner[0]
 
+        if words[i].coref_chains != None and len(words[i].coref_chains) > 0:
+            #print("\n\nNEW WORD\n\n")
+            coref = words[i].coref_chains[0]
+            #print(coref.__dict__.keys())
+            #print(coref.__dict__)
+            #print(coref.is_start)
+            #print(coref.is_end)
+            #print(coref.is_representative)
+            #print(coref.chain.__dict__.keys())
+            #print(coref.chain.__dict__)
+            #print(coref.chain.index)
+            #print(coref.chain.representative_text)
+            #print(coref.chain.representative_index)
+            #for mention in coref.chain.mentions:
+            #    print(mention.__dict__.keys())
+            #    print(mention.__dict__)
+
+            customWords[i].coref = coref.chain.representative_text
+            customWords[i].corefid = coref.chain.index
+            if coref.is_start and coref.is_end:
+                scope = 0
+            elif not coref.is_start and coref.is_end:
+                scope = 2
+            elif coref.is_start and not coref.is_end:
+                scope = 1
+            customWords[i].scope = scope
+            customWords[i].isRepresentative = coref.is_representative
+
+            #print("\n\nCOREF is ", customWords[i].coref, coref.chain.representative_text)
+            '''
+            customWords[i].corefid = coref.index
+            customWords[i].coref = coref.representative_text
+            if coref.is_start and coref.is_end:
+                scope = 0
+            elif not coref.is_start and coref.is_end:
+                scope = 2
+            elif coref.is_start and not coref.is_end:
+                scope = 1
+            customWords[i].scope = scope
+            '''
+
         i += 1
 
     return customWords
@@ -271,6 +316,31 @@ def removeWord(words,i,wordLen,direction=0):
     # Remove the extra word
     del words[i]
     return i-1, wordLen-1
+
+def addWord(words, i, wordText, wordLen):
+    #print(i)
+    for word in words:
+        #print(word.head, word.head-1)
+        if word.head-1 >= i and word.head != 0:
+            word.head+=1
+        
+        if word.id > i:
+            word.id += 1
+
+    newWord = []
+    newWord.append(Word(wordText,"","",0,i,"","","",0,0,words[i].spaces))
+    #print(WordsToSentence(words[:i+1]))
+    #print(WordsToSentence(newWord))
+    #print(WordsToSentence(words[:i+1] + newWord + words[i+1:]))
+    #print(WordsToSentence(words[:i+1] + words[i+1:]))
+    #print(newWord[0].text)
+
+    
+    words = words[:i] + newWord + words[i:]
+    #print(WordsToSentence(words))
+
+    return words
+
 
 # Takes a list of tokens, returns the output text contained within.
 def tokenToText(tokens):
