@@ -5,11 +5,6 @@ from spacy import displacy
 
 from utility import compoundWordsMiddleware
 
-nlp = stanza.Pipeline('en', use_gpu=False, 
-    processors='tokenize,pos,lemma,constituency,depparse,ner', 
-    package={"ner": ["ontonotes_charlm","conll03_charlm"]},
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
 # Take the system arguments
 args = sys.argv
 
@@ -18,6 +13,20 @@ if len(args)<2:
     print('Error: a string must be passed with the function in the format:\n'+
           'dependencyParsing "Input string here"')
     sys.exit()
+
+nlp = stanza.Pipeline('en', use_gpu=True, 
+    processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
+    package={
+        "tokenize": "combined",
+        "mwt": "combined",
+        "ner": ["ontonotes_charlm","conll03_charlm"],
+        "pos": "combined_electra-large",
+        "depparse": "combined_electra-large",
+        "lemma": "combined_charlm",
+        "ner": "ontonotes-ww-multi_charlm"
+    },
+    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
+    logging_level="fatal")
 
 # Take the input string
 doc = nlp(args[1])
@@ -29,6 +38,19 @@ print('Now printing named entities\n')
 #    print(sentence.ents)
 
 print(doc.ents)
+
+print("DOC DATA\n", doc.__dict__.keys())
+
+print("Coref chains:\n")
+
+#print("DOC coref: ", doc.coref)
+
+for item in doc.coref:
+    print("Index: ", item.index, "| Mentions: ",[value.__dict__ for value in item.mentions], 
+          "| Representative text: ", item.representative_text, 
+          "| Representative id: ", item.representative_index)
+    #print(item.__dict__)
+    #print(item.__dict__.keys())
 
 print(doc.sentences[0].tokens[0:2])
 print(doc.sentences[0].tokens[8:10])
@@ -79,4 +101,4 @@ for sentence in doc.sentences:
     print(sentence.constituency)
 
 # Spin up a webserver on port 5000 with the dependency tree using displacy
-displacy.serve(depData, style="dep", manual=True)
+displacy.serve(depData, style="dep", manual=True, port=5001)
