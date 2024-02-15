@@ -1234,8 +1234,11 @@ def corefReplace(words):
     #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
     i = 0
     wordLen = len(words)
+    
+    brackets = 0
     while i < wordLen:
-        if words[i].symbol == "A" and words[i].pos == "PRON" and words[i].coref != "":
+        if (words[i].symbol == "A" and words[i].pos == "PRON" and 
+            words[i].coref != "" and words[i].position == 0):
             #print(words[i].text, i)
             words = addWord(words, i, words[i].text, wordLen)
             i+=1
@@ -1244,6 +1247,19 @@ def corefReplace(words):
             words[i].text = "["+words[i].coref+"]"
             words[i].spaces = 1
             #print(words[i+1].text, i, "\n\n")
+        elif words[i].pos == "PRON" and words[i].coref != "":
+            if brackets == 0 and words[i].symbol == "":
+                words = addWord(words, i, words[i].text, wordLen)
+                i+=1
+                wordLen += 1
+                words[i].text = "["+words[i].coref+"]"
+                words[i].spaces = 1
+                words[i].setSymbol("A")
+        else:
+            if words[i].position == 1 and words[i].nested == False:
+                brackets+=1
+            if words[i].position == 2 and words[i].nested == False:
+                brackets-=1
         i+=1
     
     return words
