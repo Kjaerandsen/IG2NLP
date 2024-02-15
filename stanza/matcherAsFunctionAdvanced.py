@@ -1,11 +1,13 @@
 import stanza
 import time
 import copy
+import requests
 from utility import *
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
+useREST = False
 
 # Global variable for the nlp pipeline, allows for reusing the pipeline 
 # without multiple initializations
@@ -14,20 +16,21 @@ nlp = None
 # Middleware for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
 # statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
-    global nlp
-    nlp = stanza.Pipeline('en', use_gpu=True,
-                          processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
-                          package={
-                                "tokenize": "combined",
-                                "mwt": "combined",
-                                "pos": "combined_electra-large",
-                                #"depparse": "combined_electra-large",
-                                "lemma": "combined_charlm",
-                                "ner": "ontonotes-ww-multi_charlm"
-                          },
-                          #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-                          #logging_level="fatal"
-                          )
+    if not useREST:
+        global nlp
+        nlp = stanza.Pipeline('en', use_gpu=True,
+                            processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
+                            package={
+                                    "tokenize": "combined",
+                                    "mwt": "combined",
+                                    "pos": "combined_electra-large",
+                                    "depparse": "combined_electra-large",
+                                    "lemma": "combined_charlm",
+                                    "ner": "ontonotes-ww-multi_charlm"
+                            },
+                            #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
+                            #logging_level="fatal"
+                            )
 
     i = 0
     textDocs=[]
@@ -35,16 +38,33 @@ def MatcherMiddleware(jsonData):
         textDocs.append(jsonData[i]['baseTx'])
         i += 1
 
-    docs = nlpPipelineMulti(textDocs)
+    if useREST:
+        docs = nlpPipelineMulti(jsonData)
+    else:
+        docs = nlpPipelineMulti(textDocs)
 
     i = 0
     while i < len(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
-        output = WordsToSentence(
+        if not useREST:
+            words = docs[i].sentences[0].words
+            output = WordsToSentence(
             corefReplace(
                 matchingFunction(
                     compoundWordsMiddleware(
-                        docs[i].sentences[0].words))))
+                        words))))
+            # If rest data
+        else:
+            words = docs[i]
+            output = WordsToSentence(
+            corefReplace(
+                matchingFunction(
+                    compoundWordsMiddlewareWords(
+                        words))))
+
+
+        
+        
         print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
         
         jsonData[i]["stanza"] = output
@@ -55,13 +75,57 @@ def MatcherMiddleware(jsonData):
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     # Run the nlp pipeline on the input text
-    doc = nlp(text)
-    return doc.sentences[0].words
+    if not useREST:
+        doc = nlp(text)
+        return doc.sentences[0].words
+    else:
+        output = [{"baseTx":text}]
+        return nlpPipelineMulti(output)[0]
 
 # Takes a list of sentences as strings, returns the nlp pipeline results for the sentences
 def nlpPipelineMulti(textDocs):
-    docs = nlp.bulk_process(textDocs)
-    return docs
+    if not useREST:
+        docs = nlp.bulk_process(textDocs)
+        return docs
+    else:
+        #requestBody = []
+        #for doc in textDocs:
+        #    requestBody.append({"baseTx":str(doc)})
+        #print(textDocs.keys())
+        response = requests.post("http://localhost:5000", json = textDocs)
+        responseJSON = response.json()
+
+        docs = []
+        # Convert the response json to words
+        for sentence in responseJSON:
+            sentenceWords = []
+            for word in sentence:
+                sentenceWords.append(
+                    Word(
+                        word['text'],
+                        word['pos'],
+                        word['deprel'],
+                        word['head'],
+                        word['id'],
+                        word['lemma'],
+                        word['xpos'],
+                        word['feats'],
+                        word['start'],
+                        word['end'],
+                        word['spaces'],
+                        word['symbol'],
+                        word['nested'],
+                        word['position'],
+                        word['ner'],
+                        word['logical'],
+                        word['corefid'],
+                        word['coref'],
+                        word['corefScope'],
+                        word['isRepresentative']
+                    )
+                )
+            docs.append(sentenceWords)
+        return docs
 
 # Matching function, takes a list of words with dependency parse and pos-tag data.
 # Returns a list of words with IG Script notation symbols.
@@ -864,8 +928,12 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
     if firstVal == 0:
         contents = []
 
-        condition = matchingFunction(
-            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
+        if not useREST:
+            condition = matchingFunction(
+                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
+        else:
+            condition = matchingFunction(
+                compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
         #actiWords = copy.deepcopy(words[:lastIndex])
         #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
@@ -920,12 +988,21 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         # Do the same as above, but also with the words before this advcl
         contents = []
 
-        preCondition = matchingFunction(
-            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
-        words2 += preCondition
+        if not useREST:
+            preCondition = matchingFunction(
+                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+            words2 += preCondition
 
-        condition = matchingFunction(
-            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
+            condition = matchingFunction(
+                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
+        
+        else:
+            preCondition = matchingFunction(
+                compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+            words2 += preCondition
+
+            condition = matchingFunction(
+                compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
         
         #actiWords = copy.deepcopy(words[:lastIndex])
         #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
@@ -960,8 +1037,13 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         #                                            wordLen-(lastIndex+1)))
         
         if len(wordsBak) > lastIndex+1:
-            contents = matchingFunction(
-                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[lastIndex+1:]))))
+            if not useREST:
+                contents = matchingFunction(
+                    compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[lastIndex+1:]))))
+            else:
+                contents = matchingFunction(
+                    compoundWordsMiddlewareWords(nlpPipeline(
+                        WordsToSentence(wordsBak[lastIndex+1:]))))
 
             # Copy over the old placement information to the 
             # newly generated words for proper formatting
@@ -1025,8 +1107,13 @@ def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
         if firstVal == 0:
             contents = []
 
-            activationCondition = matchingFunction(
-                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
+            if not useREST:
+                activationCondition = matchingFunction(
+                    compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
+            else:
+                activationCondition = matchingFunction(
+                    compoundWordsMiddlewareWords(nlpPipeline(
+                        WordsToSentence(wordsBak[:lastIndex]))))
             #actiWords = copy.deepcopy(words[:lastIndex])
             #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
@@ -1078,14 +1165,22 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     else:
         lastIndex = wordLen
 
-    words2 += matchingFunction(
-        compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+    if not useREST:
+        words2 += matchingFunction(
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
 
-    #print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
-    activationCondition = matchingFunction(
-        compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
-    #actiWords = copy.deepcopy(words[:lastIndex])
-    #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+        #print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
+        activationCondition = matchingFunction(
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+        #actiWords = copy.deepcopy(words[:lastIndex])
+        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
+    else:
+        words2 += matchingFunction(
+            compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+
+        activationCondition = matchingFunction(
+            compoundWordsMiddlewareWords(nlpPipeline(
+                WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
 
     words2.append(Word(
     "","","",0,0,"","","",0,0,1,"O",True,1
@@ -1128,7 +1223,10 @@ def removeStart(words, offset, wordLen):
         i+=1
 
     if noRoot:
-        return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
+        if not useREST:
+            return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
+        else:
+            return compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(words)))
 
     return words
 

@@ -239,56 +239,54 @@ def compoundWordsMiddleware(words):
 
     return customWords
 
-def compoundWordsMiddlewareAdvanced(words, tokens):
-    #customWords = convertWordFormatAdvanced(words, tokens)
+def compoundWordsMiddlewareWords(words):
+    words = compoundWords(words)
+    words = compoundWords(words)
 
-    customWords = compoundWords(customWords)
-    customWords = compoundWords(customWords)
-
-    return customWords
+    return words
 
 # Takes the words from the nlp pipeline and combines combine words to a single word
 # Also converts the datatype to the Word class
-def compoundWords(customWords):
+def compoundWords(words):
     
-    wordLen = len(customWords)
+    wordLen = len(words)
     i = 0
     #print("type is: ", type(words[0]), " " , wordLen)
     while i < wordLen:
         # Compound of three words in the form compound, punct, word
         # Combines the punct and the compound first, then the main function combines the rest
         # the compound and the word
-        if customWords[i].deprel == "compound" and abs(customWords[i].head-1 - i) == 2:
-            if i < customWords[i].head-1:
-                if customWords[i+1].deprel == "punct":
-                    i, wordLen = removeWord(customWords, i+1, wordLen, 1)
+        if words[i].deprel == "compound" and abs(words[i].head-1 - i) == 2:
+            if i < words[i].head-1:
+                if words[i+1].deprel == "punct":
+                    i, wordLen = removeWord(words, i+1, wordLen, 1)
                     i-=1
 
         # If the word is a compound word
-        elif customWords[i].deprel == "compound" and customWords[i].head-1 == i+1: 
-            i, wordLen = removeWord(customWords, i, wordLen)
+        elif words[i].deprel == "compound" and words[i].head-1 == i+1: 
+            i, wordLen = removeWord(words, i, wordLen)
 
         
-        elif (customWords[i].deprel == "case" and customWords[i].head-1 == i-1 
-              and customWords[i].pos == "PART"):
+        elif (words[i].deprel == "case" and words[i].head-1 == i-1 
+              and words[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
-            #customWords[i-1].text = customWords[i-1].text + customWords[i].text
-            i, wordLen = removeWord(customWords, i, wordLen, 1)
+            #words[i-1].text = words[i-1].text + words[i].text
+            i, wordLen = removeWord(words, i, wordLen, 1)
 
         
         # If the word is a "PART" case dependency
-        elif customWords[i].deprel == "punct" and customWords[i].head-1 == i+1:
-            if (i+2 < wordLen and customWords[i+2].deprel == "punct" and 
-                customWords[i+2].head-1 == i+1):
+        elif words[i].deprel == "punct" and words[i].head-1 == i+1:
+            if (i+2 < wordLen and words[i+2].deprel == "punct" and 
+                words[i+2].head-1 == i+1):
                 # Combine the punct and following word
-                i, wordLen = removeWord(customWords, i, wordLen)
+                i, wordLen = removeWord(words, i, wordLen)
 
         # If the word is a compound part of the previous word, combine the previous and the current
-        elif customWords[i].deprel == "compound:prt" and customWords[i].head-1 == i-1:
-            i, wordLen = removeWord(customWords, i, wordLen, 1)
+        elif words[i].deprel == "compound:prt" and words[i].head-1 == i-1:
+            i, wordLen = removeWord(words, i, wordLen, 1)
         i += 1
 
-    return customWords
+    return words
 
 # Takes a list of words, an id, the length of the list of words and a direction
 # Combines the word with the next (0) or 
