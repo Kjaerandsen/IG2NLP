@@ -430,4 +430,8 @@ def loadEnvironmentVariables():
 
     logLevel = getenv("IG2STANZALOGLEVEL")
 
-    return useREST, useGPU, downloadMethod, logLevel
+    displacyPort = int(getenv("IG2DISPLACYPORT", 5001))
+
+    flaskURL = getenv("IG2FLASKURL", "http://localhost:5000")
+
+    return useREST, useGPU, downloadMethod, logLevel, displacyPort, flaskURL

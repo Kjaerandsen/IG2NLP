@@ -2,13 +2,15 @@ import stanza
 from utility import convertWordFormat
 import json
 from flask import Flask, request, Response
+from utility import loadEnvironmentVariables
 
 
-# flask --app .\restPipeline.py run
+# flask --app .\restPipeline.py run -p 5000
 
 def initialize():
+    __, useGPU, downloadMethod, logLevel, __, __= loadEnvironmentVariables()
     global nlp
-    nlp = stanza.Pipeline('en', use_gpu=True,
+    nlp = stanza.Pipeline('en', use_gpu=useGPU,
         processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
         package={
             "tokenize": "combined",
@@ -18,8 +20,8 @@ def initialize():
             "lemma": "combined_charlm",
             "ner": "ontonotes-ww-multi_charlm",
         },
-        #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-        #logging_level="fatal"
+        download_method=downloadMethod,
+        logging_level=logLevel
         )
     print("Finished initializing")
 

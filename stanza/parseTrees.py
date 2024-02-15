@@ -2,15 +2,26 @@ import json
 import stanza
 from spacy import displacy
 
-from utility import compoundWordsMiddleware
+from utility import compoundWordsMiddleware, loadEnvironmentVariables
 
 filename = "../data/input.json"
 
+__, useGPU, downloadMethod, logLevel, __, __ = loadEnvironmentVariables()
+
 global nlp
-nlp = stanza.Pipeline('en', use_gpu=True,
-    processors='tokenize,pos,lemma,depparse,ner', 
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
+nlp = stanza.Pipeline('en', use_gpu=useGPU,
+    processors='tokenize,pos,lemma,depparse,ner,mwt', 
+    package={
+        "tokenize": "combined",
+        "mwt": "combined",
+        "pos": "combined_electra-large",
+        "depparse": "combined_electra-large",
+        "lemma": "combined_charlm",
+        "ner": "ontonotes-ww-multi_charlm"
+    },
+    download_method=downloadMethod,
+    logging_level=logLevel
+    )
 
 with open(filename, "r") as input:
     

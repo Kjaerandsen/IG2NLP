@@ -9,6 +9,8 @@ CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 useREST = None
 
+flaskURL = None
+
 # Global variable for the nlp pipeline, allows for reusing the pipeline 
 # without multiple initializations
 nlp = None
@@ -17,7 +19,8 @@ nlp = None
 # statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
     global useREST
-    useREST, useGPU, downloadMethod, logLevel = loadEnvironmentVariables()
+    global flaskURL
+    useREST, useGPU, downloadMethod, logLevel, __, flaskURL = loadEnvironmentVariables()
 
     if not useREST:
         global nlp
@@ -94,7 +97,7 @@ def nlpPipelineMulti(textDocs):
         #for doc in textDocs:
         #    requestBody.append({"baseTx":str(doc)})
         #print(textDocs.keys())
-        response = requests.post("http://localhost:5000", json = textDocs)
+        response = requests.post(flaskURL, json = textDocs)
         responseJSON = response.json()
 
         docs = []

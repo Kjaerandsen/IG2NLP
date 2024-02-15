@@ -1,10 +1,12 @@
 import json
 import stanza
+from utility import loadEnvironmentVariables
 
 filename = "../data/input.json"
 
-global nlp
-nlp = stanza.Pipeline('en', use_gpu=True,
+useREST, useGPU, downloadMethod, logLevel, __, __= loadEnvironmentVariables()
+
+nlp = stanza.Pipeline('en', use_gpu=useGPU,
     processors='tokenize,pos,lemma,depparse,ner,mwt', 
     package={
         "tokenize": "combined",
@@ -14,11 +16,11 @@ nlp = stanza.Pipeline('en', use_gpu=True,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    #logging_level="fatal"
+    download_method=downloadMethod,
+    logging_level=logLevel
     )
 
-nlp2 = stanza.Pipeline('en', use_gpu=True,
+nlp2 = stanza.Pipeline('en', use_gpu=useGPU,
     processors='tokenize,pos,lemma,depparse,ner,mwt', 
     package={
         "tokenize": "combined",
@@ -28,8 +30,8 @@ nlp2 = stanza.Pipeline('en', use_gpu=True,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    #logging_level="fatal"
+    download_method=downloadMethod,
+    logging_level=logLevel
     )
 
 with open(filename, "r") as input:

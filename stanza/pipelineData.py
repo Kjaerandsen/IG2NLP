@@ -2,26 +2,28 @@ import json
 import stanza
 import pandas as pd
 
-from utility import compoundWordsMiddleware
+from utility import compoundWordsMiddleware, loadEnvironmentVariables
 
 filename = "../data/input.json"
 
 global nlp
 
+__, useGPU, downloadMethod, logLevel, __, __ = loadEnvironmentVariables()
+
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 200)
 
-nlp = stanza.Pipeline('en', use_gpu=True, 
+nlp = stanza.Pipeline('en', use_gpu=useGPU, 
     processors='tokenize,pos,lemma,depparse,ner,coref,mwt', 
     package={"ner": ["ontonotes_charlm"]},
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
+    download_method=downloadMethod,
+    logging_level=logLevel)
 
-nlp2 = stanza.Pipeline('en', use_gpu=True, 
+nlp2 = stanza.Pipeline('en', use_gpu=useGPU, 
     processors='tokenize,pos,lemma,ner,mwt', 
     package={"ner": ["conll03_charlm"]},
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
+    download_method=downloadMethod,
+    logging_level=logLevel)
 
 with open(filename, "r") as input:
     

@@ -3,7 +3,7 @@ import sys
 from spacy import displacy
 import requests
 
-from utility import Word, compoundWordsMiddlewareWords
+from utility import Word, compoundWordsMiddlewareWords, loadEnvironmentVariables
 
 # Take the system arguments
 args = sys.argv
@@ -18,8 +18,8 @@ if len(args)<2:
 out = [{"baseTx":args[1]}]
 
 #print(out, json.dumps(out))
-
-response = requests.post("http://localhost:5000", json = out)
+__, __, __, __, displacyPort, flaskURL= loadEnvironmentVariables()
+response = requests.post(flaskURL, json = out)
 
 jsonRes = response.json()
 
@@ -82,4 +82,4 @@ print("\nWords: ")
 print(df)
        
 # Spin up a webserver on port 5000 with the dependency tree using displacy
-displacy.serve(depData, style="dep", manual=True, port=5001)
+displacy.serve(depData, style="dep", manual=True, port=displacyPort)

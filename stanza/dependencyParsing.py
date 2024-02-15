@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from utility import compoundWordsMiddleware
+from utility import compoundWordsMiddleware, loadEnvironmentVariables
 
 # Take the system arguments
 args = sys.argv
@@ -14,7 +14,9 @@ if len(args)<2:
           'dependencyParsing "Input string here"')
     sys.exit()
 
-nlp = stanza.Pipeline('en', use_gpu=True, 
+__, useGPU, downloadMethod, logLevel, displacyPort, __ = loadEnvironmentVariables()
+
+nlp = stanza.Pipeline('en', use_gpu=useGPU, 
     processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
     package={
         "tokenize": "combined",
@@ -25,8 +27,8 @@ nlp = stanza.Pipeline('en', use_gpu=True,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
+    download_method=downloadMethod,
+    logging_level=logLevel)
 
 # Take the input string
 doc = nlp(args[1])
@@ -101,4 +103,4 @@ for sentence in doc.sentences:
     print(sentence.constituency)
 
 # Spin up a webserver on port 5000 with the dependency tree using displacy
-displacy.serve(depData, style="dep", manual=True, port=5001)
+displacy.serve(depData, style="dep", manual=True, port=displacyPort)
