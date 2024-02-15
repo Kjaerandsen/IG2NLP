@@ -22,8 +22,11 @@ def MatcherMiddleware(jsonData):
     global flaskURL
     useREST, useGPU, downloadMethod, logLevel, __, flaskURL = loadEnvironmentVariables()
 
-    if not useREST:
+    jsonLen = len(jsonData)
+
+    if not useREST or jsonLen != 1:
         global nlp
+        useREST = False
         nlp = stanza.Pipeline('en', use_gpu=useGPU,
                             processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
                             package={
@@ -40,7 +43,7 @@ def MatcherMiddleware(jsonData):
 
     i = 0
     textDocs=[]
-    while i < len(jsonData):
+    while i < jsonLen:
         textDocs.append(jsonData[i]['baseTx'])
         i += 1
 
