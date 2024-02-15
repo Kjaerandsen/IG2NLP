@@ -1,3 +1,7 @@
+from os import getenv
+from dotenv import load_dotenv
+from stanza import DownloadMethod
+
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
@@ -402,3 +406,28 @@ def reusePart(words, offset, listLen):
             i+=1
 
     return words
+
+# Function that loads all environment variable from ".env" file or environment
+def loadEnvironmentVariables():
+    load_dotenv()
+
+    # Take the environment variable, default to false
+    # If the variable is "True", then True
+    useREST = getenv("IG2USEREST", 'False') == 'True'
+
+    # Take the environment variable, default to None
+    useGPU = getenv("IG2USEGPU", None)
+    if useGPU == "False":
+        useGPU = False
+    elif useGPU == "True":
+        useGPU = True
+
+    downloadMethod = getenv("IG2DLMETHOD", DownloadMethod.DOWNLOAD_RESOURCES)
+    if downloadMethod == "reuse":
+        downloadMethod = DownloadMethod.REUSE_RESOURCES
+    elif downloadMethod == "none":
+        downloadMethod = DownloadMethod.NONE
+
+    logLevel = getenv("IG2STANZALOGLEVEL")
+
+    return useREST, useGPU, downloadMethod, logLevel

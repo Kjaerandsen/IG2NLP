@@ -7,7 +7,7 @@ from utility import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-useREST = False
+useREST = None
 
 # Global variable for the nlp pipeline, allows for reusing the pipeline 
 # without multiple initializations
@@ -16,9 +16,12 @@ nlp = None
 # Middleware for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
 # statements and runs through all included statements.
 def MatcherMiddleware(jsonData):
+    global useREST
+    useREST, useGPU, downloadMethod, logLevel = loadEnvironmentVariables()
+
     if not useREST:
         global nlp
-        nlp = stanza.Pipeline('en', use_gpu=True,
+        nlp = stanza.Pipeline('en', use_gpu=useGPU,
                             processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
                             package={
                                     "tokenize": "combined",
@@ -28,8 +31,8 @@ def MatcherMiddleware(jsonData):
                                     "lemma": "combined_charlm",
                                     "ner": "ontonotes-ww-multi_charlm"
                             },
-                            #download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-                            #logging_level="fatal"
+                            download_method=downloadMethod,
+                            logging_level=logLevel
                             )
 
     i = 0
@@ -53,7 +56,6 @@ def MatcherMiddleware(jsonData):
                 matchingFunction(
                     compoundWordsMiddleware(
                         words))))
-            # If rest data
         else:
             words = docs[i]
             output = WordsToSentence(
