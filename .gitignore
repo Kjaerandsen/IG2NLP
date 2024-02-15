@@ -9,7 +9,7 @@ env/
 **.env
 **/corenlp/
 **.json
-**.txt
+/data/**.txt
 **__pycache__/
 **/IG-Parser
 **.html
