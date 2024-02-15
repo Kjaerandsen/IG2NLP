@@ -319,7 +319,7 @@ def removeWord(words,i,wordLen,direction=0):
     del words[i]
     return i-1, wordLen-1
 
-def addWord(words, i, wordText, wordLen):
+def addWord(words, i, wordText):
     #print(i)
     for word in words:
         #print(word.head, word.head-1)

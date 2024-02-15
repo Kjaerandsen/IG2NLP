@@ -1196,20 +1196,29 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
         words2.append(words[wordLen-1])
 
 def findInternalLogicalOperators(words, start, end):
+    print("Finding logical operators\n")
     j = start
-
+    andCount = 0
+    orCount = 0
     while j < end:
         if words[j].deprel == "cc":
-            print("CC", words[j])
+            words[j].toLogical
+            if words[j].text == "[AND]":
+                andCount += 1
+            else:
+                orCount += 1
+            #print("CC", words[j])
             # Need to handle cases such as:
             '''
             a and b
             a, b, and c
             a, b and c, or d
             '''
-        else:
-            print(words[j].text)
+        #else:
+        #    print(words[j].text)
         j += 1
+    if andCount > 0 and orCount > 0:
+        print("Both and and or")
 
 # Function that tries to use the old dependency parse tree for the second part of sentences starting
 # with an activation condition. If the words do not include a root connection the words are
@@ -1245,18 +1254,38 @@ def corefReplace(words):
         if (words[i].symbol == "A" and words[i].pos == "PRON" and 
             words[i].coref != "" and words[i].position == 0):
             #print(words[i].text, i)
-            words = addWord(words, i, words[i].text, wordLen)
+            words = addWord(words, i, words[i].text)
             i+=1
             wordLen += 1
             #print("word has coref", words[i].text, "Coref is: ", words[i].coref)
+            corefLen = len(words[i].coref)
+            print(words[i].coref)
+            if words[i].coref[corefLen-2:] == "'s":
+                words[i].coref = words[i].coref[:corefLen-2]
+            if words[i].coref[:4].lower() == "the ":
+                words[i].coref = words[i].coref[4:]
+            elif words[i].coref[:2] == "a ":
+                words[i].coref = words[i].coref[2:]
+            if ":poss" in words[i].deprel:
+                words[i].coref += "'s"
             words[i].text = "["+words[i].coref+"]"
             words[i].spaces = 1
             #print(words[i+1].text, i, "\n\n")
         elif words[i].pos == "PRON" and words[i].coref != "":
             if brackets == 0 and words[i].symbol == "":
-                words = addWord(words, i, words[i].text, wordLen)
+                words = addWord(words, i, words[i].text)
                 i+=1
                 wordLen += 1
+                corefLen = len(words[i].coref)
+                print(words[i].coref)
+                if words[i].coref[corefLen-2:] == "'s":
+                    words[i].coref = words[i].coref[:corefLen-2]
+                if words[i].coref[:4].lower() == "the ":
+                    words[i].coref = words[i].coref[4:]
+                elif words[i].coref[:2] == "a ":
+                    words[i].coref = words[i].coref[2:]
+                if ":poss" in words[i].deprel:
+                    words[i].coref += "'s"
                 words[i].text = "["+words[i].coref+"]"
                 words[i].spaces = 1
                 words[i].setSymbol("A")
