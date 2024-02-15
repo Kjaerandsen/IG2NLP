@@ -9,15 +9,16 @@ filename = "../data/input.json"
 global nlp
 
 pd.set_option('display.max_rows', None)
+pd.set_option('display.width', 200)
 
 nlp = stanza.Pipeline('en', use_gpu=True, 
-    processors='tokenize,pos,lemma,depparse,ner', 
+    processors='tokenize,pos,lemma,depparse,ner,coref,mwt', 
     package={"ner": ["ontonotes_charlm"]},
     download_method=stanza.DownloadMethod.REUSE_RESOURCES,
     logging_level="fatal")
 
 nlp2 = stanza.Pipeline('en', use_gpu=True, 
-    processors='tokenize,pos,lemma,ner', 
+    processors='tokenize,pos,lemma,ner,mwt', 
     package={"ner": ["conll03_charlm"]},
     download_method=stanza.DownloadMethod.REUSE_RESOURCES,
     logging_level="fatal")
@@ -58,14 +59,14 @@ with open(filename, "r") as input:
                 sentence2.words = compoundWordsMiddleware(sentence2.words)
                 # Generating the data structure for displacy visualization
                 df = pd.DataFrame(columns=["Word", "POS", "XPOS", "Head id", "Head word", 
-                                               "Dependency", "Lemma", "Feats"])
+                                               "Dependency", "Lemma", "Feats", "COREF"])
                 for word in sentence.words:
                     df = df._append({
                         "Word": word.text, "POS":word.pos, "XPOS":word.xpos, "Head id":word.head, 
                         "Head word":(sentence.words[word.head-1].text if word.head > 0 
                                      else "root"), 
                         "Dependency": word.deprel, "Lemma": word.lemma, 
-                        "Feats":word.feats}, ignore_index=True)
+                        "Feats":word.feats, "COREF": word.coref}, ignore_index=True)
                 outputFile.write("\nWords:\n")
                 outputFile.write(str(df))
                 df = pd.DataFrame(columns=["Token", "POS", "XPOS", "Head id", 
