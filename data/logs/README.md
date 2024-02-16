@@ -1,0 +1,1 @@
+# The purpose of this directory is to have a shared directory for log files.

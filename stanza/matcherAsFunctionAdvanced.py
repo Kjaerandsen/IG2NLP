@@ -2,7 +2,30 @@ import stanza
 import time
 import copy
 import requests
+import logging
 from utility import *
+
+# Custom logger functionality
+logger = logging.getLogger(__name__)
+# Accept all logs
+logger.setLevel(logging.DEBUG)
+
+# Handlers for console and file output with separate logging levels
+fileHandler = logging.FileHandler("..\data\logs\log.log")
+consoleHandler = logging.StreamHandler()
+fileHandler.setLevel(logging.DEBUG)
+consoleHandler.setLevel(logging.INFO)
+
+# Custom formatting for console and file output
+formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
+                                    '%d/%m/%Y %I:%M:%S %p')
+formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
+consoleHandler.setFormatter(formatterConsole)
+fileHandler.setFormatter(formatterFile)
+
+# Add the custom handlers to the logger
+logger.addHandler(fileHandler)
+logger.addHandler(consoleHandler)
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -23,8 +46,10 @@ def MatcherMiddleware(jsonData):
     useREST, useGPU, downloadMethod, logLevel, __, flaskURL = loadEnvironmentVariables()
 
     jsonLen = len(jsonData)
+    logger.info("Running runnerAdvanced with "+ str(jsonLen) + " items.\n")
 
     if not useREST or jsonLen != 1:
+        logger.info("Loading nlp pipeline")
         global nlp
         useREST = False
         nlp = stanza.Pipeline('en', use_gpu=useGPU,
@@ -40,6 +65,7 @@ def MatcherMiddleware(jsonData):
                             download_method=downloadMethod,
                             logging_level=logLevel
                             )
+        logger.info("Finished loading the nlp pipeline")
 
     i = 0
     textDocs=[]
@@ -55,6 +81,7 @@ def MatcherMiddleware(jsonData):
     i = 0
     while i < len(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
+        logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
         if not useREST:
             words = docs[i].sentences[0].words
             output = WordsToSentence(
@@ -74,26 +101,34 @@ def MatcherMiddleware(jsonData):
         
         
         print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
-        
+        logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
         jsonData[i]["stanza"] = output
         i+=1
 
+    logger.info("Finished running matcher")
     return jsonData
 
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     # Run the nlp pipeline on the input text
+    logger.debug("Running single statement pipeline with statement: "+ text)
     if not useREST:
         doc = nlp(text)
-        return doc.sentences[0].words
+        returnVal = doc.sentences[0].words
+        logger.debug("Finished running single statement pipeline")
+        return returnVal
     else:
         output = [{"baseTx":text}]
-        return nlpPipelineMulti(output)[0]
+        returnVal = nlpPipelineMulti(output)[0]
+        logger.debug("Finished running single statement pipeline")
+        return returnVal
 
 # Takes a list of sentences as strings, returns the nlp pipeline results for the sentences
 def nlpPipelineMulti(textDocs):
     if not useREST:
+        logger.debug("Running multiple statement pipeline")
         docs = nlp.bulk_process(textDocs)
+        logger.debug("Finished running multiple statement pipeline")
         return docs
     else:
         #requestBody = []
@@ -459,7 +494,7 @@ def matchingFunction(words):
             i += 1
             '''
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
-            print("\n\nNSUBJ CCOMP OBJ\n\n")
+            logger.debug("NSUBJ CCOMP OBJ")
 
         # Too broad coverage in this case, detected instances which should be included in the main
         # object in some instances, an instance of an indirect object component, and several 
@@ -484,7 +519,7 @@ def matchingFunction(words):
                         else:
                             words[i].setSymbol("D")
                 else:
-                    print("Deontic, no verb")
+                    logger.debug("Deontic, no verb")
         
         i += 1
 
@@ -638,10 +673,11 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                 words[scopeEnd].setSymbol(symbol, 2)
                 i = scopeEnd
             else:
-                print("Out of scope")
+                logger.debug("Out of scope")
                 words[i].setSymbol(symbol)
         else:
-            print("More than one CC")
+            logger.warning("More than one CC in smallLogicalOperator function," +
+                             "please review logical operators")
     else:
         words[i].setSymbol(symbol)
 
@@ -859,7 +895,8 @@ def logicalOperatorAim(words, i, symbol, wordLen):
                             words[j].text = words[currOperatorLoc].text
                             words[j].spaces = 1
                         else:
-                            print("Error, punct not followed by a logical operator in logical",
+                            logger.error(
+                                "Error, punct not followed by a logical operator in logical"+
                                 " operator handling.")
                 elif words[j].deprel == "cc":
                     words[j].toLogical()
@@ -878,6 +915,8 @@ def logicalOperatorAim(words, i, symbol, wordLen):
             prevOperatorLoc = ccLocs2[0]
             # If there is a mix and match between symbol types handle the bracketing
             if andConj and orConj:
+                logger.warning('Found both "and" and "or" logical operators in component,'+
+                        "please review manually to solve potential encapsulation issues.")
                 j = 0
 
                 # Go through all the cc and handle the bracketing
@@ -1227,7 +1266,8 @@ def findInternalLogicalOperators(words, start, end):
         #    print(words[j].text)
         j += 1
     if andCount > 0 and orCount > 0:
-        print("Both and and or, please review manually")
+        logger.warning('Found both "and" and "or" logical operators in component,'+
+                        "please review manually to solve encapsulation issues.")
 
     return words
 
@@ -1248,6 +1288,8 @@ def removeStart(words, offset, wordLen):
         i+=1
 
     if noRoot:
+        logger.error("Unable to reuse the second part of the statement's dependency parse tree"+
+                      " in removeStart")
         if not useREST:
             return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
         else:
@@ -1270,7 +1312,7 @@ def corefReplace(words):
             wordLen += 1
             #print("word has coref", words[i].text, "Coref is: ", words[i].coref)
             corefLen = len(words[i].coref)
-            print(words[i].coref)
+            #print(words[i].coref)
             if words[i].coref[corefLen-2:] == "'s":
                 words[i].coref = words[i].coref[:corefLen-2]
             if words[i].coref[:4].lower() == "the ":
@@ -1281,6 +1323,8 @@ def corefReplace(words):
                 words[i].coref += "'s"
             words[i].text = "["+words[i].coref+"]"
             words[i].spaces = 1
+            logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
+                              words[i].text)
             #print(words[i+1].text, i, "\n\n")
         elif words[i].pos == "PRON" and words[i].coref != "":
             if brackets == 0 and words[i].symbol == "":
@@ -1300,6 +1344,8 @@ def corefReplace(words):
                 words[i].text = "["+words[i].coref+"]"
                 words[i].spaces = 1
                 words[i].setSymbol("A")
+                logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
+                              words[i].text)
         else:
             if words[i].position == 1 and words[i].nested == False:
                 brackets+=1
