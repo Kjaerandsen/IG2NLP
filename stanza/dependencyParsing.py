@@ -35,27 +35,16 @@ doc = nlp(args[1])
 
 print('Now printing named entities\n')
 
-#for sentence in doc.sentences:
-#    print("Entity:")
-#    print(sentence.ents)
-
 print(doc.ents)
 
 print("DOC DATA\n", doc.__dict__.keys())
 
 print("Coref chains:\n")
 
-#print("DOC coref: ", doc.coref)
-
 for item in doc.coref:
     print("Index: ", item.index, "| Mentions: ",[value.__dict__ for value in item.mentions], 
           "| Representative text: ", item.representative_text, 
           "| Representative id: ", item.representative_index)
-    #print(item.__dict__)
-    #print(item.__dict__.keys())
-
-print(doc.sentences[0].tokens[0:2])
-print(doc.sentences[0].tokens[8:10])
 
 depData = {"words":[],
            "arcs":[]}
