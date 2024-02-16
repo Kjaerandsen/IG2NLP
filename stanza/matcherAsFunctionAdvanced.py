@@ -205,6 +205,8 @@ def matchingFunction(words):
                 #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
                 words[scopeStart].setSymbol("Cex", 1)
                 words[scopeEnd].setSymbol("Cex", 2)
+                if scopeEnd - scopeStart > 2:
+                    words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
             
             i = scopeEnd
 
@@ -249,6 +251,8 @@ def matchingFunction(words):
                 # Add the words as a Cex
                 words[scopeStart].setSymbol("Cex", 1)
                 words[scopeEnd].setSymbol("Cex", 2)
+                if scopeEnd - scopeStart > 2:
+                    words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
             
             i = scopeEnd
 
@@ -969,6 +973,8 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
             words2[0].setSymbol(symbol,1)
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
+            if lastIndex - firstVal > 2:
+                words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
         #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
         #    WordsToSentence(words[lastIndex+1:]))))
@@ -1038,6 +1044,8 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
             words2[firstVal].setSymbol(symbol,1)
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
+            if lastIndex - firstVal > 2:
+                words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
         #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
         #    WordsToSentence(words[lastIndex+1:]))))
@@ -1199,29 +1207,29 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
         words2.append(words[wordLen-1])
 
 def findInternalLogicalOperators(words, start, end):
-    print("Finding logical operators\n")
+    #print("Finding logical operators\n", start, end)
     j = start
     andCount = 0
     orCount = 0
     while j < end:
         if words[j].deprel == "cc":
-            words[j].toLogical
+            words[j].toLogical()
             if words[j].text == "[AND]":
                 andCount += 1
             else:
                 orCount += 1
+            
+            # Remove preceeding puncts
+            if j-1 >= 0 and words[j-1].text == ",":
+                words[j-1].text = ""
             #print("CC", words[j])
-            # Need to handle cases such as:
-            '''
-            a and b
-            a, b, and c
-            a, b and c, or d
-            '''
         #else:
         #    print(words[j].text)
         j += 1
     if andCount > 0 and orCount > 0:
-        print("Both and and or")
+        print("Both and and or, please review manually")
+
+    return words
 
 # Function that tries to use the old dependency parse tree for the second part of sentences starting
 # with an activation condition. If the words do not include a root connection the words are
