@@ -30,13 +30,6 @@ logger.addHandler(consoleHandler)
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-useREST = None
-
-flaskURL = None
-
-# Global variable for the nlp pipeline, allows for reusing the pipeline 
-# without multiple initializations
-nlp = None
 
 # Middleware for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
 # statements and runs through all included statements.
