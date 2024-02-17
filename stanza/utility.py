@@ -1,6 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 from stanza import DownloadMethod
+import logging
 
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
@@ -437,4 +438,25 @@ def loadEnvironmentVariables():
 
     env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
 
+    logLevels = {"INFO":logging.INFO,
+                 "DEBUG":logging.DEBUG,
+                 "WARN":logging.WARNING,
+                 "ERROR":logging.ERROR,
+                 "CRITICAL":logging.CRITICAL,
+                 }
+    env['logLevelFile'] = getenv("IG2LOGLEVELFILE")
+    print(env['logLevelFile'], logLevels.keys())
+    if env['logLevelFile'] in logLevels.keys():
+        print("YES")
+        env['logLevelFile'] = logLevels[env['logLevelFile']]
+    else:
+        env['logLevelFile'] = logging.DEBUG
+    
+    env['logLevelConsole'] = getenv("IG2LOGLEVELCONSOLE")
+    if env['logLevelConsole'] in logLevels.keys():
+        env['logLevelConsole'] = logLevels[env['logLevelConsole']]
+    else:
+        env['logLevelConsole'] = logging.DEBUG
+
+    print(env["logLevelFile"])
     return env

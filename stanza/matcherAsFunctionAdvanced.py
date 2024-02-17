@@ -5,6 +5,7 @@ import requests
 import logging
 from utility import *
 
+env = loadEnvironmentVariables()
 # Custom logger functionality
 logger = logging.getLogger(__name__)
 # Accept all logs
@@ -13,8 +14,8 @@ logger.setLevel(logging.DEBUG)
 # Handlers for console and file output with separate logging levels
 fileHandler = logging.FileHandler("..\data\logs\log.log")
 consoleHandler = logging.StreamHandler()
-fileHandler.setLevel(logging.DEBUG)
-consoleHandler.setLevel(logging.INFO)
+fileHandler.setLevel(env['logLevelFile'])
+consoleHandler.setLevel(env['logLevelConsole'])
 
 # Custom formatting for console and file output
 formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
@@ -36,8 +37,8 @@ minimumCexLength = 1
 def MatcherMiddleware(jsonData):
     global useREST
     global flaskURL
+    global env
     
-    env = loadEnvironmentVariables()
     flaskURL = env['flaskURL']
     useREST = env['useREST']
 
