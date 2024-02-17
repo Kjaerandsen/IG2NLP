@@ -18,8 +18,12 @@ if len(args)<2:
 out = [{"baseTx":args[1]}]
 
 #print(out, json.dumps(out))
-__, __, __, __, displacyPort, flaskURL= loadEnvironmentVariables()
-response = requests.post(flaskURL, json = out)
+env = loadEnvironmentVariables()
+response = requests.post(env['flaskURL'], json = out)
+displacyPort = env['displacyPort']
+
+# Delete the environment variables dictionary
+del env
 
 jsonRes = response.json()
 

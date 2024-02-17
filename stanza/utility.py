@@ -411,27 +411,30 @@ def reusePart(words, offset, listLen):
 def loadEnvironmentVariables():
     load_dotenv()
 
+    # Dict for return values
+    env = {}
+
     # Take the environment variable, default to false
     # If the variable is "True", then True
-    useREST = getenv("IG2USEREST", 'False') == 'True'
+    env['useREST'] = getenv("IG2USEREST", 'False') == 'True'
 
     # Take the environment variable, default to None
-    useGPU = getenv("IG2USEGPU", None)
-    if useGPU == "False":
-        useGPU = False
-    elif useGPU == "True":
-        useGPU = True
+    env['useGPU'] = getenv("IG2USEGPU", None)
+    if env['useGPU'] == "False":
+        env['useGPU'] = False
+    elif env['useGPU'] == "True":
+        env['useGPU'] = True
 
-    downloadMethod = getenv("IG2DLMETHOD", DownloadMethod.DOWNLOAD_RESOURCES)
-    if downloadMethod == "reuse":
-        downloadMethod = DownloadMethod.REUSE_RESOURCES
-    elif downloadMethod == "none":
-        downloadMethod = DownloadMethod.NONE
+    env['downloadMethod'] = getenv("IG2DLMETHOD", DownloadMethod.DOWNLOAD_RESOURCES)
+    if env['downloadMethod'] == "reuse":
+        env['downloadMethod'] = DownloadMethod.REUSE_RESOURCES
+    elif env['downloadMethod'] == "none":
+        env['downloadMethod'] = DownloadMethod.NONE
 
-    logLevel = getenv("IG2STANZALOGLEVEL")
+    env['logLevel'] = getenv("IG2STANZALOGLEVEL")
 
-    displacyPort = int(getenv("IG2DISPLACYPORT", 5001))
+    env['displacyPort'] = int(getenv("IG2DISPLACYPORT", 5001))
 
-    flaskURL = getenv("IG2FLASKURL", "http://localhost:5000")
+    env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
 
-    return useREST, useGPU, downloadMethod, logLevel, displacyPort, flaskURL
+    return env

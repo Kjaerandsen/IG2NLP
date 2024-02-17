@@ -36,7 +36,10 @@ minimumCexLength = 1
 def MatcherMiddleware(jsonData):
     global useREST
     global flaskURL
-    useREST, useGPU, downloadMethod, logLevel, __, flaskURL = loadEnvironmentVariables()
+    
+    env = loadEnvironmentVariables()
+    flaskURL = env['flaskURL']
+    useREST = env['useREST']
 
     jsonLen = len(jsonData)
     logger.info("Running runnerAdvanced with "+ str(jsonLen) + " items.\n")
@@ -45,7 +48,7 @@ def MatcherMiddleware(jsonData):
         logger.info("Loading nlp pipeline")
         global nlp
         useREST = False
-        nlp = stanza.Pipeline('en', use_gpu=useGPU,
+        nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
                             processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
                             package={
                                     "tokenize": "combined",
@@ -55,10 +58,13 @@ def MatcherMiddleware(jsonData):
                                     "lemma": "combined_charlm",
                                     "ner": "ontonotes-ww-multi_charlm"
                             },
-                            download_method=downloadMethod,
-                            logging_level=logLevel
+                            download_method=env['downloadMethod'],
+                            logging_level=env['logLevel']
                             )
         logger.info("Finished loading the nlp pipeline")
+
+    # Delete the environment variables dictionary
+    del env
 
     i = 0
     textDocs=[]

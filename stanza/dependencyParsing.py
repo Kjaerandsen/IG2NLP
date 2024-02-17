@@ -14,9 +14,9 @@ if len(args)<2:
           'dependencyParsing "Input string here"')
     sys.exit()
 
-__, useGPU, downloadMethod, logLevel, displacyPort, __ = loadEnvironmentVariables()
+env = loadEnvironmentVariables()
 
-nlp = stanza.Pipeline('en', use_gpu=useGPU, 
+nlp = stanza.Pipeline('en', use_gpu=env['useGPU'], 
     processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
     package={
         "tokenize": "combined",
@@ -27,8 +27,13 @@ nlp = stanza.Pipeline('en', use_gpu=useGPU,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    download_method=downloadMethod,
-    logging_level=logLevel)
+    download_method=env['downloadMethod'],
+    logging_level=env['logLevel'])
+
+displacyPort = env['displacyPort']
+
+# Delete the environment variables dictionary
+del env
 
 # Take the input string
 doc = nlp(args[1])

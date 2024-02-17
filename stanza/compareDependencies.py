@@ -4,9 +4,9 @@ from utility import loadEnvironmentVariables
 
 filename = "../data/input.json"
 
-useREST, useGPU, downloadMethod, logLevel, __, __= loadEnvironmentVariables()
+env = loadEnvironmentVariables()
 
-nlp = stanza.Pipeline('en', use_gpu=useGPU,
+nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
     processors='tokenize,pos,lemma,depparse,ner,mwt', 
     package={
         "tokenize": "combined",
@@ -16,11 +16,11 @@ nlp = stanza.Pipeline('en', use_gpu=useGPU,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    download_method=downloadMethod,
-    logging_level=logLevel
+    download_method=env['downloadMethod'],
+    logging_level=env['logLevel']
     )
 
-nlp2 = stanza.Pipeline('en', use_gpu=useGPU,
+nlp2 = stanza.Pipeline('en', use_gpu=env['useGPU'],
     processors='tokenize,pos,lemma,depparse,ner,mwt', 
     package={
         "tokenize": "combined",
@@ -30,9 +30,12 @@ nlp2 = stanza.Pipeline('en', use_gpu=useGPU,
         "lemma": "combined_charlm",
         "ner": "ontonotes-ww-multi_charlm"
     },
-    download_method=downloadMethod,
-    logging_level=logLevel
+    download_method=env['downloadMethod'],
+    logging_level=env['logLevel']
     )
+
+# Delete the environment variables dictionary
+del env
 
 with open(filename, "r") as input:
     

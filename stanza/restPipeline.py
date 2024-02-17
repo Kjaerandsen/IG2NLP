@@ -4,13 +4,15 @@ import json
 from flask import Flask, request, Response
 from utility import loadEnvironmentVariables
 
-
+# Run this program with the following command:
 # flask --app .\restPipeline.py run -p 5000
+# The -p parameter sets the port of the webserver, if changed the environment variable
+# "IG2FLASKURL" should also be changed accordingly.
 
 def initialize():
-    __, useGPU, downloadMethod, logLevel, __, __= loadEnvironmentVariables()
+    env = loadEnvironmentVariables()
     global nlp
-    nlp = stanza.Pipeline('en', use_gpu=useGPU,
+    nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
         processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
         package={
             "tokenize": "combined",
@@ -20,12 +22,11 @@ def initialize():
             "lemma": "combined_charlm",
             "ner": "ontonotes-ww-multi_charlm",
         },
-        download_method=downloadMethod,
-        logging_level=logLevel
+        download_method=env['downloadMethod'],
+        logging_level=env['logLevel']
         )
     print("Finished initializing")
 
-nlp = None
 initialize()
 app = Flask(__name__)
 
