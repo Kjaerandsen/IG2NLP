@@ -30,14 +30,6 @@ class Word:
         self.corefid = corefid
         self.corefScope = corefScope
         self.isRepresentative = isRepresentative
-
-    # Returns the contents as a string, maintaining the source formatting in empty preceeding spaces
-    def getContents(self):
-        output = self.buildString
-        if self.spaces > 0:
-            return " " * self.spaces + output
-        else:
-            return output
         
     # Builds the contents as a component with brackets, the symbol and proper spacing in string form
     def buildString(self):
