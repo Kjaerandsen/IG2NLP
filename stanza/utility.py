@@ -80,8 +80,10 @@ class Word:
             self.spaces = otherWord.spaces
     
     # Potential future adjustment as all head id's are one (1) to high.
+    '''
     def setHead(self, head):
         self.head = head-1
+    '''
 
     def __str__(self):
         return("Word: "+ self.text + " | pos: "+ self.pos + " | " + self.xpos  
@@ -290,9 +292,17 @@ def compoundWords(words):
 # previous (1) word and removes the extra word from the list of words
 def removeWord(words,i,wordLen,direction=0):
     if direction == 0:
+        if i == wordLen-1:
+            raise Exception(
+                'removeWord called with Left to Right direction and id == wordLen-1'
+            )
         id = i+1
         words[id].combineWords(words[i], False)
     else:
+        if i == 0:
+            raise Exception(
+                    'removeWord called with Left to Right direction and id == wordLen-1'
+                )
         id = i
         words[id-1].combineWords(words[i], True)
 
@@ -332,7 +342,6 @@ def addWord(words, i, wordText):
 
     
     words = words[:i] + newWord + words[i:]
-    #print(WordsToSentence(words))
 
     return words
 
