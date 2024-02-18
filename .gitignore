@@ -14,3 +14,4 @@ env/
 **/IG-Parser
 **.html
 **.log
+**.coverage
