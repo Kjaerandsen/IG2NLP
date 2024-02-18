@@ -1,6 +1,6 @@
 from os import getenv
 from dotenv import load_dotenv
-from stanza import DownloadMethod
+import stanza
 import logging
 
 # Word for handling words,
@@ -426,11 +426,11 @@ def loadEnvironmentVariables():
     elif env['useGPU'] == "True":
         env['useGPU'] = True
 
-    env['downloadMethod'] = getenv("IG2DLMETHOD", DownloadMethod.DOWNLOAD_RESOURCES)
+    env['downloadMethod'] = getenv("IG2DLMETHOD", stanza.DownloadMethod.DOWNLOAD_RESOURCES)
     if env['downloadMethod'] == "reuse":
-        env['downloadMethod'] = DownloadMethod.REUSE_RESOURCES
+        env['downloadMethod'] = stanza.DownloadMethod.REUSE_RESOURCES
     elif env['downloadMethod'] == "none":
-        env['downloadMethod'] = DownloadMethod.NONE
+        env['downloadMethod'] = stanza.DownloadMethod.NONE
 
     env['logLevel'] = getenv("IG2STANZALOGLEVEL")
 
