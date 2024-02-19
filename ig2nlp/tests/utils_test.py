@@ -1,4 +1,4 @@
-from stanza.utility import *
+from ig2nlp.utility import *
 import pytest
 
 def createTestWord(name):
