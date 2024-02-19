@@ -899,17 +899,15 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         contents = []
 
         if not useREST:
-            preCondition = matchingFunction(
-                compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
-            words2 += preCondition
+            # Add the values before the condition
+            words2 += words[:firstVal]
 
             condition = matchingFunction(
                 compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
         
         else:
-            preCondition = matchingFunction(
-                compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
-            words2 += preCondition
+            # Add the values before the condition
+            words2 += words[:firstVal]
 
             condition = matchingFunction(
                 compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[firstVal:lastIndex]))))
@@ -988,17 +986,14 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
         lastIndex = wordLen
 
     if not useREST:
-        words2 += matchingFunction(
-            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+        # Add the values before the condition
+        words2 += words[:firstVal]
 
-        #print(WordsToSentence(wordsBak[firstVal+2:lastIndex]))
         activationCondition = matchingFunction(
             compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
-        #actiWords = copy.deepcopy(words[:lastIndex])
-        #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
     else:
-        words2 += matchingFunction(
-            compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(wordsBak[:firstVal]))))
+        # Add the values before the condition
+        words2 += words[:firstVal]
 
         activationCondition = matchingFunction(
             compoundWordsMiddlewareWords(nlpPipeline(
