@@ -446,9 +446,7 @@ def loadEnvironmentVariables():
                  "CRITICAL":logging.CRITICAL,
                  }
     env['logLevelFile'] = getenv("IG2LOGLEVELFILE")
-    print(env['logLevelFile'], logLevels.keys())
     if env['logLevelFile'] in logLevels.keys():
-        print("YES")
         env['logLevelFile'] = logLevels[env['logLevelFile']]
     else:
         env['logLevelFile'] = logging.DEBUG
@@ -459,5 +457,4 @@ def loadEnvironmentVariables():
     else:
         env['logLevelConsole'] = logging.DEBUG
 
-    print(env["logLevelFile"])
     return env
