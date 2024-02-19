@@ -6,6 +6,12 @@ import logging
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
+    # Use slots for faster access
+    # Limits variables of the class to only the defined attributes
+    __slots__ = ("text", "pos", "deprel", "head", "id", "lemma", "xpos", "feats",
+                 "start", "end", "spaces", "symbol", "nested", "position", "ner",
+                 "logical", "corefid", "coref", "corefScope", "isRepresentative")
+
     def __init__(self, text, pos, deprel, head, id, lemma, xpos, feats,
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
                  logical=0, corefid = -1, coref = "", corefScope = 0, isRepresentative=False):
@@ -190,7 +196,7 @@ def convertWordFormat(words):
                 scope = 2
             elif coref.is_start and not coref.is_end:
                 scope = 1
-            customWords[i].scope = scope
+            customWords[i].corefScope = scope
             customWords[i].isRepresentative = coref.is_representative
 
             #print("\n\nCOREF is ", customWords[i].coref, coref.chain.representative_text)
