@@ -1,10 +1,8 @@
 import json
 import stanza
-from utility import loadEnvironmentVariables
+from utility import env
 
 filename = "../data/input.json"
-
-env = loadEnvironmentVariables()
 
 nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
     processors='tokenize,pos,lemma,depparse,ner,mwt', 

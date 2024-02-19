@@ -2,11 +2,9 @@ import json
 import stanza
 from spacy import displacy
 
-from utility import compoundWordsMiddleware, loadEnvironmentVariables
+from utility import compoundWordsMiddleware, env
 
 filename = "../data/input.json"
-
-env = loadEnvironmentVariables()
 
 nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
     processors='tokenize,pos,lemma,depparse,ner,mwt', 

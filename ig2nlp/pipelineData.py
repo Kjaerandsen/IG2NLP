@@ -2,11 +2,9 @@ import json
 import stanza
 import pandas as pd
 
-from utility import compoundWordsMiddleware, loadEnvironmentVariables
+from utility import compoundWordsMiddleware, env
 
 filename = "../data/input.json"
-
-env = loadEnvironmentVariables()
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 200)

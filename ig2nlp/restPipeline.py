@@ -1,8 +1,7 @@
 import stanza
-from ig2nlp.utility import convertWordFormat
+from ig2nlp.utility import env, convertWordFormat
 import json
 from flask import Flask, request, Response
-from ig2nlp.utility import loadEnvironmentVariables
 
 # Run this program with the following command:
 # flask --app .\restPipeline.py run -p 5000
@@ -10,7 +9,6 @@ from ig2nlp.utility import loadEnvironmentVariables
 # "IG2FLASKURL" should also be changed accordingly.
 
 def initialize():
-    env = loadEnvironmentVariables()
     global nlp
     nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
         processors='tokenize,lemma,pos,depparse, mwt, ner, coref',

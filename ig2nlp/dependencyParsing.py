@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from utility import compoundWordsMiddleware, loadEnvironmentVariables
+from utility import compoundWordsMiddleware, env
 
 # Take the system arguments
 args = sys.argv
@@ -13,8 +13,6 @@ if len(args)<2:
     print('Error: a string must be passed with the function in the format:\n'+
           'dependencyParsing "Input string here"')
     sys.exit()
-
-env = loadEnvironmentVariables()
 
 nlp = stanza.Pipeline('en', use_gpu=env['useGPU'], 
     processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 

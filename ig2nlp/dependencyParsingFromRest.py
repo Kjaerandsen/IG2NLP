@@ -3,7 +3,7 @@ import sys
 from spacy import displacy
 import requests
 
-from utility import Word, compoundWordsMiddlewareWords, loadEnvironmentVariables
+from utility import Word, compoundWordsMiddlewareWords, env
 
 # Take the system arguments
 args = sys.argv
@@ -18,7 +18,6 @@ if len(args)<2:
 out = [{"baseTx":args[1]}]
 
 #print(out, json.dumps(out))
-env = loadEnvironmentVariables()
 response = requests.post(env['flaskURL'], json = out)
 displacyPort = env['displacyPort']
 
