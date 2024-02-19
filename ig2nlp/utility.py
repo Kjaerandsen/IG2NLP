@@ -323,7 +323,7 @@ def compoundWordsConjHelper(words, i, wordLen):
     while i < end:
         #logger.debug("Word: " + words[i].text + " " + words[i].deprel)
         if words[i].deprel != "punct" and words[i].deprel != "cc" and words[i].deprel != "conj":
-            print("compoundHandler: not punct cc or conj deprel")
+            #print("compoundHandler: not punct cc or conj deprel")
             return start, False, wordLen
         elif words[i].deprel == "cc":
             #logger.debug("Found cc: "+ words[i].text + " " + words[i].deprel)
@@ -333,8 +333,8 @@ def compoundWordsConjHelper(words, i, wordLen):
                 ccType = words[i].text
             else:
                 if ccType != words[i].text:
-                    print(
-                "compoundHandler: Detected several different types of logical operators.")
+                    logger.warning(
+                "utiliy.compoundHandler: Detected several different types of logical operators.")
                     return start, False, wordLen
         elif words[i].deprel == "punct":
             if words[i+1].deprel == "cc":
@@ -346,8 +346,8 @@ def compoundWordsConjHelper(words, i, wordLen):
         i+=1
 
     if len(ccLocs) == 0 or ccType == "":
-        print(
-                "compoundHandler did not detect a logical operator.")
+        #print(
+        #        "compoundHandler did not detect a logical operator.")
         return start, False, wordLen
     if len(conjLocs) == 0:
         return start, False, wordLen
@@ -358,7 +358,7 @@ def compoundWordsConjHelper(words, i, wordLen):
             words[punct].deprel = "cc"
         conjLocs = conjLocs[:len(conjLocs)-1]
         for conj in conjLocs:
-            print("Word in conjLocs: " + words[conj].text)
+            #print("Word in conjLocs: " + words[conj].text)
             words[conj].text = words[conj].text + " [" + words[end].text + "]"
             #words[conj].deprel = endRel
         
@@ -559,3 +559,27 @@ def loadEnvironmentVariables():
         env['logLevelConsole'] = logging.DEBUG
 
     return env
+
+
+logger = logging.getLogger(__name__)
+
+# Accept all logs
+logger.setLevel(logging.DEBUG)
+
+# Handlers for console and file output with separate logging levels
+fileHandler = logging.FileHandler("..\data\logs\log.log")
+consoleHandler = logging.StreamHandler()
+env = loadEnvironmentVariables()
+fileHandler.setLevel(env['logLevelFile'])
+consoleHandler.setLevel(env['logLevelConsole'])
+
+# Custom formatting for console and file output
+formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
+                                    '%d/%m/%Y %I:%M:%S %p')
+formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
+consoleHandler.setFormatter(formatterConsole)
+fileHandler.setFormatter(formatterFile)
+
+# Add the custom handlers to the logger
+logger.addHandler(fileHandler)
+logger.addHandler(consoleHandler)
