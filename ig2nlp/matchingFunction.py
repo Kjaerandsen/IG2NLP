@@ -329,12 +329,12 @@ def matchingFunction(words):
                         words[iBak].setSymbol("Bdir", 2)
                         words[iBak-1].setSymbol("Bdir", 1)
 
-        elif deprel == "compound":
-            i, error = compoundHandler(words, i)
-            if error:
-                logger.debug("compoundHandler returned True")
-            else:
-                logger.debug("compoundHandler returned False")
+        #elif deprel == "compound":
+        #    i, error = compoundHandler(words, i)
+        #    if error:
+        #        logger.debug("compoundHandler returned True")
+        #    else:
+        #        logger.debug("compoundHandler returned False")
 
         # (Bind) Indirect object detection
         elif deprel == "iobj":
@@ -1245,9 +1245,13 @@ def compoundHandler(words, i):
                 conjLocs.append(i)
             i+=1
 
-        if len(ccLocs) == 0 and ccType != "":
+        if len(ccLocs) == 0 or ccType == "":
             logger.warning(
                     "compoundHandler did not detect a logical operator.")
+            return start, False
+        if len(conjLocs == 0):
+            logger.warning(
+                    "compoundHandler did not detect any conj dependencies.")
             return start, False
         else:
             for ccLoc in ccLocs:

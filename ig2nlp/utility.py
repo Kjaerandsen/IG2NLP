@@ -231,16 +231,20 @@ def addToCustomWords(customWords, word, text, start, end, spaces):
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
 def compoundWordsMiddleware(words):
-    customWords = convertWordFormat(words)
+    words = convertWordFormat(words)
 
-    customWords = compoundWords(customWords)
-    customWords = compoundWords(customWords)
+    words = compoundWords(words)
+    words = compoundWords(words)
+    # For compound (punct or cc) conj x relations, where one or more of the same cc are present
+    words = compoundWordsConj(words)
 
-    return customWords
+    return words
 
 def compoundWordsMiddlewareWords(words):
     words = compoundWords(words)
     words = compoundWords(words)
+    # For compound (punct or cc) conj x relations, where one or more of the same cc are present
+    words = compoundWordsConj(words)
 
     return words
 
@@ -286,6 +290,103 @@ def compoundWords(words):
         i += 1
 
     return words
+
+def compoundWordsConj(words):
+    wordLen = len(words)
+    i = 0
+    while i < wordLen:
+        if words[i].deprel == "compound":
+            i, _, wordLen = compoundWordsConjHelper(words, i, wordLen)
+        i += 1
+    return words
+
+def compoundWordsConjHelper(words, i, wordLen):
+    start = i
+    end = words[i].head-1
+    ccLocs = []
+    ccType = ""
+    punctLocs = []
+    conjLocs = [i]
+
+    endRel = words[end].deprel
+    if start > end:
+        print("compoundHandler: start > end")
+        return start, False, wordLen
+    # Look for specific pattern:
+    '''
+    compound, (optional punct), cc, conj, compound
+    or
+    compound, (optional punct), conj, (optional punct), cc, conj, compound
+    (repeated punct, conj n times before the compound)
+    '''
+    i+=1
+    while i < end:
+        #logger.debug("Word: " + words[i].text + " " + words[i].deprel)
+        if words[i].deprel != "punct" and words[i].deprel != "cc" and words[i].deprel != "conj":
+            print("compoundHandler: not punct cc or conj deprel")
+            return start, False, wordLen
+        elif words[i].deprel == "cc":
+            #logger.debug("Found cc: "+ words[i].text + " " + words[i].deprel)
+            ccLocs.append(i)
+            if ccType == "":
+                #logger.debug("Adding cc text")
+                ccType = words[i].text
+            else:
+                if ccType != words[i].text:
+                    print(
+                "compoundHandler: Detected several different types of logical operators.")
+                    return start, False, wordLen
+        elif words[i].deprel == "punct":
+            if words[i+1].deprel == "cc":
+                words[i].text = ""
+            else:
+                punctLocs.append(i)
+        else:
+            conjLocs.append(i)
+        i+=1
+
+    if len(ccLocs) == 0 or ccType == "":
+        print(
+                "compoundHandler did not detect a logical operator.")
+        return start, False, wordLen
+    if len(conjLocs) == 0:
+        return start, False, wordLen
+    else:
+        for punct in punctLocs:
+            words[punct].text = words[ccLocs[0]].text
+            words[punct].spaces = 1
+            words[punct].deprel = "cc"
+        conjLocs = conjLocs[:len(conjLocs)-1]
+        for conj in conjLocs:
+            print("Word in conjLocs: " + words[conj].text)
+            words[conj].text = words[conj].text + " [" + words[end].text + "]"
+            #words[conj].deprel = endRel
+        
+        # Combine second last word with last word
+        _, wordLen = removeWord(words, end-1, wordLen)
+        end = end-1
+        
+        # Change the heads
+        # the first word should have the head of the last word of the head
+        words[start].head = words[end].head
+        words[start].deprel = endRel
+        # the last word should have the first word as the head
+        words[end].head = start+1
+        words[end].deprel = "conj"
+        # Every conj should have the first word as the head
+        if len(conjLocs) > 1:
+            j = 1
+            while j > len(conjLocs):
+                words[conjLocs[j]].head = start+1
+                j+=1
+        
+        j = 0
+        while j < wordLen:
+            if words[j].head-1 == end:
+                words[j].head = start+1
+            j+=1
+
+    return end, True, wordLen
 
 # Takes a list of words, an id, the length of the list of words and a direction
 # Combines the word with the next (0) or 
