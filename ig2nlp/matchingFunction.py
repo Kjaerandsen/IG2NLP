@@ -977,9 +977,7 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
 
 # Handler function for the Or else (O) component
 def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
-    # Go through again from the activation condition++
-    # Until the word is no longer connected to the advcl
-        
+    # Include everything but the last punct if it exists    
     if words[wordLen-1].deprel == "punct":
         lastIndex = wordLen -1
     else:
@@ -989,21 +987,26 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
         # Add the values before the condition
         words2 += words[:firstVal]
 
-        activationCondition = matchingFunction(
-            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+        #orElseComponent = matchingFunction(
+        #    compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+        orElseComponent = matchingFunction(
+            reusePart2(wordsBak[firstVal+2:lastIndex], firstVal+2))
     else:
         # Add the values before the condition
         words2 += words[:firstVal]
 
-        activationCondition = matchingFunction(
-            compoundWordsMiddlewareWords(nlpPipeline(
-                WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+        #orElseComponent = matchingFunction(
+        #    compoundWordsMiddlewareWords(nlpPipeline(
+        #        WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+        orElseComponent = matchingFunction(
+            reusePart2(wordsBak[firstVal+2:lastIndex], firstVal+2))
 
     words2.append(Word(
     "","","",0,0,"","","",0,0,1,"O",True,1
     ))
-    words2 += activationCondition
+    words2 += orElseComponent
     words2.append(Word("","","",0,0,"","","",0,0,0,"O",True,2))
+    # Append the last punct
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])
 

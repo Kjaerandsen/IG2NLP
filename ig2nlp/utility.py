@@ -516,6 +516,20 @@ def reusePart(words, offset, listLen):
 
     return words
 
+def reusePart2(words, firstVal):
+    wordLen = len(words)
+    i = 0
+    words[i].spaces = 0
+    while i < wordLen:
+        if words[i].head-1 <= firstVal:
+            words[i].head = 0
+            words[i].deprel = "root"
+        else:
+            words[i].head -= firstVal
+        i+=1
+
+    return words
+
 # Function that loads all environment variable from ".env" file or environment
 def loadEnvironmentVariables():
     load_dotenv()
