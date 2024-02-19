@@ -1,6 +1,6 @@
 import json
 import sys
-from matcherAsFunctionAdvanced import MatcherMiddleware
+from matchingFunction import MatcherMiddleware
 
 args = sys.argv
 
