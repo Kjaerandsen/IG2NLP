@@ -519,12 +519,31 @@ def matchingFunction(words):
         # overlaps with execution constraints.
         elif (words[i].deprel == "nmod" and words[words[i].head-1].symbol == "Bdir" 
               and words[words[i].head-1].position in [0,2]):
-            # Set the first word after the direct object component as the start of the Bdir,p
-            if words[words[i].head-1].position == 0:
-                words[words[i].head-1].setSymbol("Bdir", 1)
+            # positive lookahead
+            firstIndex = i
+            doubleNmod = False
+            j = 0
+            # Find and encapsulate any other nmods connected to the last detected nmod
+            while j < wordLen:
+                if words[j].deprel == "nmod" and words[j].head-1 == i:
+                    lastIndex = j
+                    doubleNmod = True
+                    i = j
+                j+=1
+            
+            # if two or more nmod dependencies are connected then treat it as a Bdir,p
+            if doubleNmod:
+                # Set the first word after the direct object component as the start of the component
+                words[words[firstIndex].head].setSymbol("Bdir,p", 1)
+                words[lastIndex].setSymbol("Bdir,p", 2)
+                i = lastIndex
             else:
-                words[words[i].head-1].setSymbol("", 0)
-            words[i].setSymbol("Bdir", 2)
+                # Set the first word after the direct object component as the start of the component
+                if words[words[firstIndex].head-1].position == 0:
+                    words[words[firstIndex].head-1].setSymbol("Bdir", 1)
+                else:
+                    words[words[firstIndex].head-1].setSymbol("", 0)
+                words[i].setSymbol("Bdir", 2)
                 
         # (D) Deontic detection
         elif words[words[i].head-1].deprel == "root":
