@@ -2,7 +2,6 @@ import stanza
 import time
 import copy
 import requests
-import logging
 from utility import *
 
 # Global variables for implementation specifics
@@ -977,96 +976,6 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
     else:
         #print("First val was not id 0 and deprel was not mark", words[lastIndex])
         return False
-
-# Backup of the old activation condition handler
-def handleActivationCondition2(words, wordsBak, i, wordLen, words2):
-    firstVal = 0
-    firstValFilled = False
-
-    k = 0
-
-    # Go through the statement from the first word to the advcl deprel
-    while k < i:
-        x = k
-        headRel = ""
-        while headRel != "root":
-            # Set x to the head of x
-            x = words[x].head-1
-            #print(words[x].deprel, words[x].text)
-            if words[x].deprel == "advcl":
-                if not firstValFilled:
-                    firstVal = k
-                    firstValFilled = True
-                headRel = "root"
-            headRel = words[x].deprel
-        k += 1
-            
-    lastIndex = 0
-    k = i+1
-    while k < len(words):
-        x = k
-        headRel = ""
-        while headRel != "root":
-            x = words[x].head-1
-            if words[x].deprel == "advcl":
-                lastIndex = k+1
-                headRel = "root"
-            headRel = words[x].deprel
-        k += 1
-
-    # Return the combination of the activation condition and the rest of the sentence
-    if lastIndex < len(words) and words[lastIndex].deprel == "punct":
-
-        if firstVal == 0:
-            contents = []
-
-            if not useREST:
-                activationCondition = matchingFunction(
-                    compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[:lastIndex]))))
-            else:
-                activationCondition = matchingFunction(
-                    compoundWordsMiddlewareWords(nlpPipeline(
-                        WordsToSentence(wordsBak[:lastIndex]))))
-            #actiWords = copy.deepcopy(words[:lastIndex])
-            #activationCondition = matchingFunction(reusePart(actiWords, 0, lastIndex))
-
-            if validateNested(activationCondition):
-                words2.append(Word(
-                "","","",0,0,"","","",0,0,0,"Cac",True,1
-                ))
-                words2 += activationCondition
-                words2.append(Word("","","",0,0,"","","",0,0,0,"Cac",True,2))
-                words2.append(words[lastIndex])
-            else:
-                words2 += words[:lastIndex]
-                words2[0].setSymbol("Cac",1)
-                words2[lastIndex-1].setSymbol("Cac",2)
-                words2.append(words[lastIndex])
-
-            #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
-            #    WordsToSentence(words[lastIndex+1:]))))
-            contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
-                                                            wordLen-(lastIndex+1)))
-
-            # Copy over the old placement information to the 
-            # newly generated words for proper formatting
-            k = lastIndex +1
-            while k < len(words):
-                index = k-lastIndex-1
-                contents[index].id = words[k].id
-                contents[index].start = words[k].start
-                contents[index].end = words[k].end
-                contents[index].spaces = words[k].spaces
-
-                k += 1
-
-            # print("Contents are: '", contents[0].text, "'")
-            words2 += contents
-
-            return True
-        else:
-            return False
-    return False
 
 # Handler function for the Or else (O) component
 def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
