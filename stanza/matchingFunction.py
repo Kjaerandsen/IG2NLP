@@ -354,7 +354,7 @@ def matchingFunction(words):
             #    print("Aim is not VERB:", words[i].pos, words[i])
             # Look for logical operators
             words[i].setSymbol("I")
-            logicalOperatorAim(words, i, "I", wordLen)
+            smallLogicalOperator(words, i, "I", wordLen, True)
             if words[i].position == 0:
                 # Look for xcomp dependencies
                 k = 0
@@ -574,7 +574,7 @@ def ifHeadRelationAim(words, wordId, headId):
     return False
 
 # Finds and handles symbols with logical operators
-def smallLogicalOperator(words, i, symbol, wordLen):
+def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
     scopeStart = i  
     scopeEnd = i
 
@@ -586,27 +586,18 @@ def smallLogicalOperator(words, i, symbol, wordLen):
     # Locations (ids) of determiners
     detLocs = []
 
-    supported = ["punct","det","advmod","amod"]
-
-    # Go through the word list and find the scope of the component
-    while j < wordLen:
-        if ifHeadRelation(words, j, i):
-            if words[j].deprel == "cc":
-                ccLocs.append(j)
-                scopeEnd = j
-            elif words[j].deprel == "conj":
-                if words[j].head-1 == i:
-                    scopeEnd = j
-            # Also include advmod dependencies
-            elif words[j].deprel == "advmod":
-                scopeEnd = j
-            # If the word is anything else than the supported components 
-            # break the loop to not include further components
-            elif not words[j].deprel in supported:
-                j=wordLen-1
-                #logger.debug("Word in smallLogicalOperator not part of supported deprels: "+ 
-                #              words[j].deprel)
-        j += 1
+    if aim:
+        # Go through the word list and find the scope of the component
+        while j < wordLen:
+            if ifHeadRelationAim(words, j, i):
+                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
+            j += 1
+    else:
+        while j < wordLen:
+            # Go through the word list and find the scope of the component
+            if ifHeadRelation(words, j, i):
+                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
+            j += 1
         
     ccCount = len(ccLocs)
 
@@ -641,6 +632,7 @@ def smallLogicalOperator(words, i, symbol, wordLen):
             j += 1
 
         words[scopeStart].setSymbol(symbol, 1)
+        words[scopeEnd].setSymbol(symbol, 2)
         
         i = scopeEnd
 
@@ -656,7 +648,6 @@ def smallLogicalOperator(words, i, symbol, wordLen):
                 words[punctLocs[j]].text = words[ccLocs[0]].text
                 j+=1
 
-            words[scopeEnd].setSymbol(symbol, 2)
             i = scopeEnd
         else:
             # Go through the list of words, create lists of logical operator sequences
@@ -665,174 +656,6 @@ def smallLogicalOperator(words, i, symbol, wordLen):
             orConj = False
             andConj = False
 
-            ccLocs = ccLocs + punctLocs
-
-            j = scopeStart
-            while j < scopeEnd+1:
-                if words[j].text == ",":
-                    if j+1 in ccLocs:
-                        words[j].text = ""
-                        if j in punctLocs: punctLocs.remove(j)
-                    else:
-                        currOperatorLoc = next(
-                            (i for i, val in enumerate(ccLocs) if val > j), -1)
-                        # Set the currOperatorLoc to the value instead of the id
-                        currOperatorLoc = ccLocs[currOperatorLoc]
-                        if currOperatorLoc != -1:
-                            words[currOperatorLoc].toLogical()
-                            if words[currOperatorLoc].text == "[AND]":
-                                ccLocs2.append(j)
-                                ccTypes.append("AND")
-                            elif words[currOperatorLoc].text == "[OR]":
-                                ccLocs2.append(j)
-                                ccTypes.append("OR")
-                            else:
-                                print("Error, unknown cc")
-                                return
-                            words[j].text = words[currOperatorLoc].text
-                            words[j].spaces = 1
-                        else:
-                            logger.error(
-                                "Error, punct not followed by a logical operator in logical"+
-                                " operator handling.")
-                elif words[j].deprel == "cc":
-                    words[j].toLogical()
-                    if words[j].text == "[AND]":
-                        ccLocs2.append(j)
-                        ccTypes.append("AND")
-                        andConj = True
-                    elif words[j].text == "[OR]":
-                        ccLocs2.append(j)
-                        ccTypes.append("OR")
-                        orConj = True
-                j+=1
-            
-            originalType = ccTypes[0]
-            prevOperator = ccTypes[0]
-            prevOperatorLoc = ccLocs2[0]
-            # If there is a mix and match between symbol types handle the bracketing
-            if andConj and orConj:
-                logger.warning('Found both "and" and "or" logical operators in component, '+
-                        "please review manually to solve potential encapsulation issues.")
-                j = 0
-
-                # Go through all the cc and handle the bracketing
-                while j < len(ccLocs2):
-                    nextLoc = ccLocs2[j]
-                    nextType = ccTypes[j]
-
-                    if prevOperator == originalType:
-                        # If next operator is not then add the first word after the operator
-                        # as the starting bracket
-                        if nextType != originalType:
-                            words[prevOperatorLoc+1].text = "(" + words[prevOperatorLoc+1].text
-                    else:
-                        # If previous is not original and this is then close the bracket
-                        if nextType == originalType:
-                            words[nextLoc-1].text += ")"
-                    # Update the previous operator
-                    prevOperator = nextType
-                    prevOperatorLoc = nextLoc
-                    j+=1
-
-            # If the last operator is not the original add a closing bracket
-            if ccTypes[len(ccLocs2)-1] != originalType:
-                words[scopeEnd].text += ")"
-            
-            logger.warning("More than one CC in smallLogicalOperator function," +
-                             "please review logical operators")
-    else:
-        words[i].setSymbol(symbol)
-
-# Finds and handles symbols with logical operators
-def logicalOperatorAim(words, i, symbol, wordLen):       
-    scopeStart = i  
-    scopeEnd = i
-
-    j=scopeStart+1
-    # Locations (ids) of cc dependent words
-    ccLocs = []
-    # Locations (ids) of puncts
-    punctLocs = []
-    # Locations (ids) of determiners
-    detLocs = []
-
-    # Go through the word list and find the scope of the component
-    while j < wordLen:
-        # If the connection to the aim is valid
-        if ifHeadRelationAim(words, j, i):
-            if words[j].deprel == "cc":
-                ccLocs.append(j)
-                scopeEnd = j
-            elif words[j].deprel == "conj":
-                scopeEnd = j
-            # Also include advmod dependencies
-            elif words[j].deprel == "advmod":
-                scopeEnd = j
-            # If the word is anything else than the supported components 
-            # break the loop to not include further components
-            elif (words[j].deprel != "punct" and words[j].deprel != "det" and 
-                  words[j].deprel != "advmod" and words[j].deprel != "amod"):
-                j=wordLen-1
-        j += 1
-        
-    ccCount = len(ccLocs)
-
-    # If the scope is larger than one word in length and there is a cc deprel in the scope (and/or)
-    if scopeEnd - scopeStart != 0 and ccCount > 0:
-        # Go through the scope, if a deprel other than conj, cc and det is found
-        # then handle it as a single word component instead.
-        j = scopeStart
-        while j < scopeEnd:
-            if words[j].deprel == "det":
-                if j == scopeStart:
-                    detLocs.append(j)
-                elif words[j-1].deprel == "cc":
-                    detLocs.append(j)
-            # Remove additional puncts (i.e. "x, and y" -> "x and y")
-            elif words[j].deprel == "punct" and words[j].text == ",":
-                if words[j+1].deprel == "cc":
-                    words[j].spaces = 0
-                    words[j].text = ""
-                # If the word is not before a cc deprel then add it to the punctLocs list
-                    # for future replacement by a logical operator
-                elif words[words[j].head-1].deprel == "conj":
-                    punctLocs.append(j)
-            j += 1
-
-        # Remove dets
-        j = 0
-        while j < len(detLocs):
-            k = detLocs[j]
-            words[k].spaces = 0
-            words[k].text = ""
-            j += 1
-
-        words[scopeStart].setSymbol(symbol, 1)
-        words[scopeEnd].setSymbol(symbol, 2)
-        i = scopeEnd
-
-        # If there is only one CC in the component
-        if ccCount == 1:
-            # Set the contents of the cc to be a logical operator
-            words[ccLocs[0]].toLogical()
-
-            # Turn all extra punct deprels into the same logical operator as above
-            j = 0
-            while j < len(punctLocs):
-                words[punctLocs[j]].spaces += 1
-                words[punctLocs[j]].text = words[ccLocs[0]].text
-                j+=1
-                
-        # If there is more than one CC in the component
-        else:
-            # Go through the list of words, create lists of logical operator sequences
-            ccLocs2 = []
-            ccTypes = []
-            orConj = False
-            andConj = False
-
-            #print("ScopeEnd is: ", words[scopeEnd],  words[scopeEnd-1])
             ccLocs = ccLocs + punctLocs
 
             '''
@@ -935,8 +758,29 @@ def logicalOperatorAim(words, i, symbol, wordLen):
             # If the last operator is not the original add a closing bracket
             if ccTypes[len(ccLocs2)-1] != originalType:
                 words[scopeEnd].text += ")"
-    #else:
-        #print("Invalid scope in logicalOperatorAim")
+            
+            logger.warning("More than one CC in smallLogicalOperator function," +
+                             "please review logical operators")
+    else:
+        words[i].setSymbol(symbol)
+
+def LogicalOperatorHelper(word, wordLen, scopeEnd, ccLocs, j):
+    supported = ["punct","det","advmod","amod"]
+
+    if word.deprel == "cc":
+        ccLocs.append(j)
+        scopeEnd = j
+    elif word.deprel == "conj":
+        scopeEnd = j
+    # Also include advmod dependencies
+    elif word.deprel == "advmod":
+        scopeEnd = j
+    # If the word is anything else than the supported components 
+    # break the loop to not include further components
+    elif not word.deprel in supported:
+        j=wordLen-1
+    
+    return scopeEnd, j
 
 # Handler function for the matching and encapsulation of conditions (Cac, Cex)
 def handleCondition(words, wordsBak, i, wordLen, words2):
