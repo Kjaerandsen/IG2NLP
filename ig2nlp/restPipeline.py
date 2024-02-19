@@ -1,8 +1,8 @@
 import stanza
-from utility import convertWordFormat
+from ig2nlp.utility import convertWordFormat
 import json
 from flask import Flask, request, Response
-from utility import loadEnvironmentVariables
+from ig2nlp.utility import loadEnvironmentVariables
 
 # Run this program with the following command:
 # flask --app .\restPipeline.py run -p 5000
