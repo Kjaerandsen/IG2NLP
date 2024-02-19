@@ -585,7 +585,7 @@ func removeComponentList(components []JSONComponent, compLen, id int) []JSONComp
 func appendToJSON(content any, jsonData []byte) []byte {
 	jsonContents, err := json.Marshal(content)
 	if err != nil {
-		log.Fatalf("Error marshaling data in appendToJSON: \n", err)
+		log.Fatalf("Error marshaling data in appendToJSON: \n%s", err)
 		return jsonData
 	}
 
@@ -607,14 +607,14 @@ func createCompareJSON(newOutput CompareOut, jsonData []byte) []byte {
 	jsonData = append(jsonData, []byte(",\n    "+`"extraComponents": `)...)
 	jsonContents, err := json.MarshalIndent(newOutput.ExtraComponents, "    ", "  ")
 	if err != nil {
-		log.Fatalf("Error marshaling data in createCompareJSON: \n", err)
+		log.Fatalf("Error marshaling data in createCompareJSON: \n%s", err)
 	}
 	jsonData = append(jsonData, jsonContents...)
 
 	jsonData = append(jsonData, []byte(",\n    "+`"partialPool": `)...)
 	jsonContents, err = json.MarshalIndent(newOutput.PartialPool, "    ", "  ")
 	if err != nil {
-		log.Fatalf("Error marshaling data in createCompareJSON: \n", err)
+		log.Fatalf("Error marshaling data in createCompareJSON: \n%s", err)
 	}
 	jsonData = append(jsonData, jsonContents...)
 

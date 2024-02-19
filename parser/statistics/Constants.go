@@ -87,7 +87,7 @@ type CompareStatisticsGeneric struct {
 	// Components which are not true positive matches
 	ExtraComponents [2][17][]JSONComponent `json:"extraComponents"`
 	PartialPool     []PartialPool          `json:"partialPool"`
-	OtherPool       []PartialPool          `json:"partialPool"`
+	OtherPool       []PartialPool          `json:"otherPool"`
 	// For partial matches of the same type
 	PartialCount [17]int
 	// Count 1 is Manual, 2 is Stanza
