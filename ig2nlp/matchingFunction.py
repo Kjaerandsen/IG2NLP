@@ -300,6 +300,7 @@ def matchingFunction(words):
             smallLogicalOperator(words, i, "Bdir", wordLen)
             # Positive lookahead for nmod to include:
             # May need future refinement
+            '''
             if words[i].position == 0:
                 j=i
                 while j < wordLen:
@@ -316,6 +317,7 @@ def matchingFunction(words):
                             i = j
                             break
                     j += 1
+            '''
 
             # If the flag is True combine the object with single word properties preceeding 
             # the object
@@ -435,6 +437,14 @@ def matchingFunction(words):
                     words[i].setSymbol("Bdir,p")
             #else:
                 #print("\nWord is nmod:poss: ", words[i])
+                    
+        # (Bdir,p) Direct object property detection 3
+        # TODO: Reconsider in the future if this is accurate enough
+        # There are currently false positives, but they should be mitigated by better
+        # Cex component detection
+        elif (words[i].deprel == "acl" and words[words[i].head-1].symbol == "Bdir"
+              and words[i-1].symbol == "Bdir"):
+            words[i].setSymbol("Bdir,p")
         
         # (A) Attribute detection
         elif "nsubj" in deprel:
@@ -507,8 +517,14 @@ def matchingFunction(words):
         # Too broad coverage in this case, detected instances which should be included in the main
         # object in some instances, an instance of an indirect object component, and several 
         # overlaps with execution constraints.
-        #elif words[i].deprel == "nmod" and words[words[i].head-1].deprel == "obj":
-        #    words[i].setSymbol("Bdir,p")
+        elif (words[i].deprel == "nmod" and words[words[i].head-1].symbol == "Bdir" 
+              and words[words[i].head-1].position in [0,2]):
+            # Set the first word after the direct object component as the start of the Bdir,p
+            if words[words[i].head-1].position == 0:
+                words[words[i].head-1].setSymbol("Bdir", 1)
+            else:
+                words[words[i].head-1].setSymbol("", 0)
+            words[i].setSymbol("Bdir", 2)
                 
         # (D) Deontic detection
         elif words[words[i].head-1].deprel == "root":
