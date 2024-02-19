@@ -513,8 +513,8 @@ def reusePart(words, offset, listLen):
 # Function that loads all environment variable from ".env" file or environment
 def loadEnvironmentVariables():
     load_dotenv()
-
     # Dict for return values
+    global env
     env = {}
 
     # Take the environment variable, default to false
@@ -541,45 +541,50 @@ def loadEnvironmentVariables():
     env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
 
     logLevels = {"INFO":logging.INFO,
-                 "DEBUG":logging.DEBUG,
-                 "WARN":logging.WARNING,
-                 "ERROR":logging.ERROR,
-                 "CRITICAL":logging.CRITICAL,
-                 }
-    env['logLevelFile'] = getenv("IG2LOGLEVELFILE")
-    if env['logLevelFile'] in logLevels.keys():
-        env['logLevelFile'] = logLevels[env['logLevelFile']]
+                    "DEBUG":logging.DEBUG,
+                    "WARN":logging.WARNING,
+                    "ERROR":logging.ERROR,
+                    "CRITICAL":logging.CRITICAL,
+                    }
+
+    env["logLevelFile"] = getenv("IG2LOGLEVELFILE")
+    if env["logLevelFile"] in logLevels.keys():
+        env["logLevelFile"] = logLevels[env["logLevelFile"]]
     else:
-        env['logLevelFile'] = logging.DEBUG
-    
-    env['logLevelConsole'] = getenv("IG2LOGLEVELCONSOLE")
-    if env['logLevelConsole'] in logLevels.keys():
-        env['logLevelConsole'] = logLevels[env['logLevelConsole']]
+        env["logLevelFile"] = logging.DEBUG
+
+    env["logLevelConsole"] = getenv("IG2LOGLEVELCONSOLE")
+    if env["logLevelConsole"] in logLevels.keys():
+        env["logLevelConsole"] = logLevels[env["logLevelConsole"]]
     else:
-        env['logLevelConsole'] = logging.DEBUG
+        env["logLevelConsole"] = logging.DEBUG
 
     return env
 
+def createLogger():
+    global logger
 
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
-# Accept all logs
-logger.setLevel(logging.DEBUG)
+    # Accept all logs
+    logger.setLevel(logging.DEBUG)
 
-# Handlers for console and file output with separate logging levels
-fileHandler = logging.FileHandler("..\data\logs\log.log")
-consoleHandler = logging.StreamHandler()
-env = loadEnvironmentVariables()
-fileHandler.setLevel(env['logLevelFile'])
-consoleHandler.setLevel(env['logLevelConsole'])
+    # Handlers for console and file output with separate logging levels
+    fileHandler = logging.FileHandler("..\data\logs\log.log")
+    consoleHandler = logging.StreamHandler()
+    fileHandler.setLevel(env["logLevelFile"])
+    consoleHandler.setLevel(env["logLevelConsole"])
 
-# Custom formatting for console and file output
-formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
-                                    '%d/%m/%Y %I:%M:%S %p')
-formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
-consoleHandler.setFormatter(formatterConsole)
-fileHandler.setFormatter(formatterFile)
+    # Custom formatting for console and file output
+    formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
+                                        '%d/%m/%Y %I:%M:%S %p')
+    formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
+    consoleHandler.setFormatter(formatterConsole)
+    fileHandler.setFormatter(formatterFile)
 
-# Add the custom handlers to the logger
-logger.addHandler(fileHandler)
-logger.addHandler(consoleHandler)
+    # Add the custom handlers to the logger
+    logger.addHandler(fileHandler)
+    logger.addHandler(consoleHandler)
+
+loadEnvironmentVariables()
+createLogger()

@@ -5,29 +5,6 @@ import requests
 import logging
 from utility import *
 
-env = loadEnvironmentVariables()
-# Custom logger functionality
-logger = logging.getLogger(__name__)
-# Accept all logs
-logger.setLevel(logging.DEBUG)
-
-# Handlers for console and file output with separate logging levels
-fileHandler = logging.FileHandler("..\data\logs\log.log")
-consoleHandler = logging.StreamHandler()
-fileHandler.setLevel(env['logLevelFile'])
-consoleHandler.setLevel(env['logLevelConsole'])
-
-# Custom formatting for console and file output
-formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
-                                    '%d/%m/%Y %I:%M:%S %p')
-formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
-consoleHandler.setFormatter(formatterConsole)
-fileHandler.setFormatter(formatterFile)
-
-# Add the custom handlers to the logger
-logger.addHandler(fileHandler)
-logger.addHandler(consoleHandler)
-
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
