@@ -329,6 +329,13 @@ def matchingFunction(words):
                         words[iBak].setSymbol("Bdir", 2)
                         words[iBak-1].setSymbol("Bdir", 1)
 
+        elif deprel == "compound":
+            i, error = compoundHandler(words, i)
+            if error:
+                logger.debug("compoundHandler returned True")
+            else:
+                logger.debug("compoundHandler returned False")
+
         # (Bind) Indirect object detection
         elif deprel == "iobj":
             iBak = i
@@ -759,7 +766,7 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
             if ccTypes[len(ccLocs2)-1] != originalType:
                 words[scopeEnd].text += ")"
             
-            logger.warning("More than one CC in smallLogicalOperator function," +
+            logger.warning("More than one CC in smallLogicalOperator function, " +
                              "please review logical operators")
     else:
         words[i].setSymbol(symbol)
@@ -1192,3 +1199,70 @@ def corefReplace(words):
         i+=1
     
     return words
+
+def compoundHandler(words, i):
+    start = i
+    end = words[i].head-1
+    ccLocs = []
+    ccType = ""
+    punctLocs = []
+    conjLocs = [i]
+
+    if words[end].deprel == "obj":
+        if start > end:
+            logger.warning("compoundHandler: start > end")
+            return start, False
+        # Look for specific pattern:
+        '''
+        compound, (optional punct), cc, conj, compound
+        or
+        compound, (optional punct), conj, (optional punct), cc, conj, compound
+        (repeated punct, conj n times before the compound)
+        '''
+        i+=1
+        while i < end:
+            #logger.debug("Word: " + words[i].text + " " + words[i].deprel)
+            if words[i].deprel != "punct" and words[i].deprel != "cc" and words[i].deprel != "conj":
+                logger.debug("compoundHandler: not punct cc or conj deprel")
+                return start, False
+            elif words[i].deprel == "cc":
+                #logger.debug("Found cc: "+ words[i].text + " " + words[i].deprel)
+                ccLocs.append(i)
+                if ccType == "":
+                    #logger.debug("Adding cc text")
+                    ccType = words[i].text
+                else:
+                    if ccType != words[i].text:
+                        logger.warning(
+                    "compoundHandler: Detected several different types of logical operators.")
+                        return start, False
+            elif words[i].deprel == "punct":
+                if words[i+1].deprel == "cc":
+                    words[i].text = ""
+                else:
+                    punctLocs.append(i)
+            else:
+                conjLocs.append(i)
+            i+=1
+
+        if len(ccLocs) == 0 and ccType != "":
+            logger.warning(
+                    "compoundHandler did not detect a logical operator.")
+            return start, False
+        else:
+            for ccLoc in ccLocs:
+                words[ccLoc].toLogical()
+            for punct in punctLocs:
+                words[punct].text = words[ccLocs[0]].text
+                words[punct].spaces = 1
+            conjLocs = conjLocs[:len(conjLocs)-1]
+            for conj in conjLocs:
+                logger.debug("Word in conjLocs: " + words[conj].text)
+                words[conj].text = words[conj].text + " [" + words[end].text + "]"
+
+        words[start].setSymbol("Bdir", 1)
+        words[end].setSymbol("Bdir", 2)
+        return end, True
+    else:
+        logger.debug("compoundHandler: Head is not an object")
+        return start, False
