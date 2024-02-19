@@ -322,12 +322,13 @@ def matchingFunction(words):
             if CombineObjandSingleWordProperty:
                 if (words[iBak-1].symbol == "Bdir,p" and words[iBak-1].deprel == "amod"
                     and words[iBak-1].position == 0):
-                    if iBak != i:
-                        words[iBak].setSymbol("", 0)
-                        words[iBak-1].setSymbol("Bdir", 1)
-                    else:
-                        words[iBak].setSymbol("Bdir", 2)
-                        words[iBak-1].setSymbol("Bdir", 1)
+                    if (words[iBak-2].symbol != "Bdir,p"):
+                        if iBak != i:
+                            words[iBak].setSymbol("", 0)
+                            words[iBak-1].setSymbol("Bdir", 1)
+                        else:
+                            words[iBak].setSymbol("Bdir", 2)
+                            words[iBak-1].setSymbol("Bdir", 1)
 
         #elif deprel == "compound":
         #    i, error = compoundHandler(words, i)
