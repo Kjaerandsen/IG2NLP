@@ -84,6 +84,9 @@ def MatcherMiddleware(jsonData):
     logger.info("Finished running matcher\n\n")
     return jsonData
 
+# Unused currently, used in orElseHandler and handleCondition if reverting to the earlier handling
+# of the components
+'''
 # Takes a sentence as a string, returns the nlp pipeline results for the string
 def nlpPipeline(text):
     # Run the nlp pipeline on the input text
@@ -98,7 +101,8 @@ def nlpPipeline(text):
         returnVal = nlpPipelineMulti(output)[0]
         logger.debug("Finished running single statement pipeline")
         return returnVal
-
+'''
+        
 # Takes a list of sentences as strings, returns the nlp pipeline results for the sentences
 def nlpPipelineMulti(textDocs):
     if not useREST:
@@ -201,7 +205,7 @@ def matchingFunction(words):
                 j += 1
             
             if scopeEnd - scopeStart >= minimumCexLength:
-                # Reconsider the two lines below in the future
+                #TODO: Reconsider the two lines below in the future
                 #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
                 #    scopeStart += 2
                 # Look for symbols within
@@ -307,13 +311,6 @@ def matchingFunction(words):
                         else:
                             words[iBak].setSymbol("Bdir", 2)
                             words[iBak-1].setSymbol("Bdir", 1)
-
-        #elif deprel == "compound":
-        #    i, error = compoundHandler(words, i)
-        #    if error:
-        #        logger.debug("compoundHandler returned True")
-        #    else:
-        #        logger.debug("compoundHandler returned False")
 
         # (Bind) Indirect object detection
         elif deprel == "iobj":
@@ -1065,32 +1062,6 @@ def findInternalLogicalOperators(words, start, end):
 
     return words
 
-# Function that tries to use the old dependency parse tree for the second part of sentences starting
-# with an activation condition. If the words do not include a root connection the words are
-# parsed again.
-def removeStart(words, offset, wordLen):
-    i = 0
-
-    noRoot = True
-    while i < wordLen:
-        if words[i].head != 0:
-            words[i].head -= offset
-        if words[i].deprel == "root":
-            noRoot = False
-
-        words[i].id -= offset
-        i+=1
-
-    if noRoot:
-        logger.error("Unable to reuse the second part of the statement's dependency parse tree"+
-                      " in removeStart")
-        if not useREST:
-            return compoundWordsMiddleware(nlpPipeline(WordsToSentence(words)))
-        else:
-            return compoundWordsMiddlewareWords(nlpPipeline(WordsToSentence(words)))
-
-    return words
-
 def corefReplace(words):
     #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
     i = 0
@@ -1148,74 +1119,3 @@ def corefReplace(words):
         i+=1
     
     return words
-
-def compoundHandler(words, i):
-    start = i
-    end = words[i].head-1
-    ccLocs = []
-    ccType = ""
-    punctLocs = []
-    conjLocs = [i]
-
-    if words[end].deprel == "obj":
-        if start > end:
-            logger.warning("compoundHandler: start > end")
-            return start, False
-        # Look for specific pattern:
-        '''
-        compound, (optional punct), cc, conj, compound
-        or
-        compound, (optional punct), conj, (optional punct), cc, conj, compound
-        (repeated punct, conj n times before the compound)
-        '''
-        i+=1
-        while i < end:
-            #logger.debug("Word: " + words[i].text + " " + words[i].deprel)
-            if words[i].deprel != "punct" and words[i].deprel != "cc" and words[i].deprel != "conj":
-                logger.debug("compoundHandler: not punct cc or conj deprel")
-                return start, False
-            elif words[i].deprel == "cc":
-                #logger.debug("Found cc: "+ words[i].text + " " + words[i].deprel)
-                ccLocs.append(i)
-                if ccType == "":
-                    #logger.debug("Adding cc text")
-                    ccType = words[i].text
-                else:
-                    if ccType != words[i].text:
-                        logger.warning(
-                    "compoundHandler: Detected several different types of logical operators.")
-                        return start, False
-            elif words[i].deprel == "punct":
-                if words[i+1].deprel == "cc":
-                    words[i].text = ""
-                else:
-                    punctLocs.append(i)
-            else:
-                conjLocs.append(i)
-            i+=1
-
-        if len(ccLocs) == 0 or ccType == "":
-            logger.warning(
-                    "compoundHandler did not detect a logical operator.")
-            return start, False
-        if len(conjLocs == 0):
-            logger.warning(
-                    "compoundHandler did not detect any conj dependencies.")
-            return start, False
-        else:
-            for ccLoc in ccLocs:
-                words[ccLoc].toLogical()
-            for punct in punctLocs:
-                words[punct].text = words[ccLocs[0]].text
-                words[punct].spaces = 1
-            conjLocs = conjLocs[:len(conjLocs)-1]
-            for conj in conjLocs:
-                logger.debug("Word in conjLocs: " + words[conj].text)
-                words[conj].text = words[conj].text + " [" + words[end].text + "]"
-
-        words[start].setSymbol("Bdir", 1)
-        words[end].setSymbol("Bdir", 2)
-        return end, True
-    else:
-        logger.debug("compoundHandler: Head is not an object")
-        return start, False
