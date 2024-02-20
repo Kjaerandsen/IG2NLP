@@ -76,7 +76,7 @@ def MatcherMiddleware(jsonData):
 
         
         
-        print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
+        #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
         logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
         jsonData[i]["stanza"] = output
         i+=1
@@ -181,49 +181,13 @@ def matchingFunction(words):
 
         # (Cex) Execution constraint detection
         elif deprel == "obl":
-            # Check for connections to the obl both before and after
-            scopeStart = i
-            scopeEnd = i
+            i = executionConstraintHandler(words, i, wordLen)
 
-            j = 0
-            while j < wordLen:
-                if words[j].head-1 == i and words[j].deprel != "punct":
-                    if j > scopeEnd:
-                        scopeEnd = j
-                    elif j < scopeStart:
-                        scopeStart = j
-                #elif words[words[j].head-1].head-1 == i and words[j].deprel != "punct":
-                #    if j > scopeEnd:
-                #        scopeEnd = j
-                #    elif j < scopeStart:
-                #        scopeStart = j
-                elif ifHeadRelation(words, j, i) and words[j].deprel != "punct":
-                    if j > scopeEnd:
-                        scopeEnd = j
-                    elif j < scopeStart:
-                        scopeStart = j
-                j += 1
-            
-            if scopeEnd - scopeStart >= minimumCexLength:
-                #TODO: Reconsider the two lines below in the future
-                #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
-                #    scopeStart += 2
-                # Look for symbols within
-                '''
-                j = scopeStart
-                while j < scopeEnd:
-                    if words[j].symbol != "":
-                        print("\n\nNot none\n\n", words[j].symbol)
-                    j += 1
-                '''
-                # Add the words as a Cex
-                #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
-                words[scopeStart].setSymbol("Cex", 1)
-                words[scopeEnd].setSymbol("Cex", 2)
-                if scopeEnd - scopeStart > 2:
-                    words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
-            
-            i = scopeEnd
+        # (Cex) Execution constraint detection 2
+        elif deprel == "obl:tmod":
+            # Old implementation used
+            # i = words[i].head-1
+            i = executionConstraintHandler(words, i, wordLen)
 
         # Advmod of Aim is correlated with execution constraints
         # Might be too generic of a rule.
@@ -232,44 +196,6 @@ def matchingFunction(words):
             if i+1 < wordLen:
                 if words[i+1].deprel == "punct":
                     words[i].setSymbol("Cex")
-
-        # (Cex) Execution constraint detection 2
-        elif deprel == "obl:tmod":
-            i = words[i].head-1
-
-            scopeStart = i
-            scopeEnd = i
-
-            j = 0
-
-            while j < wordLen:
-                if (words[j].head-1 == i 
-                    and words[j].deprel != "punct" 
-                    and words[j].deprel != "cc"):
-                    if j > scopeEnd:
-                        scopeEnd = j
-                    elif j < scopeStart:
-                        scopeStart = j
-                elif (ifHeadRelation(words, j, i) 
-                      and words[j].deprel != "punct"
-                      and words[j].deprel != "cc"):
-                    if j > scopeEnd:
-                        scopeEnd = j
-                    elif j < scopeStart:
-                        scopeStart = j
-                j += 1
-            
-            if scopeEnd - scopeStart != 0:
-                # Reconsider the two lines below in the future
-                #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
-                #    scopeStart += 2
-                # Add the words as a Cex
-                words[scopeStart].setSymbol("Cex", 1)
-                words[scopeEnd].setSymbol("Cex", 2)
-                if scopeEnd - scopeStart > 2:
-                    words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
-            
-            i = scopeEnd
 
         #elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
             #print("\nnmod connected to Attribute(A): ", words[i])
@@ -490,8 +416,10 @@ def matchingFunction(words):
         # Too broad coverage in this case, detected instances which should be included in the main
         # object in some instances, an instance of an indirect object component, and several 
         # overlaps with execution constraints.
+        # TODO: Look into nmod inclusion further
         elif (words[i].deprel == "nmod" and words[words[i].head-1].symbol == "Bdir" 
               and words[words[i].head-1].position in [0,2]):
+            #logger.debug("NMOD connected to BDIR")
             # positive lookahead
             firstIndex = i
             doubleNmod = False
@@ -859,6 +787,18 @@ def handleCondition(words, wordsBak, i, wordLen, words2):
         else:
             symbol = "Cac"
 
+        '''
+        date = False
+        for word in condition:
+            if "DATE" in word.ner:
+                date = True
+
+        if date:
+            logger.debug("Date in condition: " + symbol + WordsToSentence(condition))
+        elif symbol == "Cex":
+            logger.debug("No Date in Execution Constraint: " + symbol + WordsToSentence(condition))
+        '''
+
         if validateNested(condition):
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
@@ -1035,6 +975,55 @@ def orElseHandler(words, wordsBak, wordLen, words2, firstVal):
     # Append the last punct
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])
+
+# Handler for execution constraints detected using the obl dependency
+def executionConstraintHandler(words, i, wordLen):
+    # Check for connections to the obl both before and after
+    scopeStart = i
+    scopeEnd = i
+
+    j = 0
+    while j < wordLen:
+        if (ifHeadRelation(words, j, i) 
+                and words[j].deprel != "punct"):
+            if j > scopeEnd:
+                scopeEnd = j
+            elif j < scopeStart:
+                scopeStart = j
+        j += 1
+    
+    if scopeEnd - scopeStart >= minimumCexLength:
+        #TODO: Reconsider the two lines below in the future
+        # (removal of case, det in the component start, i.e. "of the")
+        #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
+        #    scopeStart += 2
+        '''
+        # Check for Date NER in the component
+        componentWords = words[scopeStart:scopeEnd+1]
+
+        date = False
+        for word in componentWords:
+            if "DATE" in word.ner:
+                date = True
+        if date:
+            logger.debug("Date in Execution Constraint (obl): " + 
+                            WordsToSentence(componentWords) + " " +
+                            str(len(componentWords)))
+        else:
+            logger.debug("No date in Execution Constraint (obl): " + 
+                            WordsToSentence(componentWords) + " " +
+                            str(len(componentWords)))
+        '''
+
+        # Add the words as a Cex
+        #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
+        words[scopeStart].setSymbol("Cex", 1)
+        words[scopeEnd].setSymbol("Cex", 2)
+        if scopeEnd - scopeStart > 2:
+            words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
+    
+    return scopeEnd
+
 
 def findInternalLogicalOperators(words, start, end):
     #print("Finding logical operators\n", start, end)
