@@ -43,30 +43,27 @@ def MatcherMiddleware(jsonData):
     # Delete the environment variables dictionary
     del env
 
-    i = 0
     textDocs=[]
-    while i < jsonLen:
-        textDocs.append(jsonData[i]['baseTx'])
-        i += 1
+    for jsonObject in jsonData:
+        textDocs.append(jsonObject['baseTx'])
 
     if useREST:
         docs = nlpPipelineMulti(jsonData)
     else:
         docs = nlpPipelineMulti(textDocs)
 
-    i = 0
-    while i < len(docs):
+    for i, doc in enumerate(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
         logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
         if not useREST:
-            words = docs[i].sentences[0].words
+            words = doc.sentences[0].words
             output = WordsToSentence(
             corefReplace(
                 matchingFunction(
                     compoundWordsMiddleware(
                         words))))
         else:
-            words = docs[i]
+            words = doc
             output = WordsToSentence(
             corefReplace(
                 matchingFunction(
@@ -271,7 +268,7 @@ def matchingFunction(words):
                 # Look for xcomp dependencies
                 k = 0
 
-                while k < wordLen:
+                for k in range(wordLen):
                     if words[k].deprel == "xcomp" and words[k].head-1 == i:
                         #print("XComp of I: ", words[k], k, i)
                         # If the xcomp is adjacent encapsulate it in the aim component
@@ -297,8 +294,6 @@ def matchingFunction(words):
                                 words[k].setSymbol("I",2)
                                 i = k
                             
-                        
-                    k += 1
                 #print("Done with aim: ", WordsToSentence(words), "\n",words[i])
                 #if wordLen > i+1:
                 #    print(words[i+1])
@@ -352,10 +347,8 @@ def matchingFunction(words):
         elif "nsubj" in deprel:
             if words[i].pos != "PRON":
                 # Look for nmod connected to the word i
-                j = 0
-
                 other = False
-                while j < wordLen:
+                for j in range(wordLen):
                     if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
                         #print("A with xpos: ", words[j], words[j].xpos)
                         #print("Nmod head relation to a: ", words[j], words[i])
@@ -370,7 +363,6 @@ def matchingFunction(words):
                                 words[i].setSymbol("A",1)
                                 words[i+1].setSymbol("A",2)
                                 i+=1
-                    j+=1 
                 if not other:
                     smallLogicalOperator(words, i, "A", wordLen)
                     if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
@@ -428,14 +420,12 @@ def matchingFunction(words):
             # positive lookahead
             firstIndex = i
             doubleNmod = False
-            j = 0
             # Find and encapsulate any other nmods connected to the last detected nmod
-            while j < wordLen:
+            for j in range(wordLen):
                 if words[j].deprel == "nmod" and words[j].head-1 == i:
                     lastIndex = j
                     doubleNmod = True
                     i = j
-                j+=1
             
             # if two or more nmod dependencies are connected then treat it as a Bdir,p
             if doubleNmod:
@@ -479,22 +469,18 @@ def matchingFunction(words):
 # Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to 
 # be regarded as nested.
 def validateNested(words):
-    wordLen = len(words)
-
     Aim = False
     Attribute = False
 
-    i = 0
-    while i < wordLen:
-        if words[i].symbol == "A":
+    for word in words:
+        if word.symbol == "A":
             Attribute = True
             if Aim:
                 return True
-        if words[i].symbol == "I":
+        if word.symbol == "I":
             Aim = True
             if Attribute:
                 return True
-        i += 1
     return False
 
 # Check if the word is connected to the headId through a head connection
@@ -554,8 +540,7 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
     if scopeEnd - scopeStart != 0 and ccCount > 0:
         # Go through the scope, if a deprel other than conj, cc and det is found
         # then handle it as a single word component instead.
-        j = scopeStart
-        while j < scopeEnd:
+        for j in range(scopeStart, scopeEnd):
             if words[j].deprel == "det":
                 if j == scopeStart:
                     detLocs.append(j)
@@ -570,15 +555,12 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
                         # logical operator
                 elif words[words[j].head-1].deprel == "conj":
                     punctLocs.append(j)
-            j += 1
 
         # Remove dets
-        j = 0
-        while j < len(detLocs):
-            k = detLocs[j]
+        for det in detLocs:
+            k = det
             words[k].spaces = 0
             words[k].text = ""
-            j += 1
 
         words[scopeStart].setSymbol(symbol, 1)
         words[scopeEnd].setSymbol(symbol, 2)
@@ -591,11 +573,9 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
             words[ccLocs[0]].toLogical()
 
             # Turn all extra punct deprels into the same logical operator as above
-            j = 0
-            while j < len(punctLocs):
-                words[punctLocs[j]].spaces += 1
-                words[punctLocs[j]].text = words[ccLocs[0]].text
-                j+=1
+            for punct in punctLocs:
+                words[punct].spaces += 1
+                words[punct].text = words[ccLocs[0]].text
 
             i = scopeEnd
         else:
@@ -636,8 +616,7 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
             # Potentially replace the while below with the one above by replacing the two lists with
             # a single list of tuples and sorting as the list is created, or afterwards.
 
-            j = scopeStart
-            while j < scopeEnd+1:
+            for j in range(scopeStart, scopeEnd+1):
                 if words[j].text == ",":
                     if j+1 in ccLocs:
                         words[j].text = ""
@@ -674,7 +653,6 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
                         ccLocs2.append(j)
                         ccTypes.append("OR")
                         orConj = True
-                j+=1
             
             originalType = ccTypes[0]
             prevOperator = ccTypes[0]
@@ -683,13 +661,9 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
             if andConj and orConj:
                 logger.warning('Found both "and" and "or" logical operators in component, '+
                         "please review manually to solve potential encapsulation issues.")
-                j = 0
 
                 # Go through all the cc and handle the bracketing
-                while j < len(ccLocs2):
-                    nextLoc = ccLocs2[j]
-                    nextType = ccTypes[j]
-
+                for nextLoc, nextType in zip(ccLocs2, ccTypes):
                     if prevOperator == originalType:
                         # If next operator is not then add the first word after the operator
                         # as the starting bracket
@@ -702,7 +676,6 @@ def smallLogicalOperator(words, i, symbol, wordLen, aim=False):
                     # Update the previous operator
                     prevOperator = nextType
                     prevOperatorLoc = nextLoc
-                    j+=1
 
             # If the last operator is not the original add a closing bracket
             if ccTypes[len(ccLocs2)-1] != originalType:
@@ -736,25 +709,21 @@ def conditionHandler(words, wordsBak, i, wordLen, words2):
     firstVal = i
     
     # Go through the statement until the word is connected to the advcl directly or indirectly
-    k = 0
-    while k < i:
+    for j in range(i):
         # If connected to the advcl then set firstVal to the id and break the loop
-        if ifHeadRelation(words, k, i):
-            firstVal = k
+        if ifHeadRelation(words, j, i):
+            firstVal = j
             break
-        k += 1
 
     # Go through again from the activation condition++
     # Until the word is no longer connected to the advcl
         
     # Set the lastVal to the current id -1    
     lastIndex = i+1
-    k = i+1
-    while k < wordLen:
-        if not ifHeadRelation(words, k, i):
-            lastIndex = k-1
+    for j in range(i+1,wordLen):
+        if not ifHeadRelation(words, j, i):
+            lastIndex = j-1
             break
-        k += 1
 
     if words[lastIndex].deprel != "punct":
         if words[lastIndex+1].deprel == "punct":
@@ -780,12 +749,10 @@ def conditionHandler(words, wordsBak, i, wordLen, words2):
         #actiWords = copy.deepcopy(words[:lastIndex])
         #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
-        j = 0
         oblCount = 0
-        while j < len(condition):
-            if "obl" in condition[j].deprel:
+        for conditionWord in condition:
+            if "obl" in conditionWord.deprel:
                 oblCount+=1
-            j+=1
 
         if oblCount > 1 and words[0].deprel == "mark":
             symbol = "Cex"
@@ -828,15 +795,12 @@ def conditionHandler(words, wordsBak, i, wordLen, words2):
 
         # Copy over the old placement information to the 
         # newly generated words for proper formatting
-        k = lastIndex +1
-        while k < len(words):
-            index = k-lastIndex-1
-            contents[index].id = words[k].id
-            contents[index].start = words[k].start
-            contents[index].end = words[k].end
-            contents[index].spaces = words[k].spaces
-
-            k += 1
+        for j in range(lastIndex+1, wordLen):
+            index = j-lastIndex-1
+            contents[index].id = words[j].id
+            contents[index].start = words[j].start
+            contents[index].end = words[j].end
+            contents[index].spaces = words[j].spaces
 
         # print("Contents are: '", contents[0].text, "'")
         words2 += contents
@@ -872,10 +836,9 @@ def conditionHandler(words, wordsBak, i, wordLen, words2):
         #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
         j = 0
         oblCount = 0
-        while j < len(condition):
-            if "obl" in condition[j].deprel:
+        for conditionWord in condition:
+            if "obl" in conditionWord.deprel:
                 oblCount+=1
-            j+=1
 
         if oblCount > 1:
             symbol = "Cex"
@@ -926,15 +889,12 @@ def conditionHandler(words, wordsBak, i, wordLen, words2):
 
             # Copy over the old placement information to the 
             # newly generated words for proper formatting
-            k = lastIndex +1
-            while k < wordLen:
-                index = k-lastIndex-1
-                contents[index].id = words[k].id
-                contents[index].start = words[k].start
-                contents[index].end = words[k].end
-                contents[index].spaces = words[k].spaces
-
-                k += 1
+            for j in range(lastIndex+1, wordLen):
+                index = j-lastIndex-1
+                contents[index].id = words[j].id
+                contents[index].start = words[j].start
+                contents[index].end = words[j].end
+                contents[index].spaces = words[j].spaces
 
             # print("Contents are: '", contents[0].text, "'")
             words2 += contents
@@ -987,15 +947,13 @@ def executionConstraintHandler(words, i, wordLen):
     scopeStart = i
     scopeEnd = i
 
-    j = 0
-    while j < wordLen:
+    for j in range(wordLen):
         if (ifHeadRelation(words, j, i) 
                 and words[j].deprel != "punct"):
             if j > scopeEnd:
                 scopeEnd = j
             elif j < scopeStart:
                 scopeStart = j
-        j += 1
     
     if scopeEnd - scopeStart >= minimumCexLength:
         #TODO: Reconsider the two lines below in the future
@@ -1032,10 +990,9 @@ def executionConstraintHandler(words, i, wordLen):
 
 def findInternalLogicalOperators(words, start, end):
     #print("Finding logical operators\n", start, end)
-    j = start
     andCount = 0
     orCount = 0
-    while j < end:
+    for j in range(start, end):
         if words[j].deprel == "cc":
             words[j].toLogical()
             if words[j].text == "[AND]":
@@ -1049,7 +1006,6 @@ def findInternalLogicalOperators(words, start, end):
             #print("CC", words[j])
         #else:
         #    print(words[j].text)
-        j += 1
     if andCount > 0 and orCount > 0:
         logger.warning('Found both "and" and "or" logical operators in component, '+
                         "please review manually to solve encapsulation issues.")

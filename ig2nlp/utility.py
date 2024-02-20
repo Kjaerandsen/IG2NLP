@@ -140,6 +140,7 @@ def convertWordFormat(words):
             customWords[i].ner = words[i].parent.multi_ner[0]
             i+=1
 
+            # TODO: look into the statement below
             j=0
             while j < tokenSize:
                 word = words[i]
@@ -153,7 +154,7 @@ def convertWordFormat(words):
                 wordText = tokenText[startChar:endChar]
                 tokenText = tokenText[endChar:]
                 
-                addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+                addToCustomWords(customWords, words[i], wordText, startChar, endChar, spaces)
                 customWords[i].ner = words[i].parent.multi_ner[0]
                 i+=1
                 j+=1
@@ -297,6 +298,7 @@ def compoundWords(words):
 
     return words
 
+# Compound words handling for conj dependencies of the form compound cc conj root
 def compoundWordsConj(words):
     wordLen = len(words)
     i = 0
@@ -306,6 +308,7 @@ def compoundWordsConj(words):
         i += 1
     return words
 
+# Helper function performing the logic for compoundWordsConj
 def compoundWordsConjHelper(words, i, wordLen):
     start = i
     end = words[i].head-1
@@ -325,8 +328,7 @@ def compoundWordsConjHelper(words, i, wordLen):
     compound, (optional punct), conj, (optional punct), cc, conj, compound
     (repeated punct, conj n times before the compound)
     '''
-    i+=1
-    while i < end:
+    for i in range(start+1, end):
         #logger.debug("Word: " + words[i].text + " " + words[i].deprel)
         if words[i].deprel != "punct" and words[i].deprel != "cc" and words[i].deprel != "conj":
             #print("compoundHandler: not punct cc or conj deprel")
@@ -349,7 +351,6 @@ def compoundWordsConjHelper(words, i, wordLen):
                 punctLocs.append(i)
         else:
             conjLocs.append(i)
-        i+=1
 
     if len(ccLocs) == 0 or ccType == "":
         #print(
@@ -381,16 +382,12 @@ def compoundWordsConjHelper(words, i, wordLen):
         words[end].deprel = "conj"
         # Every conj should have the first word as the head
         if len(conjLocs) > 1:
-            j = 1
-            while j > len(conjLocs):
-                words[conjLocs[j]].head = start+1
-                j+=1
+            for conjLoc in conjLocs[1:]:
+                words[conjLoc].head = start+1
         
-        j = 0
-        while j < wordLen:
-            if words[j].head-1 == end:
-                words[j].head = start+1
-            j+=1
+        for word in words:
+            if word.head-1 == end:
+                word.head = start+1
 
     return end, True, wordLen
 
@@ -415,15 +412,13 @@ def removeWord(words,i,wordLen,direction=0):
 
     # Go through the words and adjust the connections between the words to account
     # for the combination of compound words into single words
-    j = 0
-    while j < wordLen:
+    for j, word in enumerate(words):
         # Adjust the head connections to take into account the compounding of two elements
-        if words[j].head > id:
-            words[j].head = words[j].head - 1
+        if word.head > id:
+            word.head = word.head - 1
         # Adjust the id's to take into account the removal of the compound word
         if j >= i:
-            words[j].id -=  1
-        j += 1
+            word.id -=  1
 
     # Remove the extra word
     del words[i]
@@ -476,8 +471,8 @@ def WordsToSentence(words):
 
     sentence = ""
 
-    while i < len(words):
-        sentence += words[i].buildString()
+    for word in words:
+        sentence += word.buildString()
         i += 1
     
     return sentence
@@ -518,51 +513,43 @@ def reusePart(words, offset, listLen):
     return words
 '''
 
+# TODO: Add a check in reusePart functions for multiple "root" deprels
 # Function that takes a list of words and tries to reuse the list for further matching by
 # updating the root of this subset of words.
 # For the End of Statement text
 def reusePartEoS(words, firstVal):
-    wordLen = len(words)
-    i = 0
-    words[i].spaces = 0
-    while i < wordLen:
-        if words[i].head-1 < firstVal:
-            words[i].head = 0
-            words[i].deprel = "root"
-            logger.debug("Word outside of scope of reusePartEoS: " + words[i].text)
+    words[0].spaces = 0
+    for word in words:
+        if word.head-1 < firstVal:
+            word.head = 0
+            word.deprel = "root"
+            logger.debug("Word outside of scope of reusePartEoS: " + word.text)
         else:
-            words[i].head -= firstVal
-        i+=1
+            word.head -= firstVal
 
     return words
 
 # For the Start of Statement text
 def reusePartSoS(words, lastVal):
-    wordLen = len(words)
-    i = 0
-    words[i].spaces = 0
-    while i < wordLen:
-        if words[i].head-1 > lastVal:
-            words[i].head = 0
-            words[i].deprel = "root"
-            logger.debug("Word outside of scope of reusePartSoS: " + words[i].text)
-        i+=1
+    words[0].spaces = 0
+    for word in words:
+        if word.head-1 > lastVal:
+            word.head = 0
+            word.deprel = "root"
+            logger.debug("Word outside of scope of reusePartSoS: " + word.text)
 
     return words
 
 # For the Middle of a Statement text
 def reusePartMoS(words, firstVal, lastVal):
-    wordLen = len(words)
-    i = 0
-    words[i].spaces = 1
-    while i < wordLen:
-        if words[i].head-1 > lastVal or words[i].head-1 < firstVal:
-            words[i].head = 0
-            words[i].deprel = "root"
-            logger.debug("Word outside of scope of reusePartMoS: " + words[i].text)
+    words[0].spaces = 1
+    for word in words:
+        if word.head-1 > lastVal or word.head-1 < firstVal:
+            word.head = 0
+            word.deprel = "root"
+            logger.debug("Word outside of scope of reusePartMoS: " + word.text)
         else:
-            words[i].head -= firstVal
-        i+=1
+            word.head -= firstVal
 
     return words
 
@@ -617,6 +604,7 @@ def loadEnvironmentVariables():
 
     return env
 
+# Create a custom logger instance shared with all programs importing this file
 def createLogger():
     global logger
 
