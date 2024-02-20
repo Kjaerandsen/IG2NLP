@@ -170,7 +170,7 @@ def matchingFunction(words):
         # (Cac, Cex) Condition detection 
         if deprel == "advcl":
             words2 = []
-            if handleCondition(words, wordsBak, i, wordLen, words2):
+            if conditionHandler(words, wordsBak, i, wordLen, words2):
                 return words2
 
         # (O) Or else detection
@@ -191,12 +191,14 @@ def matchingFunction(words):
 
         # Advmod of Aim is correlated with execution constraints
         # Might be too generic of a rule.
+        # TODO: Revisit and test
         elif deprel == "advmod" and words[words[i].head-1].symbol == "I":
             #print("\nadvmod connected to Aim(I): ", words[i])
             if i+1 < wordLen:
                 if words[i+1].deprel == "punct":
                     words[i].setSymbol("Cex")
 
+        # TODO: Revisit and test
         #elif deprel == "nmod" and words[words[i].head-1].symbol == "A":
             #print("\nnmod connected to Attribute(A): ", words[i])
 
@@ -206,6 +208,7 @@ def matchingFunction(words):
             smallLogicalOperator(words, i, "Bdir", wordLen)
             # Positive lookahead for nmod to include:
             # May need future refinement
+            # TODO: Look into positive lookahead vs, handling nmod separately as currently done
             '''
             if words[i].position == 0:
                 j=i
@@ -379,6 +382,7 @@ def matchingFunction(words):
                             words[i].setSymbol("A",1)
                             words[i+1].setSymbol("A",2)
                             i+=1
+
             # If the nsubj is a pronoun connected to root then handle it as an attribute
             # This may need to be reverted in the future if coreference resolution is used
             # in that case, the coreference resolution will be used to add the appropriate attribute
@@ -410,6 +414,7 @@ def matchingFunction(words):
             words[i+1].setSymbol(words[i+1],"bdir", 2)
             i += 1
             '''
+            
         elif words[i].deprel == "nsubj" and words[words[i].head-1].deprel == "ccomp":
             logger.debug("NSUBJ CCOMP OBJ")
 
@@ -727,7 +732,7 @@ def LogicalOperatorHelper(word, wordLen, scopeEnd, ccLocs, j):
     return scopeEnd, j
 
 # Handler function for the matching and encapsulation of conditions (Cac, Cex)
-def handleCondition(words, wordsBak, i, wordLen, words2):
+def conditionHandler(words, wordsBak, i, wordLen, words2):
     firstVal = i
     
     # Go through the statement until the word is connected to the advcl directly or indirectly
