@@ -484,6 +484,7 @@ def WordsToSentence(words):
 
 # Function that takes a list of words and tries to reuse the list for further matching by
 # updating the root of this subset of words.
+'''
 def reusePart(words, offset, listLen):
     i = 0
     if offset == 0:
@@ -515,15 +516,50 @@ def reusePart(words, offset, listLen):
             i+=1
 
     return words
+'''
 
-def reusePart2(words, firstVal):
+# Function that takes a list of words and tries to reuse the list for further matching by
+# updating the root of this subset of words.
+# For the End of Statement text
+def reusePartEoS(words, firstVal):
     wordLen = len(words)
     i = 0
     words[i].spaces = 0
     while i < wordLen:
-        if words[i].head-1 <= firstVal:
+        if words[i].head-1 < firstVal:
             words[i].head = 0
             words[i].deprel = "root"
+            logger.debug("Word outside of scope of reusePartEoS: " + words[i].text)
+        else:
+            words[i].head -= firstVal
+        i+=1
+
+    return words
+
+# For the Start of Statement text
+def reusePartSoS(words, lastVal):
+    wordLen = len(words)
+    i = 0
+    words[i].spaces = 0
+    while i < wordLen:
+        if words[i].head-1 > lastVal:
+            words[i].head = 0
+            words[i].deprel = "root"
+            logger.debug("Word outside of scope of reusePartSoS: " + words[i].text)
+        i+=1
+
+    return words
+
+# For the Middle of a Statement text
+def reusePartMoS(words, firstVal, lastVal):
+    wordLen = len(words)
+    i = 0
+    words[i].spaces = 1
+    while i < wordLen:
+        if words[i].head-1 > lastVal or words[i].head-1 < firstVal:
+            words[i].head = 0
+            words[i].deprel = "root"
+            logger.debug("Word outside of scope of reusePartMoS: " + words[i].text)
         else:
             words[i].head -= firstVal
         i+=1
