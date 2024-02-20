@@ -6,13 +6,16 @@ import logging
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
 class Word:
+    """Word class for handling words, with nlp pipeline data and IG Script notation annotation data
+    """
     # Use slots for faster access
     # Limits variables of the class to only the defined attributes
     __slots__ = ("text", "pos", "deprel", "head", "id", "lemma", "xpos", "feats",
                  "start", "end", "spaces", "symbol", "nested", "position", "ner",
                  "logical", "corefid", "coref", "corefScope", "isRepresentative")
 
-    def __init__(self, text, pos, deprel, head, id, lemma, xpos, feats,
+    def __init__(self, text:str, pos:str, deprel:str, head:int, 
+                 id:int, lemma:str, xpos:int, feats:str,
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
                  logical=0, corefid = -1, coref = "", corefScope = 0, isRepresentative=False):
         self.id = id
@@ -37,8 +40,9 @@ class Word:
         self.corefScope = corefScope
         self.isRepresentative = isRepresentative
         
-    # Builds the contents as a component with brackets, the symbol and proper spacing in string form
     def buildString(self):
+        """Builds the contents as a component with brackets, 
+        the symbol and proper spacing in string form"""
         output = " " * self.spaces
         if self.symbol != "":
             if self.nested:
@@ -60,6 +64,7 @@ class Word:
         return output
     
     def toLogical(self):
+        """Converts the text of the Word to a logical operator i.e. 'and' -> '[AND]'"""
         if self.logical == 0:
             self.text = "[" + self.text.upper() + "]"
             self.logical = 4
@@ -68,7 +73,11 @@ class Word:
     # Position defines whether the symbol encapsulates only the word (0),
     # or if the word is the first word of the symbol(1), or the last(2).
     # Nested defines the nesting, if true use "{}" brackets, else use "()".
-    def setSymbol(self, symbol, position=0, nested=False):
+    def setSymbol(self, symbol:str, position=0, nested=False):
+        """Set the symbol of a Word, 
+        position 0 for single word component, 
+        position 1 for the start of the component, 
+        position 2 for the end"""
         self.symbol = symbol
         self.nested = nested
         self.position = position
@@ -76,7 +85,9 @@ class Word:
     # Function for combining two subsequent words into one
     # Direction is a bool, True is left to right, False is right to left
     # The direction defines which start and end position to keep, and the text concatenation order
-    def combineWords(self, otherWord, direction):
+    def combineWords(self, otherWord:"Word", direction:bool):
+        """Takes another word and a direction, combines the contents of the two words. 
+        direction True for right into left, False for left into right"""
         if direction:
             self.end = otherWord.end
             self.text = self.text + " " * otherWord.spaces + otherWord.text
@@ -100,7 +111,9 @@ class Word:
                + str(self.position) + " " + str(self.nested) + " | NER:" + self.ner 
                + "\nFeats: " + self.feats)
 
-def convertWordFormat(words):
+def convertWordFormat(words:list) -> list[Word]:
+    """ Takes the words from the Stanza nlp pipeline, converts the words and data into a list of the
+    Word class"""
     i = 0
     wordLen = len(words)
 
@@ -219,7 +232,7 @@ def convertWordFormat(words):
 
 # Simple function for appending to the customWords list. Takes text, start and end parameters 
 # to facilitate multi word tokens(MWTs).
-def addToCustomWords(customWords, word, text, start, end, spaces):
+def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int, spaces:int):
     customWords.append(
             Word(
                 text,
@@ -237,7 +250,7 @@ def addToCustomWords(customWords, word, text, start, end, spaces):
 
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
-def compoundWordsMiddleware(words):
+def compoundWordsMiddleware(words:list) -> list[Word]:
     words = convertWordFormat(words)
 
     words = compoundWords(words)
@@ -247,7 +260,7 @@ def compoundWordsMiddleware(words):
 
     return words
 
-def compoundWordsMiddlewareWords(words):
+def compoundWordsMiddlewareWords(words:list[Word]) -> list[Word]:
     words = compoundWords(words)
     words = compoundWords(words)
     # For compound (punct or cc) conj x relations, where one or more of the same cc are present
@@ -257,7 +270,7 @@ def compoundWordsMiddlewareWords(words):
 
 # Takes the words from the nlp pipeline and combines combine words to a single word
 # Also converts the datatype to the Word class
-def compoundWords(words):
+def compoundWords(words:list[Word]) -> list[Word]:
     
     wordLen = len(words)
     i = 0
@@ -299,7 +312,7 @@ def compoundWords(words):
     return words
 
 # Compound words handling for conj dependencies of the form compound cc conj root
-def compoundWordsConj(words):
+def compoundWordsConj(words:list[Word]) -> list[Word]:
     wordLen = len(words)
     i = 0
     while i < wordLen:
@@ -394,7 +407,9 @@ def compoundWordsConjHelper(words, i, wordLen):
 # Takes a list of words, an id, the length of the list of words and a direction
 # Combines the word with the next (0) or 
 # previous (1) word and removes the extra word from the list of words
-def removeWord(words,i,wordLen,direction=0):
+def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
+    """ Takes a list of words, a location, the length of the list and a 
+    direction 0 = left, 1 = right """
     if direction == 0:
         if i == wordLen-1:
             raise Exception(
@@ -424,7 +439,7 @@ def removeWord(words,i,wordLen,direction=0):
     del words[i]
     return i-1, wordLen-1
 
-def addWord(words, i, wordText):
+def addWord(words:list[Word], i:int, wordText:str):
     #print(i)
     for word in words:
         #print(word.head, word.head-1)
@@ -466,7 +481,7 @@ def tokenToText(tokens):
     return output
 
 # Builds the final annotated statement or reconstructs the base statement.
-def WordsToSentence(words):
+def WordsToSentence(words:list[Word]) -> str:
     i = 0
 
     sentence = ""
@@ -517,7 +532,7 @@ def reusePart(words, offset, listLen):
 # Function that takes a list of words and tries to reuse the list for further matching by
 # updating the root of this subset of words.
 # For the End of Statement text
-def reusePartEoS(words, firstVal):
+def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
     words[0].spaces = 0
     for word in words:
         if word.head-1 < firstVal:
@@ -530,7 +545,7 @@ def reusePartEoS(words, firstVal):
     return words
 
 # For the Start of Statement text
-def reusePartSoS(words, lastVal):
+def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
     words[0].spaces = 0
     for word in words:
         if word.head-1 > lastVal:
@@ -541,7 +556,7 @@ def reusePartSoS(words, lastVal):
     return words
 
 # For the Middle of a Statement text
-def reusePartMoS(words, firstVal, lastVal):
+def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
     words[0].spaces = 1
     for word in words:
         if word.head-1 > lastVal or word.head-1 < firstVal:
@@ -554,7 +569,7 @@ def reusePartMoS(words, firstVal, lastVal):
     return words
 
 # Function that loads all environment variable from ".env" file or environment
-def loadEnvironmentVariables():
+def loadEnvironmentVariables() -> dict:
     load_dotenv()
     # Dict for return values
     global env
