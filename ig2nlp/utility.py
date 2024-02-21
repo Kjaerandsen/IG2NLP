@@ -13,13 +13,14 @@ class Word:
     __slots__ = ("text", "pos", "deprel", "head", "id", "lemma", "xpos", "feats",
                  "start", "end", "spaces", "symbol", "nested", "position", "ner",
                  "logical", "corefid", "coref", "corefScope", "isRepresentative",
-                 "_semanticAnnotation")
+                 "semanticAnnotation")
 
     def __init__(self, text:str, pos:str, deprel:str, head:int, 
                  id:int, lemma:str, xpos:int, feats:str,
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
                  logical=0, corefid = -1, coref = "", corefScope = 0, isRepresentative=False,
-                 semanticAnnotation:dict={}):
+                 semanticAnnotation=""):
+        
         self.id = id
         self.text = text
         self.deprel = deprel
@@ -41,7 +42,7 @@ class Word:
         self.corefid = corefid
         self.corefScope = corefScope
         self.isRepresentative = isRepresentative
-        self._semanticAnnotation = semanticAnnotation
+        self.semanticAnnotation = semanticAnnotation
         
     def buildString(self):
         """Builds the contents as a component with brackets, 
@@ -55,8 +56,8 @@ class Word:
                     output += self.text + ")"
             else:
                 output += self.symbol
-                if self._semanticAnnotation:
-                    output += "["+self.getSemanticAnnotation()+"]"
+                if self.semanticAnnotation != "":
+                    output += "["+self.semanticAnnotation+"]"
                 if self.nested:
                     if self.position == 0:
                         output += "{"+self.text+"}"
@@ -70,26 +71,6 @@ class Word:
         else:
             output += self.text
         return output
-    
-    @property 
-    def semanticAnnotation(self):
-        return self._semanticAnnotation
-
-    def setSemanticAnnotation(self, key:str, val:str):
-        """Setter for semantic annotations, if the key does not exist create it with the given value
-           else append the current key value with a comma and the given value"""
-        if key in self._semanticAnnotation:
-            self._semanticAnnotation[key] += "," + val
-        else:
-            self._semanticAnnotation[key] = val
-
-    def getSemanticAnnotation(self) -> str:
-        """Get the contents of the semantic annotation in the form of a string"""
-        output = ""
-        for key, annotation in self._semanticAnnotation.items():
-            output += key + "=" + annotation + ";"
-        # Remove trailing semicolon and return
-        return output[:len(output)-1]
 
     def toLogical(self):
         """Converts the text of the Word to a logical operator i.e. 'and' -> '[AND]'"""

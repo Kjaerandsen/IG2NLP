@@ -209,24 +209,16 @@ def test_WordsToSentence():
     assert WordsToSentence(words) == " Cac{0} A(1 2) 3 3.5 4"
 
 def test_semanticAnnotation():
+    # A new word should not have a semantic annotation present
     word=createTestWord("Word")
-
     assert word.buildString() == "Word"
-
     word.setSymbol("A")
-
     assert word.buildString() == "A(Word)"
     
-    word.setSemanticAnnotation("key", "val")
+    # Adding a semantic annotation should add it to the output
+    word.semanticAnnotation = "X"
+    assert word.buildString() == "A[X](Word)"
 
-    assert word.buildString() == "A[key=val](Word)"
-
-    word.setSemanticAnnotation("key", "val2")
-
-    assert word.buildString() == "A[key=val,val2](Word)"
-
-    word.setSemanticAnnotation("key2", "val")
-
-    assert word.buildString() == "A[key=val,val2;key2=val](Word)"
-
-    assert str(word.semanticAnnotation) == "{'key': 'val,val2', 'key2': 'val'}"
+    # Resetting the semantic annotation to an empty string should remove it from the output
+    word.semanticAnnotation = ""
+    assert word.buildString() == "A(Word)"

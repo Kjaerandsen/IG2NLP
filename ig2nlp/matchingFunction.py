@@ -698,6 +698,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         # (removal of case, det in the component start, i.e. "of the")
         #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
         #    scopeStart += 2
+        
         '''
         # Check for Date NER in the component
         componentWords = words[scopeStart:scopeEnd+1]
@@ -706,6 +707,10 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         for word in componentWords:
             if "DATE" in word.ner:
                 date = True
+        if not date:
+            return i
+        '''
+        '''
         if date:
             logger.debug("Date in Execution Constraint (obl): " + 
                             WordsToSentence(componentWords) + " " +
@@ -759,6 +764,57 @@ def corefReplace(words:list[Word]) -> list[Word]:
     i = 0
     wordLen = len(words)
     
+    corefIds = {}
+    locations = {}
+    corefStrings = {}
+
+    brackets = 0
+
+    # Get all instances of a coref with the given id
+    # if the length of the word is longer than another instance replace the coref string for that
+    # coref with the new word
+    while i < wordLen:
+        if words[i].symbol == "A":
+            if words[i].position != 2 and words[i].corefid != -1:
+                if words[i].corefid in corefIds:
+                    corefIds[words[i].corefid] += 1
+                    locations[words[i].corefid].append(i)
+                else:
+                    corefIds[words[i].corefid] = 1
+                    locations[words[i].corefid] = [i]
+
+                if words[i].position == 0:
+                    if words[i].corefid in corefStrings:
+                        if len(corefStrings[words[i].corefid]) < len(words[i].text):
+                            corefStrings[words[i].corefid]=words[i].text
+                    else:
+                        corefStrings[words[i].corefid]=words[i].text
+                else:
+                    iBak = i
+                    while words[i].position != 2:
+                        i+=1
+                    if words[i].corefid in corefStrings:
+                        if (len(corefStrings[words[i].corefid]) < 
+                            len(WordsToSentence(words[iBak:i+1]))):
+                            corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                    else:
+                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+        elif (words[i].symbol == "" and words[i].corefid != -1 
+              and words[i].pos == "PRON" and brackets == 0):
+            if words[i].corefid in corefIds:
+                corefIds[words[i].corefid] += 1
+                locations[words[i].corefid].append(i)
+            else:
+                corefIds[words[i].corefid] = 1
+                locations[words[i].corefid] = [i]
+        else:
+            if words[i].position == 1 and words[i].nested == False:
+                brackets+=1
+            if words[i].position == 2 and words[i].nested == False:
+                brackets-=1
+        i += 1
+
+    '''
     brackets = 0
     while i < wordLen:
         if (words[i].symbol == "A" and words[i].pos == "PRON" and 
@@ -783,8 +839,8 @@ def corefReplace(words:list[Word]) -> list[Word]:
             logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
                               words[i].text)
             #print(words[i+1].text, i, "\n\n")
-        elif words[i].pos == "PRON" and words[i].coref != "":
-            if brackets == 0 and words[i].symbol == "":
+        elif (words[i].pos == "PRON" and words[i].coref != "" and
+              brackets == 0 and words[i].symbol == ""):
                 words = addWord(words, i, words[i].text)
                 i+=1
                 wordLen += 1
@@ -809,6 +865,26 @@ def corefReplace(words:list[Word]) -> list[Word]:
             if words[i].position == 2 and words[i].nested == False:
                 brackets-=1
         i+=1
+    '''
+
+    #print(str(corefIds), str(corefStrings), str(locations))
+        
+    for key, val in corefIds.items():
+        print(key,val, wordLen)
+        for id in locations[key]:
+            if words[id].pos == "PRON":
+                print("ADDING PRON REPLACEMENT COREF")
+                words = addWord(words, id, words[id].text)
+                words[id+1].text = "["+corefStrings[key]+"]"
+                words[id+1].spaces = 1
+                words[id+1].setSymbol("A")
+                if val > 1:
+                    words[id+1].semanticAnnotation = "Entity="+corefStrings[key]
+        if val > 1:
+            #print("val over 1")
+            for id in locations[key]:
+                print(id, "adding entity semanticannotation")
+                words[id].semanticAnnotation = "Entity="+corefStrings[key]
     
     return words
 
