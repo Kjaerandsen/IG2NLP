@@ -69,15 +69,12 @@ class Word:
             self.text = "[" + self.text.upper() + "]"
             self.logical = 4
     
-    # Function to set the symbol of the word,
-    # Position defines whether the symbol encapsulates only the word (0),
-    # or if the word is the first word of the symbol(1), or the last(2).
-    # Nested defines the nesting, if true use "{}" brackets, else use "()".
     def setSymbol(self, symbol:str, position=0, nested=False):
         """Set the symbol of a Word, 
         position 0 for single word component, 
         position 1 for the start of the component, 
-        position 2 for the end"""
+        position 2 for the end.
+        Nested decides whether to use '()' or '{}' brackets."""
         self.symbol = symbol
         self.nested = nested
         self.position = position
@@ -233,6 +230,8 @@ def convertWordFormat(words:list) -> list[Word]:
 # Simple function for appending to the customWords list. Takes text, start and end parameters 
 # to facilitate multi word tokens(MWTs).
 def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int, spaces:int):
+    """Appends a Word to a list of Word objects. 
+    Takes a Word, text, start, end and spaces parameters"""
     customWords.append(
             Word(
                 text,
@@ -251,6 +250,8 @@ def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int,
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
 def compoundWordsMiddleware(words:list) -> list[Word]:
+    """Middleware function for processing words, converts the format to a list of the Word class,
+    then combines compound words in the list to single words"""
     words = convertWordFormat(words)
 
     words = compoundWords(words)
@@ -261,6 +262,8 @@ def compoundWordsMiddleware(words:list) -> list[Word]:
     return words
 
 def compoundWordsMiddlewareWords(words:list[Word]) -> list[Word]:
+    """Middleware function for processing words of the Word class,
+    combines compound words in the list to single words"""
     words = compoundWords(words)
     words = compoundWords(words)
     # For compound (punct or cc) conj x relations, where one or more of the same cc are present
@@ -271,7 +274,9 @@ def compoundWordsMiddlewareWords(words:list[Word]) -> list[Word]:
 # Takes the words from the nlp pipeline and combines combine words to a single word
 # Also converts the datatype to the Word class
 def compoundWords(words:list[Word]) -> list[Word]:
-    
+    """Basic compound words handling for lists of the Word class, 
+    combines simple compound words with their respective counterparts"""
+
     wordLen = len(words)
     i = 0
     #print("type is: ", type(words[0]), " " , wordLen)
@@ -311,8 +316,8 @@ def compoundWords(words:list[Word]) -> list[Word]:
 
     return words
 
-# Compound words handling for conj dependencies of the form compound cc conj root
 def compoundWordsConj(words:list[Word]) -> list[Word]:
+    """Compound words handling for conj dependencies of the form compound cc conj root"""
     wordLen = len(words)
     i = 0
     while i < wordLen:
@@ -321,8 +326,8 @@ def compoundWordsConj(words:list[Word]) -> list[Word]:
         i += 1
     return words
 
-# Helper function performing the logic for compoundWordsConj
 def compoundWordsConjHelper(words, i, wordLen):
+    """Helper function performing the logic for compoundWordsConj"""
     start = i
     end = words[i].head-1
     ccLocs = []
@@ -409,7 +414,8 @@ def compoundWordsConjHelper(words, i, wordLen):
 # previous (1) word and removes the extra word from the list of words
 def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
     """ Takes a list of words, a location, the length of the list and a 
-    direction 0 = left, 1 = right """
+    direction 0 = left, 1 = right. Combines the word with the next in the given direction, then 
+    removes the extra words."""
     if direction == 0:
         if i == wordLen-1:
             raise Exception(
@@ -440,6 +446,7 @@ def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
     return i-1, wordLen-1
 
 def addWord(words:list[Word], i:int, wordText:str):
+    """Appends a word to a list of words in the location with the index of i"""
     #print(i)
     for word in words:
         #print(word.head, word.head-1)
@@ -462,9 +469,8 @@ def addWord(words:list[Word], i:int, wordText:str):
 
     return words
 
-
-# Takes a list of tokens, returns the output text contained within.
 def tokenToText(tokens):
+    """Takes a list of tokens, returns the output text contained within."""
     output = ""
     for token in tokens:
         output += str(token)
@@ -482,6 +488,8 @@ def tokenToText(tokens):
 
 # Builds the final annotated statement or reconstructs the base statement.
 def WordsToSentence(words:list[Word]) -> str:
+    """Takes a list of Word class instances, returns their content as text in the form of 
+    a formatted output string with IG Script Notation syntax if present."""
     i = 0
 
     sentence = ""
@@ -529,11 +537,11 @@ def reusePart(words, offset, listLen):
 '''
 
 # TODO: Add a check in reusePart functions for multiple "root" deprels
-# Function that takes a list of words and tries to reuse the list for further matching by
-# updating the root of this subset of words.
 # For the End of Statement text
 def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
-    words[0].spaces = 0
+    """Function for reusing a subset of a list of Words for matching components.
+    Sets all connections to words before the index of firstVal to 'root' 
+    dependencies and their headId to 0"""
     for word in words:
         if word.head-1 < firstVal:
             word.head = 0
@@ -546,7 +554,9 @@ def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
 
 # For the Start of Statement text
 def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
-    words[0].spaces = 0
+    """Function for reusing a subset of a list of Words for matching components.
+    Sets all connections to words after the index of lastVal to 'root' 
+    dependencies and their headId to 0"""
     for word in words:
         if word.head-1 > lastVal:
             word.head = 0
@@ -557,7 +567,9 @@ def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
 
 # For the Middle of a Statement text
 def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
-    words[0].spaces = 1
+    """Function for reusing a subset of a list of Words for matching components.
+    Sets all connections to words before the index of firstVal or after lastVal to 'root' 
+    dependencies and their headId to 0"""
     for word in words:
         if word.head-1 > lastVal or word.head-1 < firstVal:
             word.head = 0
@@ -568,8 +580,9 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
 
     return words
 
-# Function that loads all environment variable from ".env" file or environment
 def loadEnvironmentVariables() -> dict:
+    """Function that loads all environment variables from a ".env" file or 
+    the environment variables"""
     load_dotenv()
     # Dict for return values
     global env
@@ -619,8 +632,8 @@ def loadEnvironmentVariables() -> dict:
 
     return env
 
-# Create a custom logger instance shared with all programs importing this file
 def createLogger():
+    """Creates a custom logger instance shared with all programs importing this file"""
     global logger
 
     logger = logging.getLogger(__name__)
