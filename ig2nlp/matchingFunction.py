@@ -746,8 +746,6 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
         '''
         #TODO: Test this further, the configuration above had a different outcome in one case
         condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
-        #actiWords = copy.deepcopy(words[:lastIndex])
-        #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
 
         oblCount = 0
         for conditionWord in condition:
@@ -775,6 +773,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
+            condition[0].spaces = 0
             words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
             words2.append(words[lastIndex])
@@ -788,10 +787,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
 
         #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
         #    WordsToSentence(words[lastIndex+1:]))))
-        #contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
-        #                                            wordLen-(lastIndex+1)))
         contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
-        contents[0].spaces = 1
 
         # Copy over the old placement information to the 
         # newly generated words for proper formatting
@@ -832,8 +828,6 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
         condition = matchingFunction(
                 reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
 
-        #actiWords = copy.deepcopy(words[:lastIndex])
-        #Condition = matchingFunction(reusePart(actiWords, 0, lastIndex))
         j = 0
         oblCount = 0
         for conditionWord in condition:
@@ -860,13 +854,15 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
             words2.append(words[lastIndex])
             if lastIndex - firstVal > 2:
                 words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
-
-        #contents = matchingFunction(compoundWordsMiddleware(nlpPipeline(
-        #    WordsToSentence(words[lastIndex+1:]))))
-        #contents = matchingFunction(reusePart(words[lastIndex+1:], lastIndex+1, 
-        #                                            wordLen-(lastIndex+1)))
         
         if wordLen > lastIndex+1:
+            lastPunct = False
+            lastVal = wordLen
+            if wordsBak[wordLen-1].deprel == "punct":
+                lastPunct = True
+                lastVal = wordLen-1
+                wordLen -= 1
+
             '''
             if not useREST:
                 contents = matchingFunction(
@@ -876,16 +872,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
                     compoundWordsMiddlewareWords(nlpPipeline(
                         WordsToSentence(wordsBak[lastIndex+1:]))))
             '''
-            lastPunct = False
-            lastVal = wordLen
-            if wordsBak[wordLen-1].deprel == "punct":
-                lastPunct = True
-                lastVal = wordLen-1
-                wordLen -= 1        
 
             contents = matchingFunction(
                 reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
-            )
+            )   
 
             # Copy over the old placement information to the 
             # newly generated words for proper formatting
@@ -915,23 +905,21 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     else:
         lastIndex = wordLen
 
+    # Add the values before the condition
+    words2 += words[:firstVal]
+    '''
     if not useREST:
-        # Add the values before the condition
-        words2 += words[:firstVal]
-
-        #orElseComponent = matchingFunction(
-        #    compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
         orElseComponent = matchingFunction(
-            reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+            compoundWordsMiddleware(nlpPipeline(WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
     else:
-        # Add the values before the condition
-        words2 += words[:firstVal]
-
-        #orElseComponent = matchingFunction(
-        #    compoundWordsMiddlewareWords(nlpPipeline(
-        #        WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
         orElseComponent = matchingFunction(
+            compoundWordsMiddlewareWords(nlpPipeline(
+                WordsToSentence(wordsBak[firstVal+2:lastIndex]))))
+    '''
+
+    orElseComponent = matchingFunction(
             reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+    orElseComponent[0].spaces = 0
 
     words2.append(Word(
     "","","",0,0,"","","",0,0,1,"O",True,1
