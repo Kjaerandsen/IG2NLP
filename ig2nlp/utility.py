@@ -542,13 +542,19 @@ def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
     """Function for reusing a subset of a list of Words for matching components.
     Sets all connections to words before the index of firstVal to 'root' 
     dependencies and their headId to 0"""
+    outsideCount = 0
     for word in words:
         if word.head-1 < firstVal:
             word.head = 0
             word.deprel = "root"
-            logger.debug("Word outside of scope of reusePartEoS: " + word.text)
+            outsideCount += 1
         else:
             word.head -= firstVal
+    
+    if outsideCount == 0:
+        logger.warning("utility: reusePartEoS found no root dependency")
+    elif outsideCount > 1:
+        logger.warning("utility: reusePartEoS found multiple root dependencies")
 
     return words
 
@@ -557,11 +563,17 @@ def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
     """Function for reusing a subset of a list of Words for matching components.
     Sets all connections to words after the index of lastVal to 'root' 
     dependencies and their headId to 0"""
+    outsideCount = 0
     for word in words:
         if word.head-1 > lastVal:
             word.head = 0
             word.deprel = "root"
-            logger.debug("Word outside of scope of reusePartSoS: " + word.text)
+            outsideCount += 1
+
+    if outsideCount == 0:
+        logger.warning("utility: reusePartSoS found no root dependency")
+    elif outsideCount > 1:
+        logger.warning("utility: reusePartSoS found multiple root dependencies")
 
     return words
 
@@ -570,13 +582,19 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
     """Function for reusing a subset of a list of Words for matching components.
     Sets all connections to words before the index of firstVal or after lastVal to 'root' 
     dependencies and their headId to 0"""
+    outsideCount = 0
     for word in words:
         if word.head-1 > lastVal or word.head-1 < firstVal:
             word.head = 0
             word.deprel = "root"
-            logger.debug("Word outside of scope of reusePartMoS: " + word.text)
+            outsideCount += 1
         else:
             word.head -= firstVal
+
+    if outsideCount == 0:
+        logger.warning("utility: reusePartMoS found no root dependency")
+    elif outsideCount > 1:
+        logger.warning("utility: reusePartMoS found multiple root dependencies")
 
     return words
 
