@@ -187,7 +187,7 @@ def test_addWord():
     assert words[4].text == "3.5"
 
 def test_WordsToSentence():
-    words = []
+    words:list[Word] = []
     i = 0
     while i < 5:
         words.append(createTestWord(str(i)))
@@ -207,3 +207,26 @@ def test_WordsToSentence():
 
     # Verify the updated output
     assert WordsToSentence(words) == " Cac{0} A(1 2) 3 3.5 4"
+
+def test_semanticAnnotation():
+    word=createTestWord("Word")
+
+    assert word.buildString() == "Word"
+
+    word.setSymbol("A")
+
+    assert word.buildString() == "A(Word)"
+    
+    word.setSemanticAnnotation("key", "val")
+
+    assert word.buildString() == "A[key=val](Word)"
+
+    word.setSemanticAnnotation("key", "val2")
+
+    assert word.buildString() == "A[key=val,val2](Word)"
+
+    word.setSemanticAnnotation("key2", "val")
+
+    assert word.buildString() == "A[key=val,val2;key2=val](Word)"
+
+    assert str(word.semanticAnnotation) == "{'key': 'val,val2', 'key2': 'val'}"
