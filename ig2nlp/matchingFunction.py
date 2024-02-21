@@ -8,9 +8,10 @@ from utility import *
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 
-# Middleware for the matcher, initializes the nlp pipeline globally to reuse the pipeline across the
-# statements and runs through all included statements.
-def MatcherMiddleware(jsonData:list):
+# Middleware for the matcher, 
+def MatcherMiddleware(jsonData:list) -> list:
+    """Initializes the nlp pipeline globally to reuse the pipeline across the
+       statements and runs through all included statements."""
     global useREST
     global flaskURL
     global env
@@ -100,8 +101,8 @@ def nlpPipeline(text):
         return returnVal
 '''
         
-# Takes a list of sentences as strings, returns the nlp pipeline results for the sentences
-def nlpPipelineMulti(textDocs:list):
+def nlpPipelineMulti(textDocs:list) -> list:
+    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
     if not useREST:
         logger.debug("Running multiple statement pipeline")
         docs = nlp.bulk_process(textDocs)
@@ -147,9 +148,9 @@ def nlpPipelineMulti(textDocs:list):
             docs.append(sentenceWords)
         return docs
 
-# Matching function, takes a list of words with dependency parse and pos-tag data.
-# Returns a list of words with IG Script notation symbols.
 def matchingFunction(words:list[Word]) -> list[Word]:
+    """takes a list of words with dependency parse and pos-tag data.
+       Returns a list of words with IG Script notation symbols."""
     wordLen = len(words)
     wordsBak = copy.deepcopy(words)
     i = 0
@@ -464,11 +465,9 @@ def matchingFunction(words:list[Word]) -> list[Word]:
 
     return words
 
-
-# Validation function for nested components
-# Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to 
-# be regarded as nested.
-def validateNested(words:list[Word]):
+def validateNested(words:list[Word]) -> bool:
+    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
+       be regarded as nested."""
     Aim = False
     Attribute = False
 
@@ -483,8 +482,8 @@ def validateNested(words:list[Word]):
                 return True
     return False
 
-# Check if the word is connected to the headId through a head connection
-def ifHeadRelation(words:list[Word], wordId:int, headId:int):
+def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
+    """Check if the word is connected to the headId through a head connection"""
     while words[words[wordId].head-1].deprel != "root":
         if words[wordId].deprel == "root":
             return False
@@ -495,8 +494,10 @@ def ifHeadRelation(words:list[Word], wordId:int, headId:int):
 
 # List of allowed head connections for the function below
 allowedAimHeads = ["conj","cc","det","amod","advmod"]
-# Check if the word is connected to the headId through a head connection, specifically for Aim (I)
-def ifHeadRelationAim(words, wordId, headId):
+
+def ifHeadRelationAim(words, wordId, headId) -> bool:
+    """Check if the word is connected to the headId through a head connection, 
+    specifically for Aim (I) components"""
     while words[words[wordId].head-1].deprel != "root":
         if words[wordId].head-1 == headId:
             return True
@@ -508,8 +509,8 @@ def ifHeadRelationAim(words, wordId, headId):
         return True
     return False
 
-# Finds and handles symbols with logical operators
 def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, aim=False):
+    """Finds the scope of components with logical operators and handles the logical operators"""
     scopeStart = i  
     scopeEnd = i
 
@@ -686,7 +687,8 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, aim=F
     else:
         words[i].setSymbol(symbol)
 
-def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, ccLocs:list[int], j:int):
+def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, 
+                          ccLocs:list[int], j:int) -> tuple[int, int]:
     supported = ["punct","det","advmod","amod"]
 
     if word.deprel == "cc":
@@ -704,8 +706,9 @@ def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, ccLocs:lis
     
     return scopeEnd, j
 
-# Handler function for the matching and encapsulation of conditions (Cac, Cex)
-def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, words2:list[Word]):
+def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
+                     wordLen:int, words2:list[Word]) -> bool:
+    """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
     firstVal = i
     
     # Go through the statement until the word is connected to the advcl directly or indirectly
@@ -896,9 +899,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, wordLen:int, 
         #print("First val was not id 0 and deprel was not mark", words[lastIndex])
         return False
 
-# Handler function for the Or else (O) component
 def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
                   words2:list[Word], firstVal:int):
+    """Handler function for the Or else (O) component"""
+
     # Include everything but the last punct if it exists    
     if words[wordLen-1].deprel == "punct":
         lastIndex = wordLen -1
@@ -930,8 +934,8 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])
 
-# Handler for execution constraints detected using the obl dependency
-def executionConstraintHandler(words:list[Word], i:int, wordLen:int):
+def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
+    """Handler for execution constraint (Cex) components detected using the obl dependency"""
     # Check for connections to the obl both before and after
     scopeStart = i
     scopeEnd = i
@@ -977,7 +981,9 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int):
     return scopeEnd
 
 
-def findInternalLogicalOperators(words:list[Word], start:int, end:int):
+def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[Word]:
+    """Detects logical operator words, formats them, and replaces preceeding commas with the same
+       logical operator"""
     #print("Finding logical operators\n", start, end)
     andCount = 0
     orCount = 0
@@ -1001,7 +1007,9 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int):
 
     return words
 
-def corefReplace(words:list[Word]):
+def corefReplace(words:list[Word]) -> list[Word]:
+    """Handles supplementing pronouns with their respective Attribute (A) component contents using
+       coreference resolution data"""
     #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
     i = 0
     wordLen = len(words)
