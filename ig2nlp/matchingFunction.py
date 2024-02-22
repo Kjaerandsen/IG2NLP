@@ -319,7 +319,8 @@ def ifHeadRelationAim(words, wordId, headId) -> bool:
         return True
     return False
 
-def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, aim=False) -> int:
+
+def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
     """Finds the scope of components with logical operators and handles the logical operators"""
     scopeStart = i  
     scopeEnd = i
@@ -332,7 +333,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, aim=F
     # Locations (ids) of determiners
     detLocs = []
 
-    if aim:
+    if symbol == "I":
         # Go through the word list and find the scope of the component
         while j < wordLen:
             if ifHeadRelationAim(words, j, i):
@@ -985,7 +986,7 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
     #    print("Aim is not VERB:", words[i].pos, words[i])
     # Look for logical operators
     words[i].setSymbol("I")
-    i = smallLogicalOperator(words, i, "I", wordLen, True)
+    i = smallLogicalOperator(words, i, "I", wordLen)
     if words[i].position == 0:
         # Look for xcomp dependencies
         k = 0
