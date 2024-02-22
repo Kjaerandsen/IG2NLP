@@ -7,6 +7,7 @@ from utility import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
+semanticAnnotations = True
 
 def MatcherMiddleware(jsonData:list) -> list:
     """Initializes the nlp pipeline globally to reuse the pipeline across the
@@ -520,6 +521,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             logger.debug("Last val in handleCondition was not punct: " + words[lastIndex].text)
             return False
 
+    date = False
     if firstVal == 0:
         contents = []
 
@@ -534,18 +536,16 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         for conditionWord in condition:
             if "obl" in conditionWord.deprel:
                 oblCount+=1
+            if "DATE" in conditionWord.ner:
+                date = True
 
         if oblCount > 1 and words[0].deprel == "mark":
             symbol = "Cex"
         else:
             symbol = "Cac"
+            date = False
 
         '''
-        date = False
-        for word in condition:
-            if "DATE" in word.ner:
-                date = True
-
         if date:
             logger.debug("Date in condition: " + symbol + WordsToSentence(condition))
         elif symbol == "Cex":
@@ -556,6 +556,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
+            if date and semanticAnnotations:
+                words2[len(words2)-1].semanticAnnotation = "ctx:tmp"
             condition[0].spaces = 0
             words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
@@ -563,6 +565,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += words[:lastIndex]
             words2[0].setSymbol(symbol,1)
+            if date and semanticAnnotations:
+                words2[0].semanticAnnotation = "ctx:tmp"
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
             if lastIndex - firstVal > 2:
@@ -600,16 +604,21 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         for conditionWord in condition:
             if "obl" in conditionWord.deprel:
                 oblCount+=1
+            if "DATE" in conditionWord.ner:
+                date = True
 
         if oblCount > 1:
             symbol = "Cex"
         else:
             symbol = "Cac"
+            date = False
 
         if validateNested(condition):
             words2.append(Word(
             "","","",0,0,"","","",0,0,1,symbol,True,1
             ))
+            if date and semanticAnnotations:
+                words2[len(words2)-1].semanticAnnotation = "ctx:tmp"
             condition[0].spaces = 0
             words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
@@ -617,6 +626,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += wordsBak[firstVal:lastIndex]
             words2[firstVal].setSymbol(symbol,1)
+            if date and semanticAnnotations:
+                words2[firstVal].semanticAnnotation = "ctx:tmp"
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
             if lastIndex - firstVal > 2:
@@ -699,7 +710,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
         #    scopeStart += 2
         
-        '''
+        
         # Check for Date NER in the component
         componentWords = words[scopeStart:scopeEnd+1]
 
@@ -707,9 +718,9 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         for word in componentWords:
             if "DATE" in word.ner:
                 date = True
-        if not date:
-            return i
-        '''
+        #if not date:
+        #    return i
+        
         '''
         if date:
             logger.debug("Date in Execution Constraint (obl): " + 
@@ -724,6 +735,8 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         # Add the words as a Cex
         #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
         words[scopeStart].setSymbol("Cex", 1)
+        if date and semanticAnnotations:
+            words[scopeStart].semanticAnnotation = "ctx:tmp"
         words[scopeEnd].setSymbol("Cex", 2)
         if scopeEnd - scopeStart > 2:
             words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
@@ -878,9 +891,9 @@ def corefReplace(words:list[Word]) -> list[Word]:
                 words[id+1].text = "["+corefStrings[key]+"]"
                 words[id+1].spaces = 1
                 words[id+1].setSymbol("A")
-                if val > 1:
+                if val > 1 and semanticAnnotations:
                     words[id+1].semanticAnnotation = "Entity="+corefStrings[key]
-        if val > 1:
+        if val > 1 and semanticAnnotations:
             #print("val over 1")
             for id in locations[key]:
                 print(id, "adding entity semanticannotation")
