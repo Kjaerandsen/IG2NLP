@@ -1,7 +1,7 @@
-# Stanza test functions
+# IG2NLP
 
-This folder contains test functions in stanza to test the functionality 
-(of both stanza and stanford corenlp through the stanza interface).
+This folder contains programs for automating the annotation of institutional statements with the
+Institutional Grammar notation using NLP tools and a matching function.
 
 To install the dependencies run
 
@@ -11,67 +11,15 @@ Alternatively see the dependencies section below.
 
 I recommend using a virtual environment.
 
-Tested using Python 3.11, models used do not support Python 3.12 as of the time of writing.
-
-Afterwards Stanford CoreNLP has to be installed. 
-This can be done through running `installCoreNLP.py`.
-After it is done a corenlp folder should appear in this directory. T
-his directory needs to be added to the `CORENLP_HOME` environment variable.
+Tested using Python 3.11, models and programs used do not support Python 3.12 as of the time of writing.
 
 ## Python programs:
 
-### coreferenceResolution.py
-Takes a string in the form:
-
-`python coreferenceResolution.py "input string here"`
-
-The program then prints out the mentions of the objects in the text as well as the coref chains 
-which describes the connection between the objects.
-
-### dependencyParsing.py
-Takes a string in the form:
-
-`python dependencyParsing.py "input string here"`
-
-The program then uses displacy to create a dependency tree based on the input.
-Additionally, the input data for the dependency tree is added to a table 
-and displayed in the terminal and named entities and a constituency tree are 
-printed to the console.
-The displacy visualizer is used to show the tree, which is hosted locally on "localhost:5000".
-
 ### runner.py
-
-Old version of the automated annotator.
 
 Takes an integer in the form
 
 `python runner.py 0`
-
-The integer is the id of the statement which the runner automatically annotates. 
-This statement is located in a JSON object in the file 
-`input.json`, where the JSON data has the structure:
-
-```
-[
-  {
-    "name": "Custom name for the statement",
-    "baseText": "Base statement text",
-    "processedText": "Manually annotated statement",
-    "stanza": "Automatically annotated statement using stanza",
-    "spacy": "Automatically annotated statement using spacy"
-  },
-]
-```
-
-The runner saves the automatically annotated statement to the "stanza" key of the input statement.
-
-### runnerAdvanced.py
-
-New version of the annotator.
-
-Takes an integer in the form
-
-`python runnerAdvanced.py 0`
 
 The integer is the id of the statement which the runner automatically annotates. 
 A value of negative 1 (-1) goes through all statements instead.
@@ -90,6 +38,44 @@ This statement is located in a JSON object in the file
 ```
 
 The runner saves the automatically annotated statement to the "stanza" key of the input statement.
+
+### dependencyParsing.py
+Takes a string in the form:
+
+`python dependencyParsing.py "input string here"`
+
+The program then uses displacy to create a dependency tree based on the input.
+Additionally, the input data for the dependency tree is added to a table 
+and displayed in the terminal and named entities and a constituency tree are 
+printed to the console.
+The displacy visualizer is used to show the tree, which is hosted locally on "localhost:5000".
+
+### dependencyParsingFromRest.py
+
+Takes a string in the form:
+
+`python dependencyParsingFromRest.py "input string here"`
+
+The program then uses displacy to create a dependency tree based on the input.
+Additionally, the input data for the dependency tree is added to a table 
+and displayed in the terminal and named entities and a constituency tree are 
+printed to the console.
+The displacy visualizer is used to show the tree, which is hosted locally on "localhost:5000".
+
+This version of the program uses the rest api exposed by the `restPipeline.py` program.
+
+### restPipeline.py
+
+Run with: 
+
+`flask --app .\restPipeline.py run -p 5000`
+
+The port can be changed by altering the -p parameter.
+
+Requires first commenting out the "__slots__" variable in the Word class in `utility.py`.
+The program opens a rest api that can handle the nlp pipeline tasks for the `dependencyParsingFromRest.py`
+and the `runner.py` programs for testing and development purposes. Due to the startup time for loading the models
+this is faster for single statements than loading it in the programs themselves.
 
 ### parseTrees.py
 
@@ -127,7 +113,8 @@ the data to tables in a pipeline.txt file.
 
 ## Dependencies
 
-Dependencies are Stanza, Spacy and Pandas. They can be installed using the command:
+Dependencies are Stanza, Spacy and Pandas.
+They can be installed using the commands:
 
 ```
 pip install stanza 
@@ -136,7 +123,14 @@ pip install pandas
 pip install pyarrow
 pip install transformers
 pip install peft
+pip install flask
+pip install requests
+pip install python-dotenv
+pip install pytest
+pip install pytest-cov
 ```
+
+Tested on Stanza v1.7.0, newer versions may not work as expected.
 
 Further for GPU processing Cuda is required, and PyTorch with Cuda.
 See `https://pytorch.org/get-started/locally/`.
