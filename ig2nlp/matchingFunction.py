@@ -7,7 +7,7 @@ from utility import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-semanticAnnotations = True
+semanticAnnotations = False
 
 def MatcherMiddleware(jsonData:list) -> list:
     """Initializes the nlp pipeline globally to reuse the pipeline across the
@@ -883,10 +883,11 @@ def corefReplace(words:list[Word]) -> list[Word]:
     #print(str(corefIds), str(corefStrings), str(locations))
         
     for key, val in corefIds.items():
-        print(key,val, wordLen)
+        #print(key,val, wordLen)
         for id in locations[key]:
             if words[id].pos == "PRON":
-                print("ADDING PRON REPLACEMENT COREF")
+                logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
+                            + words[id].text + " -> " + corefStrings[key])
                 words = addWord(words, id, words[id].text)
                 words[id+1].text = "["+corefStrings[key]+"]"
                 words[id+1].spaces = 1
@@ -896,7 +897,7 @@ def corefReplace(words:list[Word]) -> list[Word]:
         if val > 1 and semanticAnnotations:
             #print("val over 1")
             for id in locations[key]:
-                print(id, "adding entity semanticannotation")
+                #print(id, "adding entity semanticannotation")
                 words[id].semanticAnnotation = "Entity="+corefStrings[key]
     
     return words
