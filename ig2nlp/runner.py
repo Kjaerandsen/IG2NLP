@@ -1,18 +1,20 @@
 import json
-import sys
 from matchingFunction import MatcherMiddleware
+import argparse
 
-args = sys.argv
+parser = argparse.ArgumentParser()
+parser.add_argument("id", 
+    help="Id from the input to run through the parser, -1 goes through all statements")
+parser.add_argument("-i", "--input", 
+    help="input file, defaults to json extension, i.e. input is treated as input.json")
+args = parser.parse_args()
 
-# Check if an input was given
-if len(args)<2:
-    print('Error: a integer must be passed with the function in the format:\n'+
-          'runnerAdvanced <integer here>')
-    sys.exit()
+number = int(args.id)
 
-number = int(args[1])
-
-filename = "../data/input.json"
+if not args.input:
+    filename = "../data/input.json"
+else:
+    filename = "../data/"+args.input+".json"
 
 i = number
 
