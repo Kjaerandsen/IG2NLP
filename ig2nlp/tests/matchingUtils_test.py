@@ -139,3 +139,80 @@ def test_smallLogicalOperator():
     i = smallLogicalOperator(wordsBak, 0, "Bdir", len(words))
     assert i == 7
     assert WordsToSentence(wordsBak) == "Bdir(a [AND] b [AND] (c [OR] amod d))"
+
+def test_validateNested():
+    words:list[Word] = []
+    words.append(createTestWord("1"))
+    words.append(createTestWord("2"))
+
+    # No symbols
+    assert validateNested(words) == False
+
+    # Only aim
+    words[0].setSymbol("I")
+    assert validateNested(words) == False
+
+    # Only attribute
+    words[0].setSymbol("A")
+    assert validateNested(words) == False
+
+    # Both aim and attribute
+    words[1].setSymbol("I")
+    assert validateNested(words) == True
+
+def test_ifHeadRelation():
+    """Test for ifHeadRelation and ifHeadRelationAim functions"""
+    words:list[Word] = []
+    words.append(createTestWord("1"))
+    words.append(createTestWord("2"))
+
+    words[0].head = 1
+    words[1].head = 1
+
+    # Check if Word 1 is connected to word 0
+    assert ifHeadRelation(words, 1, 0)
+
+    # Check if Word 1 is connected to word 0 for aim (root deprel)
+    words[0].deprel = "root"
+    assert ifHeadRelationAim(words, 1, 0)
+
+    # Check if word 1 is connected to itself (False)
+    assert ifHeadRelation(words, 1, 1) == False
+    assert ifHeadRelationAim(words, 1, 1) == False
+
+    # Check the detection through two extra chains
+    words.append(createTestWord("3"))
+    words.append(createTestWord("4"))
+    words[2].head = 4
+    words[3].head = 2
+    # 2 is now connected through 3 to 1, which is connected to 0
+    # Making the tested chain -> 2-3-1-0
+
+    # If head relation should fail because the head has a root deprel
+    assert not ifHeadRelation(words, 2, 0)
+
+    # It should now succeed as the head does not have a root deprel
+    words[0].deprel = ""
+    assert ifHeadRelation(words, 2, 0)
+
+    # It should now fail as the word has a root deprel
+    words[2].deprel = "root"
+    assert not ifHeadRelation(words, 2, 0)
+    
+    # It should now fail as a link in the chain has a root deprel
+    words[2].deprel = ""
+    words[3].deprel = "root"
+    assert not ifHeadRelation(words, 2, 0)
+
+    # Should now fail because link in the chain are not in the allowedAimHeads
+    words[3].deprel = ""
+    words[0].deprel = "root"
+
+    assert not ifHeadRelationAim(words,2,0)
+
+    # Set all words to have allowed deprels
+    for word in words:
+        word.deprel="conj"
+
+    # Should now be True
+    assert ifHeadRelationAim(words,2,0)
