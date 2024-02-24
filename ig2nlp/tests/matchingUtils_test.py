@@ -1,4 +1,5 @@
-from ig2nlp.matchingFunction import *
+from matchingUtils import *
+import copy
 import pytest
 
 def createTestWord(text:str) -> Word:
@@ -132,22 +133,9 @@ def test_smallLogicalOperator():
     assert i == 7
     assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] (c [OR] amod d))"
 
-    # Test the same function through the rootHandler
-    wordsBak = copy.deepcopy(words)
-    i = rootHandler(wordsBak, 0, len(words))
-    assert i == 7
-    assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] (c [OR] amod d))"
-
     # With Bdir instead
     words[0].deprel = "obj"
     wordsBak = copy.deepcopy(words)
     i = smallLogicalOperator(wordsBak, 0, "Bdir", len(words))
-    assert i == 7
-    assert WordsToSentence(wordsBak) == "Bdir(a [AND] b [AND] (c [OR] amod d))"
-
-    # With bdirHandler
-    words[0].deprel = "obj"
-    wordsBak = copy.deepcopy(words)
-    i = bdirHandler(wordsBak, 0, len(words))
     assert i == 7
     assert WordsToSentence(wordsBak) == "Bdir(a [AND] b [AND] (c [OR] amod d))"

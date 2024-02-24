@@ -258,21 +258,10 @@ def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int,
 
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
-def compoundWordsMiddleware(words:list) -> list[Word]:
-    """Middleware function for processing words, converts the format to a list of the Word class,
-    then combines compound words in the list to single words"""
-    words = convertWordFormat(words)
-
-    words = compoundWords(words)
-    words = compoundWords(words)
-    # For compound (punct or cc) conj x relations, where one or more of the same cc are present
-    words = compoundWordsConj(words)
-
-    return words
-
-def compoundWordsMiddlewareWords(words:list[Word]) -> list[Word]:
+def compoundWordsHandler(words:list) -> list[Word]:
     """Middleware function for processing words of the Word class,
     combines compound words in the list to single words"""
+
     words = compoundWords(words)
     words = compoundWords(words)
     # For compound (punct or cc) conj x relations, where one or more of the same cc are present

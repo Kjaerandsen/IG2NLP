@@ -1,4 +1,4 @@
-from ig2nlp.utility import *
+from utility import *
 import pytest
 
 def createTestWord(name):
