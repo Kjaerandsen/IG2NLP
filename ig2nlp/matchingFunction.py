@@ -1,4 +1,3 @@
-import stanza
 import time
 import copy
 import requests
@@ -8,142 +7,6 @@ from utility import *
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 semanticAnnotations = False
-
-def MatcherMiddleware(jsonData:list) -> list:
-    """Initializes the nlp pipeline globally to reuse the pipeline across the
-       statements and runs through all included statements."""
-    global useREST
-    global flaskURL
-    global env
-    
-    flaskURL = env['flaskURL']
-    useREST = env['useREST']
-
-    jsonLen = len(jsonData)
-    logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
-
-    if not useREST or jsonLen != 1:
-        logger.info("Loading nlp pipeline")
-        global nlp
-        useREST = False
-        nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
-                            processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
-                            package={
-                                    "tokenize": "combined",
-                                    "mwt": "combined",
-                                    "pos": "combined_electra-large",
-                                    "depparse": "combined_electra-large",
-                                    "lemma": "combined_charlm",
-                                    "ner": "ontonotes-ww-multi_charlm"
-                            },
-                            download_method=env['downloadMethod'],
-                            logging_level=env['logLevel']
-                            )
-        logger.info("Finished loading the nlp pipeline")
-
-    # Delete the environment variables dictionary
-    del env
-
-    textDocs=[]
-    for jsonObject in jsonData:
-        textDocs.append(jsonObject['baseTx'])
-
-    if useREST:
-        docs = nlpPipelineMulti(jsonData)
-    else:
-        docs = nlpPipelineMulti(textDocs)
-
-    for i, doc in enumerate(docs):
-        print("\nStatement", str(i) + ": " + jsonData[i]['name'])
-        logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
-        if not useREST:
-            words = doc.sentences[0].words
-            output = WordsToSentence(
-            corefReplace(
-                matchingFunction(
-                    compoundWordsMiddleware(
-                        words))))
-        else:
-            words = doc
-            output = WordsToSentence(
-            corefReplace(
-                matchingFunction(
-                    compoundWordsMiddlewareWords(
-                        words))))
-        
-        #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
-        logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
-        jsonData[i]["stanza"] = output
-        i+=1
-
-    logger.info("Finished running matcher\n\n")
-    return jsonData
-
-# Unused currently, used in orElseHandler and handleCondition if reverting to the earlier handling
-# of the components
-'''
-# Takes a sentence as a string, returns the nlp pipeline results for the string
-def nlpPipeline(text):
-    # Run the nlp pipeline on the input text
-    logger.debug("Running single statement pipeline with statement: "+ text)
-    if not useREST:
-        doc = nlp(text)
-        returnVal = doc.sentences[0].words
-        logger.debug("Finished running single statement pipeline")
-        return returnVal
-    else:
-        output = [{"baseTx":text}]
-        returnVal = nlpPipelineMulti(output)[0]
-        logger.debug("Finished running single statement pipeline")
-        return returnVal
-'''
-        
-def nlpPipelineMulti(textDocs:list) -> list:
-    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
-    if not useREST:
-        logger.debug("Running multiple statement pipeline")
-        docs = nlp.bulk_process(textDocs)
-        logger.debug("Finished running multiple statement pipeline")
-        return docs
-    else:
-        #requestBody = []
-        #for doc in textDocs:
-        #    requestBody.append({"baseTx":str(doc)})
-        #print(textDocs.keys())
-        response = requests.post(flaskURL, json = textDocs)
-        responseJSON = response.json()
-
-        docs:list = []
-        # Convert the response json to words
-        for sentence in responseJSON:
-            sentenceWords:list[Word] = []
-            for word in sentence:
-                sentenceWords.append(
-                    Word(
-                        word['text'],
-                        word['pos'],
-                        word['deprel'],
-                        word['head'],
-                        word['id'],
-                        word['lemma'],
-                        word['xpos'],
-                        word['feats'],
-                        word['start'],
-                        word['end'],
-                        word['spaces'],
-                        word['symbol'],
-                        word['nested'],
-                        word['position'],
-                        word['ner'],
-                        word['logical'],
-                        word['corefid'],
-                        word['coref'],
-                        word['corefScope'],
-                        word['isRepresentative']
-                    )
-                )
-            docs.append(sentenceWords)
-        return docs
 
 def matchingFunction(words:list[Word]) -> list[Word]:
     """takes a list of words with dependency parse and pos-tag data.
@@ -274,224 +137,6 @@ def matchingFunction(words:list[Word]) -> list[Word]:
         i += 1
 
     return words
-
-def validateNested(words:list[Word]) -> bool:
-    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
-       be regarded as nested."""
-    Aim = False
-    Attribute = False
-
-    for word in words:
-        if word.symbol == "A":
-            Attribute = True
-            if Aim:
-                return True
-        if word.symbol == "I":
-            Aim = True
-            if Attribute:
-                return True
-    return False
-
-def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
-    """Check if the word is connected to the headId through a head connection"""
-    while words[words[wordId].head-1].deprel != "root":
-        if words[wordId].deprel == "root":
-            return False
-        if words[wordId].head-1 == headId:
-            return True
-        wordId = words[wordId].head-1
-    return False
-
-# List of allowed head connections for the function below
-allowedAimHeads = ["conj","cc","det","amod","advmod"]
-
-def ifHeadRelationAim(words, wordId, headId) -> bool:
-    """Check if the word is connected to the headId through a head connection, 
-    specifically for Aim (I) components"""
-    while words[words[wordId].head-1].deprel != "root":
-        if words[wordId].head-1 == headId:
-            return True
-        if not words[words[wordId].head-1].deprel in allowedAimHeads:
-            return False
-        wordId = words[wordId].head-1
-    # Exception for the case where the headId is the root
-    if words[headId].deprel == "root":
-        return True
-    return False
-
-
-def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
-    """Finds the scope of components with logical operators and handles the logical operators"""
-    scopeStart = i  
-    scopeEnd = i
-
-    j=scopeStart+1
-    # Locations (ids) of cc dependent words
-    ccLocs = []
-    # Locations (ids) of puncts
-    punctLocs = []
-    # Locations (ids) of determiners
-    detLocs = []
-
-    if symbol == "I":
-        # Go through the word list and find the scope of the component
-        while j < wordLen:
-            if ifHeadRelationAim(words, j, i):
-                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
-            j += 1
-    else:
-        while j < wordLen:
-            # Go through the word list and find the scope of the component
-            if ifHeadRelation(words, j, i):
-                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
-            j += 1
-        
-    ccCount = len(ccLocs)
-
-    # If the scope is larger than one word in length and there is a cc deprel in the scope (and/or)
-    if scopeEnd - scopeStart != 0 and ccCount > 0:
-        # Go through the scope, if a deprel other than conj, cc and det is found
-        # then handle it as a single word component instead.
-        for j in range(scopeStart, scopeEnd):
-            if words[j].deprel == "det":
-                if j == scopeStart:
-                    detLocs.append(j)
-                elif words[j-1].deprel == "cc":
-                    detLocs.append(j)
-            # Remove additional puncts (i.e. "x, and y" -> "x and y")
-            elif words[j].deprel == "punct" and words[j].text == ",":
-                if words[j+1].deprel == "cc":
-                    words[j].spaces = 0
-                    words[j].text = ""
-                # If the word is a punct connected to the conj, then it should be replaced by a
-                        # logical operator
-                elif words[words[j].head-1].deprel == "conj":
-                    punctLocs.append(j)
-
-        # Remove dets
-        for det in detLocs:
-            k = det
-            words[k].spaces = 0
-            words[k].text = ""
-
-        words[scopeStart].setSymbol(symbol, 1)
-        words[scopeEnd].setSymbol(symbol, 2)
-        
-        i = scopeEnd
-
-        # If there is only one CC in the component
-        if ccCount == 1:
-            # Set the contents of the cc to be a logical operator
-            words[ccLocs[0]].toLogical()
-
-            # Turn all extra punct deprels into the same logical operator as above
-            for punct in punctLocs:
-                words[punct].spaces += 1
-                words[punct].text = words[ccLocs[0]].text
-
-        else:
-            # Go through the list of words, create lists of logical operator sequences
-            ccLocs2 = []
-            ccTypes = []
-            orConj = False
-            andConj = False
-
-            ccLocs = ccLocs + punctLocs
-
-            for j in range(scopeStart, scopeEnd+1):
-                if words[j].text == ",":
-                    if j+1 in ccLocs:
-                        words[j].text = ""
-                        if j in punctLocs: punctLocs.remove(j)
-                    else:
-                        currOperatorLoc = next(
-                            (i for i, val in enumerate(ccLocs) if val > j), -1)
-                        # Set the currOperatorLoc to the value instead of the id
-                        currOperatorLoc = ccLocs[currOperatorLoc]
-                        if currOperatorLoc != -1:
-                            words[currOperatorLoc].toLogical()
-                            if words[currOperatorLoc].text == "[AND]":
-                                ccLocs2.append(j)
-                                ccTypes.append("AND")
-                            elif words[currOperatorLoc].text == "[OR]":
-                                ccLocs2.append(j)
-                                ccTypes.append("OR")
-                            else:
-                                print("Error, unknown cc")
-                                return
-                            words[j].text = words[currOperatorLoc].text
-                            words[j].spaces = 1
-                        else:
-                            logger.error(
-                                "Error, punct not followed by a logical operator in logical"+
-                                " operator handling.")
-                elif words[j].deprel == "cc":
-                    words[j].toLogical()
-                    if words[j].text == "[AND]":
-                        ccLocs2.append(j)
-                        ccTypes.append("AND")
-                        andConj = True
-                    elif words[j].text == "[OR]":
-                        ccLocs2.append(j)
-                        ccTypes.append("OR")
-                        orConj = True
-            
-            originalType = ccTypes[0]
-            prevOperator = ccTypes[0]
-            prevOperatorLoc = ccLocs2[0]
-            # If there is a mix and match between symbol types handle the bracketing
-            if andConj and orConj:
-                logger.warning('Found both "and" and "or" logical operators in component, '+
-                        "please review manually to solve potential encapsulation issues.")
-
-                # Go through all the cc and handle the bracketing
-                for nextLoc, nextType in zip(ccLocs2, ccTypes):
-                    if prevOperator == originalType:
-                        # If next operator is not then add the first word after the operator
-                        # as the starting bracket
-                        if nextType != originalType:
-                            words[prevOperatorLoc+1].text = "(" + words[prevOperatorLoc+1].text
-                    else:
-                        # If previous is not original and this is then close the bracket
-                        if nextType == originalType:
-                            words[nextLoc-1].text += ")"
-                    # Update the previous operator
-                    prevOperator = nextType
-                    prevOperatorLoc = nextLoc
-
-            # If the last operator is not the original add a closing bracket
-            if ccTypes[len(ccLocs2)-1] != originalType:
-                words[scopeEnd].text += ")"
-            
-            logger.warning("More than one CC in smallLogicalOperator function, " +
-                             "please review logical operators")
-            
-        return scopeEnd
-    
-    else:
-        words[i].setSymbol(symbol)
-        return i
-
-def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, 
-                          ccLocs:list[int], j:int) -> tuple[int, int]:
-    """Adds cc deprels to ccLocs and escapes the sequence if
-       an unsupported deprel is detected"""
-    supported = ["punct","det","advmod","amod"]
-
-    if word.deprel == "cc":
-        ccLocs.append(j)
-        scopeEnd = j
-    elif word.deprel == "conj":
-        scopeEnd = j
-    # Also include advmod dependencies
-    elif word.deprel == "advmod":
-        scopeEnd = j
-    # If the word is anything else than the supported components 
-    # break the loop to not include further components
-    elif not word.deprel in supported:
-        j=wordLen-1
-    
-    return scopeEnd, j
 
 def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
                      wordLen:int, words2:list[Word]) -> bool:
@@ -744,165 +389,6 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
     
     return scopeEnd
 
-
-def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[Word]:
-    """Detects logical operator words, formats them, and replaces preceeding commas with the same
-       logical operator"""
-    #print("Finding logical operators\n", start, end)
-    andCount = 0
-    orCount = 0
-    for j in range(start, end):
-        if words[j].deprel == "cc":
-            words[j].toLogical()
-            if words[j].text == "[AND]":
-                andCount += 1
-            else:
-                orCount += 1
-            
-            # Remove preceeding puncts
-            if j-1 >= 0 and words[j-1].text == ",":
-                words[j-1].text = ""
-            #print("CC", words[j])
-        #else:
-        #    print(words[j].text)
-    if andCount > 0 and orCount > 0:
-        logger.warning('Found both "and" and "or" logical operators in component, '+
-                        "please review manually to solve encapsulation issues.")
-
-    return words
-
-def corefReplace(words:list[Word]) -> list[Word]:
-    """Handles supplementing pronouns with their respective Attribute (A) component contents using
-       coreference resolution data"""
-    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
-    i = 0
-    wordLen = len(words)
-    
-    corefIds = {}
-    locations = {}
-    corefStrings = {}
-
-    brackets = 0
-
-    # Get all instances of a coref with the given id
-    # if the length of the word is longer than another instance replace the coref string for that
-    # coref with the new word
-    while i < wordLen:
-        if words[i].symbol == "A":
-            if words[i].position != 2 and words[i].corefid != -1:
-                if words[i].corefid in corefIds:
-                    corefIds[words[i].corefid] += 1
-                    locations[words[i].corefid].append(i)
-                else:
-                    corefIds[words[i].corefid] = 1
-                    locations[words[i].corefid] = [i]
-
-                if words[i].position == 0:
-                    if words[i].corefid in corefStrings:
-                        if len(corefStrings[words[i].corefid]) < len(words[i].text):
-                            corefStrings[words[i].corefid]=words[i].text
-                    else:
-                        corefStrings[words[i].corefid]=words[i].text
-                else:
-                    iBak = i
-                    while words[i].position != 2:
-                        i+=1
-                    if words[i].corefid in corefStrings:
-                        if (len(corefStrings[words[i].corefid]) < 
-                            len(WordsToSentence(words[iBak:i+1]))):
-                            corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
-                    else:
-                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
-        elif (words[i].symbol == "" and words[i].corefid != -1 
-              and words[i].pos == "PRON" and brackets == 0):
-            if words[i].corefid in corefIds:
-                corefIds[words[i].corefid] += 1
-                locations[words[i].corefid].append(i)
-            else:
-                corefIds[words[i].corefid] = 1
-                locations[words[i].corefid] = [i]
-        else:
-            if words[i].position == 1 and words[i].nested == False:
-                brackets+=1
-            if words[i].position == 2 and words[i].nested == False:
-                brackets-=1
-        i += 1
-
-    '''
-    brackets = 0
-    while i < wordLen:
-        if (words[i].symbol == "A" and words[i].pos == "PRON" and 
-            words[i].coref != "" and words[i].position == 0):
-            #print(words[i].text, i)
-            words = addWord(words, i, words[i].text)
-            i+=1
-            wordLen += 1
-            #print("word has coref", words[i].text, "Coref is: ", words[i].coref)
-            corefLen = len(words[i].coref)
-            #print(words[i].coref)
-            if words[i].coref[corefLen-2:] == "'s":
-                words[i].coref = words[i].coref[:corefLen-2]
-            if words[i].coref[:4].lower() == "the ":
-                words[i].coref = words[i].coref[4:]
-            elif words[i].coref[:2] == "a ":
-                words[i].coref = words[i].coref[2:]
-            if ":poss" in words[i].deprel:
-                words[i].coref += "'s"
-            words[i].text = "["+words[i].coref+"]"
-            words[i].spaces = 1
-            logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
-                              words[i].text)
-            #print(words[i+1].text, i, "\n\n")
-        elif (words[i].pos == "PRON" and words[i].coref != "" and
-              brackets == 0 and words[i].symbol == ""):
-                words = addWord(words, i, words[i].text)
-                i+=1
-                wordLen += 1
-                corefLen = len(words[i].coref)
-                print(words[i].coref)
-                if words[i].coref[corefLen-2:] == "'s":
-                    words[i].coref = words[i].coref[:corefLen-2]
-                if words[i].coref[:4].lower() == "the ":
-                    words[i].coref = words[i].coref[4:]
-                elif words[i].coref[:2] == "a ":
-                    words[i].coref = words[i].coref[2:]
-                if ":poss" in words[i].deprel:
-                    words[i].coref += "'s"
-                words[i].text = "["+words[i].coref+"]"
-                words[i].spaces = 1
-                words[i].setSymbol("A")
-                logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
-                              words[i].text)
-        else:
-            if words[i].position == 1 and words[i].nested == False:
-                brackets+=1
-            if words[i].position == 2 and words[i].nested == False:
-                brackets-=1
-        i+=1
-    '''
-
-    #print(str(corefIds), str(corefStrings), str(locations))
-        
-    for key, val in corefIds.items():
-        #print(key,val, wordLen)
-        for id in locations[key]:
-            if words[id].pos == "PRON":
-                logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
-                            + words[id].text + " -> " + corefStrings[key])
-                words = addWord(words, id, words[id].text)
-                words[id+1].text = "["+corefStrings[key]+"]"
-                words[id+1].spaces = 1
-                words[id+1].setSymbol("A")
-                if val > 1 and semanticAnnotations:
-                    words[id+1].semanticAnnotation = "Entity="+corefStrings[key]
-        if val > 1 and semanticAnnotations:
-            #print("val over 1")
-            for id in locations[key]:
-                #print(id, "adding entity semanticannotation")
-                words[id].semanticAnnotation = "Entity="+corefStrings[key]
-    
-    return words
-
 def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
     """Handler for attribute (A) components detected using the nsubj dependency"""
     if words[i].pos != "PRON":
@@ -1129,3 +615,397 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
                 words[words[firstIndex].head-1].setSymbol("", 0)
             words[i].setSymbol("Bdir", 2)
     return i
+
+def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[Word]:
+    """Detects logical operator words, formats them, and replaces preceeding commas with the same
+       logical operator"""
+    #print("Finding logical operators\n", start, end)
+    andCount = 0
+    orCount = 0
+    for j in range(start, end):
+        if words[j].deprel == "cc":
+            words[j].toLogical()
+            if words[j].text == "[AND]":
+                andCount += 1
+            else:
+                orCount += 1
+            
+            # Remove preceeding puncts
+            if j-1 >= 0 and words[j-1].text == ",":
+                words[j-1].text = ""
+            #print("CC", words[j])
+        #else:
+        #    print(words[j].text)
+    if andCount > 0 and orCount > 0:
+        logger.warning('Found both "and" and "or" logical operators in component, '+
+                        "please review manually to solve encapsulation issues.")
+
+    return words
+
+def corefReplace(words:list[Word]) -> list[Word]:
+    """Handles supplementing pronouns with their respective Attribute (A) component contents using
+       coreference resolution data"""
+    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
+    i = 0
+    wordLen = len(words)
+    
+    corefIds = {}
+    locations = {}
+    corefStrings = {}
+
+    brackets = 0
+
+    # Get all instances of a coref with the given id
+    # if the length of the word is longer than another instance replace the coref string for that
+    # coref with the new word
+    while i < wordLen:
+        if words[i].symbol == "A":
+            if words[i].position != 2 and words[i].corefid != -1:
+                if words[i].corefid in corefIds:
+                    corefIds[words[i].corefid] += 1
+                    locations[words[i].corefid].append(i)
+                else:
+                    corefIds[words[i].corefid] = 1
+                    locations[words[i].corefid] = [i]
+
+                if words[i].position == 0:
+                    if words[i].corefid in corefStrings:
+                        if len(corefStrings[words[i].corefid]) < len(words[i].text):
+                            corefStrings[words[i].corefid]=words[i].text
+                    else:
+                        corefStrings[words[i].corefid]=words[i].text
+                else:
+                    iBak = i
+                    while words[i].position != 2:
+                        i+=1
+                    if words[i].corefid in corefStrings:
+                        if (len(corefStrings[words[i].corefid]) < 
+                            len(WordsToSentence(words[iBak:i+1]))):
+                            corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                    else:
+                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+        elif (words[i].symbol == "" and words[i].corefid != -1 
+              and words[i].pos == "PRON" and brackets == 0):
+            if words[i].corefid in corefIds:
+                corefIds[words[i].corefid] += 1
+                locations[words[i].corefid].append(i)
+            else:
+                corefIds[words[i].corefid] = 1
+                locations[words[i].corefid] = [i]
+        else:
+            if words[i].position == 1 and words[i].nested == False:
+                brackets+=1
+            if words[i].position == 2 and words[i].nested == False:
+                brackets-=1
+        i += 1
+
+    '''
+    brackets = 0
+    while i < wordLen:
+        if (words[i].symbol == "A" and words[i].pos == "PRON" and 
+            words[i].coref != "" and words[i].position == 0):
+            #print(words[i].text, i)
+            words = addWord(words, i, words[i].text)
+            i+=1
+            wordLen += 1
+            #print("word has coref", words[i].text, "Coref is: ", words[i].coref)
+            corefLen = len(words[i].coref)
+            #print(words[i].coref)
+            if words[i].coref[corefLen-2:] == "'s":
+                words[i].coref = words[i].coref[:corefLen-2]
+            if words[i].coref[:4].lower() == "the ":
+                words[i].coref = words[i].coref[4:]
+            elif words[i].coref[:2] == "a ":
+                words[i].coref = words[i].coref[2:]
+            if ":poss" in words[i].deprel:
+                words[i].coref += "'s"
+            words[i].text = "["+words[i].coref+"]"
+            words[i].spaces = 1
+            logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
+                              words[i].text)
+            #print(words[i+1].text, i, "\n\n")
+        elif (words[i].pos == "PRON" and words[i].coref != "" and
+              brackets == 0 and words[i].symbol == ""):
+                words = addWord(words, i, words[i].text)
+                i+=1
+                wordLen += 1
+                corefLen = len(words[i].coref)
+                print(words[i].coref)
+                if words[i].coref[corefLen-2:] == "'s":
+                    words[i].coref = words[i].coref[:corefLen-2]
+                if words[i].coref[:4].lower() == "the ":
+                    words[i].coref = words[i].coref[4:]
+                elif words[i].coref[:2] == "a ":
+                    words[i].coref = words[i].coref[2:]
+                if ":poss" in words[i].deprel:
+                    words[i].coref += "'s"
+                words[i].text = "["+words[i].coref+"]"
+                words[i].spaces = 1
+                words[i].setSymbol("A")
+                logger.info("Replaced pronoun with coreference Attribute: "+ words[i-1].text+ ", "+
+                              words[i].text)
+        else:
+            if words[i].position == 1 and words[i].nested == False:
+                brackets+=1
+            if words[i].position == 2 and words[i].nested == False:
+                brackets-=1
+        i+=1
+    '''
+
+    #print(str(corefIds), str(corefStrings), str(locations))
+        
+    for key, val in corefIds.items():
+        #print(key,val, wordLen)
+        for id in locations[key]:
+            if words[id].pos == "PRON":
+                logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
+                            + words[id].text + " -> " + corefStrings[key])
+                words = addWord(words, id, words[id].text)
+                words[id+1].text = "["+corefStrings[key]+"]"
+                words[id+1].spaces = 1
+                words[id+1].setSymbol("A")
+                if val > 1 and semanticAnnotations:
+                    words[id+1].semanticAnnotation = "Entity="+corefStrings[key]
+        if val > 1 and semanticAnnotations:
+            #print("val over 1")
+            for id in locations[key]:
+                #print(id, "adding entity semanticannotation")
+                words[id].semanticAnnotation = "Entity="+corefStrings[key]
+    
+    return words
+
+def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
+    """Finds the scope of components with logical operators and handles the logical operators"""
+    scopeStart = i  
+    scopeEnd = i
+
+    j=scopeStart+1
+    # Locations (ids) of cc dependent words
+    ccLocs = []
+    # Locations (ids) of puncts
+    punctLocs = []
+    # Locations (ids) of determiners
+    detLocs = []
+
+    if symbol == "I":
+        # Go through the word list and find the scope of the component
+        while j < wordLen:
+            if ifHeadRelationAim(words, j, i):
+                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
+            j += 1
+    else:
+        while j < wordLen:
+            # Go through the word list and find the scope of the component
+            if ifHeadRelation(words, j, i):
+                scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
+            j += 1
+        
+    ccCount = len(ccLocs)
+
+    # If the scope is larger than one word in length and there is a cc deprel in the scope (and/or)
+    if scopeEnd - scopeStart != 0 and ccCount > 0:
+        # Go through the scope, if a deprel other than conj, cc and det is found
+        # then handle it as a single word component instead.
+        for j in range(scopeStart, scopeEnd):
+            if words[j].deprel == "det":
+                if j == scopeStart:
+                    detLocs.append(j)
+                elif words[j-1].deprel == "cc":
+                    detLocs.append(j)
+            # Remove additional puncts (i.e. "x, and y" -> "x and y")
+            elif words[j].deprel == "punct" and words[j].text == ",":
+                if words[j+1].deprel == "cc":
+                    words[j].spaces = 0
+                    words[j].text = ""
+                # If the word is a punct connected to the conj, then it should be replaced by a
+                        # logical operator
+                elif words[words[j].head-1].deprel == "conj":
+                    punctLocs.append(j)
+
+        # Remove dets
+        for det in detLocs:
+            k = det
+            words[k].spaces = 0
+            words[k].text = ""
+
+        words[scopeStart].setSymbol(symbol, 1)
+        words[scopeEnd].setSymbol(symbol, 2)
+        
+        i = scopeEnd
+
+        # If there is only one CC in the component
+        if ccCount == 1:
+            # Set the contents of the cc to be a logical operator
+            words[ccLocs[0]].toLogical()
+
+            # Turn all extra punct deprels into the same logical operator as above
+            for punct in punctLocs:
+                words[punct].spaces += 1
+                words[punct].text = words[ccLocs[0]].text
+
+        else:
+            # Go through the list of words, create lists of logical operator sequences
+            ccLocs2 = []
+            ccTypes = []
+            orConj = False
+            andConj = False
+
+            ccLocs = ccLocs + punctLocs
+
+            for j in range(scopeStart, scopeEnd+1):
+                if words[j].text == ",":
+                    if j+1 in ccLocs:
+                        words[j].text = ""
+                        if j in punctLocs: punctLocs.remove(j)
+                    else:
+                        currOperatorLoc = next(
+                            (i for i, val in enumerate(ccLocs) if val > j), -1)
+                        # Set the currOperatorLoc to the value instead of the id
+                        currOperatorLoc = ccLocs[currOperatorLoc]
+                        if currOperatorLoc != -1:
+                            words[currOperatorLoc].toLogical()
+                            if words[currOperatorLoc].text == "[AND]":
+                                ccLocs2.append(j)
+                                ccTypes.append("AND")
+                            elif words[currOperatorLoc].text == "[OR]":
+                                ccLocs2.append(j)
+                                ccTypes.append("OR")
+                            else:
+                                print("Error, unknown cc")
+                                return
+                            words[j].text = words[currOperatorLoc].text
+                            words[j].spaces = 1
+                        else:
+                            logger.error(
+                                "Error, punct not followed by a logical operator in logical"+
+                                " operator handling.")
+                elif words[j].deprel == "cc":
+                    words[j].toLogical()
+                    if words[j].text == "[AND]":
+                        ccLocs2.append(j)
+                        ccTypes.append("AND")
+                        andConj = True
+                    elif words[j].text == "[OR]":
+                        ccLocs2.append(j)
+                        ccTypes.append("OR")
+                        orConj = True
+            
+            originalType = ccTypes[0]
+            prevOperator = ccTypes[0]
+            prevOperatorLoc = ccLocs2[0]
+            # If there is a mix and match between symbol types handle the bracketing
+            if andConj and orConj:
+                logger.warning('Found both "and" and "or" logical operators in component, '+
+                        "please review manually to solve potential encapsulation issues.")
+
+                # Go through all the cc and handle the bracketing
+                for nextLoc, nextType in zip(ccLocs2, ccTypes):
+                    if prevOperator == originalType:
+                        # If next operator is not then add the first word after the operator
+                        # as the starting bracket
+                        if nextType != originalType:
+                            words[prevOperatorLoc+1].text = "(" + words[prevOperatorLoc+1].text
+                    else:
+                        # If previous is not original and this is then close the bracket
+                        if nextType == originalType:
+                            words[nextLoc-1].text += ")"
+                    # Update the previous operator
+                    prevOperator = nextType
+                    prevOperatorLoc = nextLoc
+
+            # If the last operator is not the original add a closing bracket
+            if ccTypes[len(ccLocs2)-1] != originalType:
+                words[scopeEnd].text += ")"
+            
+            logger.warning("More than one CC in smallLogicalOperator function, " +
+                             "please review logical operators")
+            
+        return scopeEnd
+    
+    else:
+        words[i].setSymbol(symbol)
+        return i
+
+def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, 
+                          ccLocs:list[int], j:int) -> tuple[int, int]:
+    """Adds cc deprels to ccLocs and escapes the sequence if
+       an unsupported deprel is detected"""
+    supported = ["punct","det","advmod","amod"]
+
+    if word.deprel == "cc":
+        ccLocs.append(j)
+        scopeEnd = j
+    elif word.deprel == "conj":
+        scopeEnd = j
+    # Also include advmod dependencies
+    elif word.deprel == "advmod":
+        scopeEnd = j
+    # If the word is anything else than the supported components 
+    # break the loop to not include further components
+    elif not word.deprel in supported:
+        j=wordLen-1
+    
+    return scopeEnd, j
+
+def validateNested(words:list[Word]) -> bool:
+    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
+       be regarded as nested."""
+    Aim = False
+    Attribute = False
+
+    for word in words:
+        if word.symbol == "A":
+            Attribute = True
+            if Aim:
+                return True
+        if word.symbol == "I":
+            Aim = True
+            if Attribute:
+                return True
+    return False
+
+def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
+    """Check if the word is connected to the headId through a head connection"""
+    while words[words[wordId].head-1].deprel != "root":
+        if words[wordId].deprel == "root":
+            return False
+        if words[wordId].head-1 == headId:
+            return True
+        wordId = words[wordId].head-1
+    return False
+
+# List of allowed head connections for the function below
+allowedAimHeads = ["conj","cc","det","amod","advmod"]
+
+def ifHeadRelationAim(words, wordId, headId) -> bool:
+    """Check if the word is connected to the headId through a head connection, 
+    specifically for Aim (I) components"""
+    while words[words[wordId].head-1].deprel != "root":
+        if words[wordId].head-1 == headId:
+            return True
+        if not words[words[wordId].head-1].deprel in allowedAimHeads:
+            return False
+        wordId = words[wordId].head-1
+    # Exception for the case where the headId is the root
+    if words[headId].deprel == "root":
+        return True
+    return False
+
+# Unused currently, used in orElseHandler and handleCondition if reverting to the earlier handling
+# of the components
+'''
+# Takes a sentence as a string, returns the nlp pipeline results for the string
+def nlpPipeline(text):
+    # Run the nlp pipeline on the input text
+    logger.debug("Running single statement pipeline with statement: "+ text)
+    if not useREST:
+        doc = nlp(text)
+        returnVal = doc.sentences[0].words
+        logger.debug("Finished running single statement pipeline")
+        return returnVal
+    else:
+        output = [{"baseTx":text}]
+        returnVal = nlpPipelineMulti(output)[0]
+        logger.debug("Finished running single statement pipeline")
+        return returnVal
+'''
