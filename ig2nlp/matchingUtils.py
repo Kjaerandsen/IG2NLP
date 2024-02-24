@@ -192,12 +192,15 @@ def validateNested(words:list[Word]) -> bool:
 
 def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
     """Check if the word is connected to the headId through a head connection"""
-    while words[words[wordId].head-1].deprel != "root":
-        if words[wordId].deprel == "root":
+    word = words[wordId]
+    
+    while words[word.head-1].deprel != "root":
+        if word.deprel == "root":
             return False
-        if words[wordId].head-1 == headId:
+        if word.head-1 == headId:
             return True
-        wordId = words[wordId].head-1
+        # Go to the head of the current word and iterate
+        word = words[word.head-1]
     return False
 
 # List of allowed head connections for the function below
