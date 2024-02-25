@@ -45,7 +45,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                     words[j].text = ""
                 # If the word is a punct connected to the conj, then it should be replaced by a
                         # logical operator
-                elif words[words[j].head-1].deprel == "conj":
+                elif words[words[j].head].deprel == "conj":
                     punctLocs.append(j)
 
         # Remove dets
@@ -194,27 +194,27 @@ def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
     """Check if the word is connected to the headId through a head connection"""
     word = words[wordId]
     
-    while words[word.head-1].deprel != "root":
+    while words[word.head].deprel != "root":
         if word.deprel == "root":
             return False
-        if word.head-1 == headId:
+        if word.head == headId:
             return True
         # Go to the head of the current word and iterate
-        word = words[word.head-1]
+        word = words[word.head]
     return False
 
 # List of allowed head connections for the function below
 allowedAimHeads = ["conj","cc","det","amod","advmod"]
 
-def ifHeadRelationAim(words, wordId, headId) -> bool:
+def ifHeadRelationAim(words:list[Word], wordId:int, headId:int) -> bool:
     """Check if the word is connected to the headId through a head connection, 
     specifically for Aim (I) components"""
-    while words[words[wordId].head-1].deprel != "root":
-        if words[wordId].head-1 == headId:
+    while words[words[wordId].head].deprel != "root":
+        if words[wordId].head == headId:
             return True
-        if not words[words[wordId].head-1].deprel in allowedAimHeads:
+        if not words[words[wordId].head].deprel in allowedAimHeads:
             return False
-        wordId = words[wordId].head-1
+        wordId = words[wordId].head
     # Exception for the case where the headId is the root
     if words[headId].deprel == "root":
         return True

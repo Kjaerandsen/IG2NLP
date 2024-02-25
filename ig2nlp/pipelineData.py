@@ -2,7 +2,7 @@ import json
 import stanza
 import pandas as pd
 
-from utility import compoundWordsMiddleware, env
+from utility import compoundWordsHandler, env
 
 filename = "../data/input.json"
 
@@ -75,8 +75,8 @@ with open(filename, "r") as input:
                 sentence2 = doc2.sentences[j]
                 sentence3 = doc3.sentences[j]
                 sentence4 = doc4.sentences[j]
-                sentence.words = compoundWordsMiddleware(sentence.words)
-                sentence2.words = compoundWordsMiddleware(sentence2.words)
+                sentence.words = compoundWordsHandler(sentence.words)
+                sentence2.words = compoundWordsHandler(sentence2.words)
                 # Generating the data structure for displacy visualization
                 df = pd.DataFrame(columns=["Word", "POS", "XPOS", "Head id", "Head word", 
                                                "Dependency", "Lemma", "Feats", "COREF"])
@@ -86,7 +86,11 @@ with open(filename, "r") as input:
                         "Head word":(sentence.words[word.head-1].text if word.head > 0 
                                      else "root"), 
                         "Dependency": word.deprel, "Lemma": word.lemma, 
-                        "Feats":word.feats, "COREF": word.coref}, ignore_index=True)
+                        "Feats":word.feats, 
+                        "COREF": word.coref_chains[0].chain.representative_text 
+                        if word.coref_chains!=None and len(word.coref_chains) > 0
+                        else ""}, 
+                        ignore_index=True)
                 outputFile.write("\nWords:\n")
                 outputFile.write(str(df))
                 df = pd.DataFrame(columns=["Token", "POS", "XPOS", "Head id", 

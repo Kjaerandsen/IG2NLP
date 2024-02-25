@@ -10,7 +10,7 @@ def createCC(text:str, id:int) -> Word:
     word = createTestWord(text)
     word.deprel = "cc"
     word.pos = "CCONJ"
-    word.head = id+2
+    word.head = id+1
     word.spaces = 1
     return word
 
@@ -18,12 +18,12 @@ def createComma(id:int) -> Word:
     word = createTestWord(",")
     word.deprel = "punct"
     word.pos = "PUNCT"
-    word.head = id+2
+    word.head = id+1
     return word
 
 def createConj(text:str, headId:int) -> Word:
     word = createTestWord(text)
-    word.head = headId+1
+    word.head = headId
     word.deprel = "conj"
     word.pos = "NOUN"
     word.spaces = 1
@@ -166,8 +166,8 @@ def test_ifHeadRelation():
     words.append(createTestWord("1"))
     words.append(createTestWord("2"))
 
-    words[0].head = 1
-    words[1].head = 1
+    words[0].head = 0
+    words[1].head = 0
 
     # Check if Word 1 is connected to word 0
     assert ifHeadRelation(words, 1, 0)
@@ -183,8 +183,8 @@ def test_ifHeadRelation():
     # Check the detection through two extra chains
     words.append(createTestWord("3"))
     words.append(createTestWord("4"))
-    words[2].head = 4
-    words[3].head = 2
+    words[2].head = 3
+    words[3].head = 1
     # 2 is now connected through 3 to 1, which is connected to 0
     # Making the tested chain -> 2-3-1-0
 

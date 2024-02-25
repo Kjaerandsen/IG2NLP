@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from utility import compoundWordsMiddleware, env
+from utility import compoundWordsHandler, env
 
 # Take the system arguments
 args = sys.argv
@@ -61,7 +61,7 @@ pd.set_option('display.max_rows', None)
 
 for sentence in doc.sentences:
     df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency", "Lemma", "Feats"])
-    sentence.words = compoundWordsMiddleware(sentence.words)
+    sentence.words = compoundWordsHandler(sentence.words)
     for word in sentence.words:
         df = df._append({
             "Word": word.text, "POS":word.pos, "Head id":word.head, 

@@ -1,5 +1,5 @@
 import stanza
-from ig2nlp.utility import env, convertWordFormat
+from utility import env, convertWordFormat
 import json
 from flask import Flask, request, Response
 

@@ -28,7 +28,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
         word = words[i]
         deprel = word.deprel
 
-        #print(words[words[i].head-1], words[i].deprel, words[i].text)
+        #print(words[words[i].head], words[i].deprel, words[i].text)
 
         match deprel:
             # (Cac, Cex) Condition detection 
@@ -56,8 +56,8 @@ def matchingFunction(words:list[Word]) -> list[Word]:
                 # If the relation is a ccomp then handle it as a direct object
                 # This does nothing in testing
                 '''
-                elif (words[word.head-1].deprel == "nsubj" 
-                    and words[words[word.head-1].head-1].deprel == "ccomp"):
+                elif (words[word.head].deprel == "nsubj" 
+                    and words[words[word.head].head].deprel == "ccomp"):
                     #print("\n\nAMOD NSUBJ OBJ\n\n")
                     word.setSymbol(word,"bdir", 1)
                     words[i+1].setSymbol(words[i+1],"bdir", 2)
@@ -65,27 +65,27 @@ def matchingFunction(words:list[Word]) -> list[Word]:
                 '''
             case "acl":
                 # (A,p) Attribute property detection 2
-                if words[word.head-1].symbol == "A":
+                if words[word.head].symbol == "A":
                     word.setSymbol("A,p")
                 # (Bdir,p) Direct object property detection 3
                 # TODO: Reconsider in the future if this is accurate enough
                 # There are currently false positives, but they should be mitigated by better
                 # Cex component detection
-                if words[word.head-1].symbol == "Bdir" and words[i-1].symbol == "Bdir":
+                if words[word.head].symbol == "Bdir" and words[i-1].symbol == "Bdir":
                     word.setSymbol("Bdir,p")
 
             # Direct object handling (Bdir), (Bdir,p)
             case "nmod":
                 i = nmodDependencyHandler(words, i, wordLen)
                 # TODO: Revisit and test
-                #else if words[word.head-1].symbol == "A":
+                #else if words[word.head].symbol == "A":
                 #   print("\nnmod connected to Attribute(A): ", word)
 
             # (Bdir,p) Direct object property detection 2
             case "nmod:poss":
-                if words[word.head-1].deprel == "obj" and word.head-1 == i+1:
+                if words[word.head].deprel == "obj" and word.head == i+1:
                     # Check if there is a previous amod connection and add both
-                    if words[i-1].deprel == "amod" and words[i-1].head-1 == i:
+                    if words[i-1].deprel == "amod" and words[i-1].head == i:
                         words[i-1].setSymbol("Bdir,p", 1)
                         word.setSymbol("Bdir,p", 2)
                     # Else only add the Bdir,p
@@ -103,7 +103,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
             # Might be too generic of a rule.
             # TODO: Revisit and test
             case "advmod":
-                if words[word.head-1].symbol == "I":
+                if words[word.head].symbol == "I":
                     #print("\nadvmod connected to Aim(I): ", word)
                     if i+1 < wordLen:
                         if words[i+1].deprel == "punct":
@@ -114,7 +114,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
                 i = executionConstraintHandler(words, i, wordLen)
             case "obl:tmod":
                 # Old implementation used
-                # i = words[i].head-1
+                # i = words[i].head
                 i = executionConstraintHandler(words, i, wordLen)
 
             # Default, for matches based on more than just a single deprel
@@ -130,11 +130,11 @@ def matchingFunction(words:list[Word]) -> list[Word]:
                     i = attributeHandler(words, i, wordLen)
 
                     # TODO: look into the line below
-                    if words[word.head-1].deprel == "ccomp":
+                    if words[word.head].deprel == "ccomp":
                         logger.debug("NSUBJ CCOMP OBJ")
 
                 # (D) Deontic detection
-                elif words[word.head-1].deprel == "root" and "aux" in deprel:
+                elif words[word.head].deprel == "root" and "aux" in deprel:
                     i = deonticHandler(words, i)
 
                 elif (deprel != "punct" and deprel != "conj" and deprel != "cc"
@@ -401,7 +401,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                 #print("Nmod head relation to a: ", words[j], words[i])
                 j = smallLogicalOperator(words, j, "A", wordLen)
                 other = True
-                if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+                if words[i+1].deprel == "appos" and words[i+1].head == i:
                     if words[i].position == 2:
                         words[i].setSymbol("")
                         words[i+1].setSymbol("A",2)
@@ -412,7 +412,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                         i+=1
         if not other:
             i = smallLogicalOperator(words, i, "A", wordLen)
-            if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+            if words[i+1].deprel == "appos" and words[i+1].head == i:
                 if words[i].position == 2:
                     words[i].setSymbol("")
                     words[i+1].setSymbol("A",2)
@@ -425,9 +425,9 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
     # If the nsubj is a pronoun connected to root then handle it as an attribute
     # This may need to be reverted in the future if coreference resolution is used
     # in that case, the coreference resolution will be used to add the appropriate attribute
-    elif words[words[i].head-1].deprel == "root":
+    elif words[words[i].head].deprel == "root":
         i = smallLogicalOperator(words, i, "A", wordLen)
-        if words[i+1].deprel == "appos" and words[i+1].head-1 == i:
+        if words[i+1].deprel == "appos" and words[i+1].head == i:
             if words[i].position == 2:
                 words[i].setSymbol("")
                 words[i+1].setSymbol("A",2)
@@ -439,7 +439,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
 
     # (A,p) detection mechanism, might be too specific. 
     # Is overwritten by Aim (I) component in several cases
-    if words[i+1].deprel == "advcl" and words[words[i+1].head-1].deprel == "root":
+    if words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
         #print("ADVCL")
         words[i+1].setSymbol("A,p")
 
@@ -447,7 +447,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
 
 def deonticHandler(words:list[Word], i:int) -> int:
     """Handler for deontic (D) components detected using the aux dependency"""
-    if words[words[i].head-1].pos == "VERB":
+    if words[words[i].head].pos == "VERB":
         #print("Deontic: ", words[i].xpos) 
         #Might be worth looking into deontics that do not have xpos of MD
         # Combine two adjacent deontics if present.
@@ -455,9 +455,9 @@ def deonticHandler(words:list[Word], i:int) -> int:
             words[i-1].setSymbol("D",1)
             words[i].setSymbol("D",2)
         else:
-            if (words[i].head-1 - i) > 1:
+            if (words[i].head - i) > 1:
                 words[i].setSymbol("D",1)
-                i = words[i].head-2
+                i = words[i].head-1
                 words[i].setSymbol("D",2)
             else:
                 words[i].setSymbol("D")
@@ -479,7 +479,7 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
         k = 0
 
         for k in range(wordLen):
-            if words[k].deprel == "xcomp" and words[k].head-1 == i:
+            if words[k].deprel == "xcomp" and words[k].head == i:
                 #print("XComp of I: ", words[k], k, i)
                 # If the xcomp is adjacent encapsulate it in the aim component
                 if k-i == 2:
@@ -490,7 +490,7 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
                 else:
                     j = i+1
                     while j < k-1:
-                        if words[j].head-1 != k:
+                        if words[j].head != k:
                             # Add semantic annotation for context based on xcomp
                             # if the xcomp is not adjacent to the aim
                             words[i].text = (words[i].text + " " * words[k].spaces + "[" + 
@@ -534,7 +534,7 @@ def bdirHandler(words:list[Word], i:int, wordLen:int) -> int:
     if words[i].position == 0:
         j=i
         while j < wordLen:
-            if words[j].deprel == "nmod" and words[j].head-1 == i:
+            if words[j].deprel == "nmod" and words[j].head == i:
                 if j+1 < wordLen:
                     if not ifHeadRelation(words, j+1, j):
                         words[i].setSymbol("Bdir", 1)
@@ -568,17 +568,17 @@ def amodPropertyHandler(words:list[Word], i:int, wordLen:int) -> int:
     """Handler for properties detected using the amod dependency. Currently used for 
        Direct object (Bdir), Indirect object (Bind) and Attribute (A) properties (,p)"""
     # If the word is directly connected to an obj (Bdir)
-    if words[words[i].head-1].deprel == "obj":
+    if words[words[i].head].deprel == "obj":
         i = smallLogicalOperator(words, i, "Bdir,p", wordLen)
         #words[i].setSymbol("Bdir,p")
     # Else if the word is directly connected to an iobj (Bind)
-    elif words[words[i].head-1].deprel == "iobj":
+    elif words[words[i].head].deprel == "iobj":
         i = smallLogicalOperator(words, i, "Bind,p", wordLen)
         #words[i].setSymbol("Bind,p")
     # Else if the word is connected to a nsubj connected directly to root (Attribute)
-    elif (words[words[i].head-1].deprel == "nsubj" 
-            and (words[words[words[i].head-1].head-1].deprel == "root" or 
-            words[words[words[i].head-1].head-1].symbol == "A")):
+    elif (words[words[i].head].deprel == "nsubj" 
+            and (words[words[words[i].head].head].deprel == "root" or 
+            words[words[words[i].head].head].symbol == "A")):
         i = smallLogicalOperator(words, i, "A,p", wordLen)
         #words[i].setSymbol("A,p")
     return i
@@ -590,14 +590,14 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
     # object in some instances, an instance of an indirect object component, and several 
     # overlaps with execution constraints.
     # TODO: Look into nmod inclusion further
-    if words[words[i].head-1].symbol == "Bdir" and words[words[i].head-1].position in [0,2]:
+    if words[words[i].head].symbol == "Bdir" and words[words[i].head].position in [0,2]:
         #logger.debug("NMOD connected to BDIR")
         # positive lookahead
         firstIndex = i
         doubleNmod = False
         # Find and encapsulate any other nmods connected to the last detected nmod
         for j in range(wordLen):
-            if words[j].deprel == "nmod" and words[j].head-1 == i:
+            if words[j].deprel == "nmod" and words[j].head == i:
                 lastIndex = j
                 doubleNmod = True
                 i = j
@@ -605,14 +605,14 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
         # if two or more nmod dependencies are connected then treat it as a Bdir,p
         if doubleNmod:
             # Set the first word after the direct object component as the start of the component
-            words[words[firstIndex].head].setSymbol("Bdir,p", 1)
+            words[words[firstIndex].head+1].setSymbol("Bdir,p", 1)
             words[lastIndex].setSymbol("Bdir,p", 2)
             i = lastIndex
         else:
             # Set the first word after the direct object component as the start of the component
-            if words[words[firstIndex].head-1].position == 0:
-                words[words[firstIndex].head-1].setSymbol("Bdir", 1)
+            if words[words[firstIndex].head].position == 0:
+                words[words[firstIndex].head].setSymbol("Bdir", 1)
             else:
-                words[words[firstIndex].head-1].setSymbol("", 0)
+                words[words[firstIndex].head].setSymbol("", 0)
             words[i].setSymbol("Bdir", 2)
     return i

@@ -24,7 +24,7 @@ class Word:
         self.id = id
         self.text = text
         self.deprel = deprel
-        self.head = head
+        self.head = head-1
         self.start = start
         self.end = end
         self.pos = pos
@@ -101,12 +101,6 @@ class Word:
             self.start = otherWord.start
             self.text = otherWord.text + " " * self.spaces + self.text
             self.spaces = otherWord.spaces
-    
-    # Potential future adjustment as all head id's are one (1) to high.
-    '''
-    def setHead(self, head):
-        self.head = head-1
-    '''
 
     def __str__(self):
         return("Word: "+ self.text + " | pos: "+ self.pos + " | " + self.xpos  
@@ -282,18 +276,18 @@ def compoundWords(words:list[Word]) -> list[Word]:
         # Compound of three words in the form compound, punct, word
         # Combines the punct and the compound first, then the main function combines the rest
         # the compound and the word
-        if words[i].deprel == "compound" and abs(words[i].head-1 - i) == 2:
-            if i < words[i].head-1:
+        if words[i].deprel == "compound" and abs(words[i].head - i) == 2:
+            if i < words[i].head:
                 if words[i+1].deprel == "punct":
                     i, wordLen = removeWord(words, i+1, wordLen, 1)
                     i-=1
 
         # If the word is a compound word
-        elif words[i].deprel == "compound" and words[i].head-1 == i+1: 
+        elif words[i].deprel == "compound" and words[i].head == i+1: 
             i, wordLen = removeWord(words, i, wordLen)
 
         
-        elif (words[i].deprel == "case" and words[i].head-1 == i-1 
+        elif (words[i].deprel == "case" and words[i].head == i-1 
               and words[i].pos == "PART"):
             # Add the PART case (i.e with "state" and "'s" -> "state's")
             #words[i-1].text = words[i-1].text + words[i].text
@@ -301,14 +295,14 @@ def compoundWords(words:list[Word]) -> list[Word]:
 
         
         # If the word is a "PART" case dependency
-        elif words[i].deprel == "punct" and words[i].head-1 == i+1:
+        elif words[i].deprel == "punct" and words[i].head == i+1:
             if (i+2 < wordLen and words[i+2].deprel == "punct" and 
-                words[i+2].head-1 == i+1):
+                words[i+2].head == i+1):
                 # Combine the punct and following word
                 i, wordLen = removeWord(words, i, wordLen)
 
         # If the word is a compound part of the previous word, combine the previous and the current
-        elif words[i].deprel == "compound:prt" and words[i].head-1 == i-1:
+        elif words[i].deprel == "compound:prt" and words[i].head == i-1:
             i, wordLen = removeWord(words, i, wordLen, 1)
         i += 1
 
@@ -324,10 +318,10 @@ def compoundWordsConj(words:list[Word]) -> list[Word]:
         i += 1
     return words
 
-def compoundWordsConjHelper(words, i, wordLen):
+def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int):
     """Helper function performing the logic for compoundWordsConj"""
     start = i
-    end = words[i].head-1
+    end = words[i].head
     ccLocs = []
     ccType = ""
     punctLocs = []
@@ -394,16 +388,16 @@ def compoundWordsConjHelper(words, i, wordLen):
         words[start].head = words[end].head
         words[start].deprel = endRel
         # the last word should have the first word as the head
-        words[end].head = start+1
+        words[end].head = start
         words[end].deprel = "conj"
         # Every conj should have the first word as the head
         if len(conjLocs) > 1:
             for conjLoc in conjLocs[1:]:
-                words[conjLoc].head = start+1
+                words[conjLoc].head = start
         
         for word in words:
-            if word.head-1 == end:
-                word.head = start+1
+            if word.head == end:
+                word.head = start
 
     return end, True, wordLen
 
@@ -433,8 +427,8 @@ def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
     # for the combination of compound words into single words
     for j, word in enumerate(words):
         # Adjust the head connections to take into account the compounding of two elements
-        if word.head > id:
-            word.head = word.head - 1
+        if word.head+1 > id:
+            word.head -= 1
         # Adjust the id's to take into account the removal of the compound word
         if j >= i:
             word.id -=  1
@@ -447,9 +441,9 @@ def addWord(words:list[Word], i:int, wordText:str):
     """Appends a word to a list of words in the location with the index of i"""
     #print(i)
     for word in words:
-        #print(word.head, word.head-1)
-        if word.head-1 >= i and word.head != 0:
-            word.head+=1
+        #print(word.head-1, word.head)
+        if word.head >= i and word.head != -1:
+            word.head += 1
         
         if word.id > i:
             word.id += 1
@@ -498,42 +492,6 @@ def WordsToSentence(words:list[Word]) -> str:
     
     return sentence
 
-# Function that takes a list of words and tries to reuse the list for further matching by
-# updating the root of this subset of words.
-'''
-def reusePart(words, offset, listLen):
-    i = 0
-    if offset == 0:
-        rootId = 0
-        while i < listLen:
-            if words[i].head > listLen and words[i].deprel != "punct":
-                words[i].deprel = "root"
-                words[i].head = 0
-                rootId = i
-            elif words[i].deprel == "root":
-                rootId = i
-
-            i+=1
-
-        i = 0
-        while i < listLen:
-            if words[i].head > listLen:
-                words[i].head = rootId
-
-            i+=1
-    else:
-        while i < listLen:
-            if words[i].head != 0:
-                words[i].head -= offset
-                if words[i].head < 0:
-                    words[i].deprel = "root"
-
-            words[i].id -= offset
-            i+=1
-
-    return words
-'''
-
 # For the End of Statement text
 def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
     """Function for reusing a subset of a list of Words for matching components.
@@ -541,8 +499,8 @@ def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
     dependencies and their headId to 0"""
     outsideCount = 0
     for word in words:
-        if word.head-1 < firstVal:
-            word.head = 0
+        if word.head < firstVal:
+            word.head = -1
             word.deprel = "root"
             outsideCount += 1
         else:
@@ -562,8 +520,8 @@ def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
     dependencies and their headId to 0"""
     outsideCount = 0
     for word in words:
-        if word.head-1 > lastVal:
-            word.head = 0
+        if word.head > lastVal:
+            word.head = -1
             word.deprel = "root"
             outsideCount += 1
 
@@ -581,8 +539,8 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
     dependencies and their headId to 0"""
     outsideCount = 0
     for word in words:
-        if word.head-1 > lastVal or word.head-1 < firstVal:
-            word.head = 0
+        if word.head > lastVal or word.head < firstVal:
+            word.head = -1
             word.deprel = "root"
             outsideCount += 1
         else:

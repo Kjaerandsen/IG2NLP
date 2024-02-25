@@ -2,7 +2,7 @@ import json
 import stanza
 from spacy import displacy
 
-from utility import compoundWordsMiddleware, env
+from utility import compoundWordsHandler, env
 
 filename = "../data/input.json"
 
@@ -49,7 +49,7 @@ with open(filename, "r") as input:
     # Based on the example found at: 
     # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
         for sentence in doc.sentences:
-            sentence.words = compoundWordsMiddleware(sentence.words)
+            sentence.words = compoundWordsHandler(sentence.words)
             for word in sentence.words:
                 # Generating the data structure for displacy visualization
                 depData["words"].append({"text":word.text, "tag": word.pos})
