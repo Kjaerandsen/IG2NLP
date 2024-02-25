@@ -102,6 +102,14 @@ class Word:
             self.text = otherWord.text + " " * self.spaces + self.text
             self.spaces = otherWord.spaces
 
+    def addSemantic(self, annotation:str):
+        """Takes a semantic annotation and 
+        appends it to the list of semantic annotations in the Word"""
+        if self.semanticAnnotation == "":
+            self.semanticAnnotation = annotation
+        else:
+            self.semanticAnnotation += "," + annotation
+
     def __str__(self):
         return("Word: "+ self.text + " | pos: "+ self.pos + " | " + self.xpos  
                + " | deprel: "+ str(self.deprel) + " | id: " + str(self.id)
