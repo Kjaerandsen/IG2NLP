@@ -15,13 +15,13 @@ Tested using Python 3.11, models and programs used do not support Python 3.12 as
 
 ## Python programs:
 
-### runner.py
+### ig2nlp.py
 
 Takes an integer in the form
 
-`python runner.py 0`
+`python ig2nlp.py 0`
 
-The integer is the id of the statement which the runner automatically annotates. 
+The integer is the id of the statement which the program automatically annotates. 
 A value of negative 1 (-1) goes through all statements instead.
 This statement is located in a JSON object in the file 
 `input.json`, where the JSON data has the structure:
@@ -37,7 +37,7 @@ This statement is located in a JSON object in the file
 ]
 ```
 
-The runner saves the automatically annotated statement to the "stanza" key of the input statement.
+The program saves the automatically annotated statement to the "stanza" key of the input statement.
 
 ### dependencyParsing.py
 Takes a string in the form:
