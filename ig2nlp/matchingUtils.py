@@ -331,3 +331,14 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
                         "please review manually to solve encapsulation issues.")
 
     return words
+
+def attributeSemantic(words:list[Word]) -> list[Word]:
+    """Adds Number=x semantic annotation to attribute components in a list of words"""
+    for word in words:
+        if word.symbol == "A":
+            if "Number=Sing" in word.feats:
+                word.addSemantic("Number=Sing")
+            if "Number=Plur" in word.feats:
+                word.addSemantic("Number=Plur")
+
+    return words

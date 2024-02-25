@@ -7,14 +7,17 @@ from matchingUtils import *
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
 semanticAnnotations = True
+numberAnnotation = False
+coref = True
 
 def matchingHandler(words:list[Word]) -> list[Word]:
     """takes a list of words, performs annotations using the matching function and returns 
     a formatted string of annotated text"""
-    return WordsToSentence(
-            corefReplace(
-                matchingFunction(
-                    compoundWordsHandler(words)), semanticAnnotations))
+    words = compoundWordsHandler(words)
+    words = matchingFunction(words)
+    if coref: words = corefReplace(words, semanticAnnotations)
+    if semanticAnnotations and numberAnnotation: words = attributeSemantic(words)
+    return WordsToSentence(words)
 
 def matchingFunction(words:list[Word]) -> list[Word]:
     """takes a list of words with dependency parse and pos-tag data.
