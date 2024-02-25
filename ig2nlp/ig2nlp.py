@@ -17,14 +17,21 @@ def main():
     parser.add_argument("-b", "--batch", 
         help="Batch size for the nlp pipeline. Lower values require less memory,"+
         " recommended values between 10 and 30")
+    parser.add_argument("-o","--output", 
+        help="output file, defaults to json extension, i.e. output is treated as output.json")
     args = parser.parse_args()
 
-    number = int(args.id)
+    i = int(args.id)
 
     if not args.input:
         filename = "../data/input.json"
     else:
         filename = "../data/"+args.input+".json"
+
+    if args.output:
+        outfilename = "../data/"+args.output+".json"
+    else:
+        outfilename = filename
 
     if args.batch:
         batchSize = int(args.batch)
@@ -32,8 +39,6 @@ def main():
         batchSize = 0
 
     singleMode = True if args.single else False
-        
-    i = number
 
     # The testData.json is a json file containing an array of objects 
     # with a name, baseText and processedText.
@@ -44,15 +49,9 @@ def main():
 
     # If argument is -1 then go through all the items
     if i == -1:
-        i = 0
-
         print("Running with ", len(jsonData), " items.")
         
         jsonData = MatcherMiddleware(jsonData, singleMode, batchSize)
-
-        # Write the automatically parsed statement to the file
-        with open(filename, "w") as outputFile:
-            json.dump(jsonData, outputFile, indent=2)
 
     # Else only go through the selected item
     else:
@@ -63,11 +62,10 @@ def main():
         else:
             jsonData[i] = MatcherMiddleware(jsonData[i:i+1])[0]
 
-        # Write the automatically parsed statement to the file
-        with open(filename, "w") as outputFile:
-            json.dump(jsonData, outputFile, indent=2)
-                
-        #    i += 1
+    # Write the automatically parsed statement(s) to the file
+    with open(outfilename, "w") as outputFile:
+        json.dump(jsonData, outputFile, indent=2)
+
 
 
 
