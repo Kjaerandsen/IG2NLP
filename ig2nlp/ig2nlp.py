@@ -11,6 +11,9 @@ def main():
         help="Id from the input to run through the parser, -1 goes through all statements")
     parser.add_argument("-i", "--input", 
         help="input file, defaults to json extension, i.e. input is treated as input.json")
+    parser.add_argument("-s", "--single", 
+        help="single mode, run one at a time instead of batching the nlp pipeline.", 
+        action='store_true')
     args = parser.parse_args()
 
     number = int(args.id)
@@ -20,6 +23,8 @@ def main():
     else:
         filename = "../data/"+args.input+".json"
 
+    singleMode = True if args.single else False
+        
     i = number
 
     # The testData.json is a json file containing an array of objects 
@@ -35,7 +40,7 @@ def main():
 
         print("Running with ", len(jsonData), " items.")
         
-        jsonData = MatcherMiddleware(jsonData)
+        jsonData = MatcherMiddleware(jsonData, singleMode)
 
         # Write the automatically parsed statement to the file
         with open(filename, "w") as outputFile:
@@ -58,7 +63,7 @@ def main():
 
 
 
-def MatcherMiddleware(jsonData:list) -> list:
+def MatcherMiddleware(jsonData:list, singleMode:bool) -> list:
     """Initializes the nlp pipeline globally to reuse the pipeline across the
        statements and runs through all included statements."""
     global useREST
@@ -100,7 +105,12 @@ def MatcherMiddleware(jsonData:list) -> list:
     if useREST:
         docs = nlpPipelineMulti(jsonData)
     else:
-        docs = nlpPipelineMulti(textDocs)
+        if singleMode:
+            docs=[]
+            for sentence in textDocs:
+                docs.append(nlpPipeline(sentence))
+        else:
+            docs = nlpPipelineMulti(textDocs)
 
     for i, doc in enumerate(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
@@ -163,6 +173,13 @@ def nlpPipelineMulti(textDocs:list) -> list:
                 )
             docs.append(sentenceWords)
         return docs
+    
+def nlpPipeline(textDoc:str):
+    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
+    logger.debug("Running single statement pipeline")
+    doc = nlp.process(textDoc)
+    logger.debug("Finished running single statement pipeline")
+    return doc
 
 # Run the main function
 main()
