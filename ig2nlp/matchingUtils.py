@@ -297,12 +297,12 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
                 words[id+1].spaces = 1
                 words[id+1].setSymbol("A")
                 if val > 1 and semanticAnnotations:
-                    words[id+1].semanticAnnotation = "Entity="+corefStrings[key]
+                    words[id+1].addSemantic("Entity="+corefStrings[key])
         if val > 1 and semanticAnnotations:
             #print("val over 1")
             for id in locations[key]:
                 #print(id, "adding entity semanticannotation")
-                words[id].semanticAnnotation = "Entity="+corefStrings[key]
+                words[id].addSemantic("Entity="+corefStrings[key])
     
     return words
 

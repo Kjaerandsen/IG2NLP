@@ -6,7 +6,7 @@ from matchingUtils import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-semanticAnnotations = False
+semanticAnnotations = True
 
 def matchingHandler(words:list[Word]) -> list[Word]:
     """takes a list of words, performs annotations using the matching function and returns 
@@ -176,6 +176,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             return False
 
     date = False
+    law = False
     if firstVal == 0:
         contents = []
 
@@ -187,6 +188,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 oblCount+=1
             if "DATE" in conditionWord.ner:
                 date = True
+            if "LAW" in conditionWord.ner:
+                law = True
 
         if oblCount > 1 and words[0].deprel == "mark":
             symbol = "Cex"
@@ -194,19 +197,15 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             symbol = "Cac"
             date = False
 
-        '''
-        if date:
-            logger.debug("Date in condition: " + symbol + WordsToSentence(condition))
-        elif symbol == "Cex":
-            logger.debug("No Date in Execution Constraint: " + symbol + WordsToSentence(condition))
-        '''
-
         if validateNested(condition):
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
-            if date and semanticAnnotations:
-                words2[len(words2)-1].semanticAnnotation = "ctx:tmp"
+            if semanticAnnotations:
+                if date:
+                    words2[len(words2)-1].addSemantic("ctx:tmp")
+                if law:
+                    words2[len(words2)-1].addSemantic("act:law")
             condition[0].spaces = 0
             words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
@@ -214,8 +213,11 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += words[:lastIndex]
             words2[0].setSymbol(symbol,1)
-            if date and semanticAnnotations:
-                words2[0].semanticAnnotation = "ctx:tmp"
+            if semanticAnnotations:
+                if date:
+                    words2[0].addSemantic("ctx:tmp") 
+                if law:
+                    words2[0].addSemantic("act:law") 
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
             if lastIndex - firstVal > 2:
@@ -232,7 +234,6 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             contents[index].end = words[j].end
             contents[index].spaces = words[j].spaces
 
-        # print("Contents are: '", contents[0].text, "'")
         words2 += contents
 
         return True
@@ -253,6 +254,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 oblCount+=1
             if "DATE" in conditionWord.ner:
                 date = True
+            if "LAW" in conditionWord.ner:
+                law = True
 
         if oblCount > 1:
             symbol = "Cex"
@@ -264,8 +267,11 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             words2.append(Word(
             "","","",0,0,"","","",0,0,1,symbol,True,1
             ))
-            if date and semanticAnnotations:
-                words2[len(words2)-1].semanticAnnotation = "ctx:tmp"
+            if semanticAnnotations:
+                if date:
+                    words2[len(words2)-1].addSemantic("ctx:tmp") 
+                if law:
+                    words2[len(words2)-1].addSemantic("act:law") 
             condition[0].spaces = 0
             words2 += condition
             words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
@@ -273,8 +279,11 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += wordsBak[firstVal:lastIndex]
             words2[firstVal].setSymbol(symbol,1)
-            if date and semanticAnnotations:
-                words2[firstVal].semanticAnnotation = "ctx:tmp"
+            if semanticAnnotations:
+                if date:
+                    words2[firstVal].addSemantic("ctx:tmp") 
+                if law:
+                    words2[firstVal].addSemantic("act:law") 
             words2[lastIndex-1].setSymbol(symbol,2)
             words2.append(words[lastIndex])
             if lastIndex - firstVal > 2:
@@ -301,14 +310,12 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 contents[index].end = words[j].end
                 contents[index].spaces = words[j].spaces
 
-            # print("Contents are: '", contents[0].text, "'")
             words2 += contents
             if lastPunct:
                 words2.append(wordsBak[lastVal])
 
         return True
     else:
-        #print("First val was not id 0 and deprel was not mark", words[lastIndex])
         return False
 
 def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
@@ -362,11 +369,12 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         componentWords = words[scopeStart:scopeEnd+1]
 
         date = False
+        law = False
         for word in componentWords:
             if "DATE" in word.ner:
                 date = True
-        #if not date:
-        #    return i
+            if "LAW" in word.ner:
+                law = True
         
         '''
         if date:
@@ -382,8 +390,11 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         # Add the words as a Cex
         #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
         words[scopeStart].setSymbol("Cex", 1)
-        if date and semanticAnnotations:
-            words[scopeStart].semanticAnnotation = "ctx:tmp"
+        if semanticAnnotations:
+            if date:
+                words[scopeStart].addSemantic("ctx:tmp")
+            if law:
+                words[scopeStart].addSemantic("act:law")
         words[scopeEnd].setSymbol("Cex", 2)
         if scopeEnd - scopeStart > 2:
             words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
