@@ -14,6 +14,9 @@ def main():
     parser.add_argument("-s", "--single", 
         help="single mode, run one at a time instead of batching the nlp pipeline.", 
         action='store_true')
+    parser.add_argument("-b", "--batch", 
+        help="Batch size for the nlp pipeline. Lower values require less memory,"+
+        " recommended values between 10 and 30")
     args = parser.parse_args()
 
     number = int(args.id)
@@ -22,6 +25,11 @@ def main():
         filename = "../data/input.json"
     else:
         filename = "../data/"+args.input+".json"
+
+    if args.batch:
+        batchSize = int(args.batch)
+    else:
+        batchSize = 0
 
     singleMode = True if args.single else False
         
@@ -40,7 +48,7 @@ def main():
 
         print("Running with ", len(jsonData), " items.")
         
-        jsonData = MatcherMiddleware(jsonData, singleMode)
+        jsonData = MatcherMiddleware(jsonData, singleMode, batchSize)
 
         # Write the automatically parsed statement to the file
         with open(filename, "w") as outputFile:
@@ -63,7 +71,7 @@ def main():
 
 
 
-def MatcherMiddleware(jsonData:list, singleMode:bool) -> list:
+def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> list:
     """Initializes the nlp pipeline globally to reuse the pipeline across the
        statements and runs through all included statements."""
     global useREST
@@ -110,7 +118,18 @@ def MatcherMiddleware(jsonData:list, singleMode:bool) -> list:
             for sentence in textDocs:
                 docs.append(nlpPipeline(sentence))
         else:
-            docs = nlpPipelineMulti(textDocs)
+            if batchSize == 0:
+                docs = nlpPipelineMulti(textDocs)
+            else:
+                docs=[]
+                # Go through the nlp pipeline in batches of batchSize
+                while len(textDocs) > batchSize:
+                    pipelineResults = nlpPipelineMulti(textDocs[:batchSize])
+                    for doc in pipelineResults: docs.append(doc)
+                    textDocs = textDocs[batchSize:]
+                # Add the remaining items
+                pipelineResults = nlpPipelineMulti(textDocs)
+                for doc in pipelineResults: docs.append(doc)
 
     for i, doc in enumerate(docs):
         print("\nStatement", str(i) + ": " + jsonData[i]['name'])
@@ -175,7 +194,7 @@ def nlpPipelineMulti(textDocs:list) -> list:
         return docs
     
 def nlpPipeline(textDoc:str):
-    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
+    """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
     logger.debug("Running single statement pipeline")
     doc = nlp.process(textDoc)
     logger.debug("Finished running single statement pipeline")
