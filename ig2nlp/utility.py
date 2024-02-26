@@ -19,7 +19,7 @@ class Word:
                  id:int, lemma:str, xpos:int, feats:str,
                  start=0, end=0, spaces=0, symbol="", nested = False, position = 0, ner="", 
                  logical=0, corefid = -1, coref = "", corefScope = 0, isRepresentative=False,
-                 semanticAnnotation=""):
+                 semanticAnnotation="") -> None:
         
         self.id = id
         self.text = text
@@ -44,7 +44,7 @@ class Word:
         self.isRepresentative = isRepresentative
         self.semanticAnnotation = semanticAnnotation
         
-    def buildString(self):
+    def buildString(self) -> None:
         """Builds the contents as a component with brackets, 
         the symbol and proper spacing in string form"""
         output = " " * self.spaces
@@ -72,13 +72,13 @@ class Word:
             output += self.text
         return output
 
-    def toLogical(self):
+    def toLogical(self) -> None:
         """Converts the text of the Word to a logical operator i.e. 'and' -> '[AND]'"""
         if self.logical == 0:
             self.text = "[" + self.text.upper() + "]"
             self.logical = 4
     
-    def setSymbol(self, symbol:str, position=0, nested=False):
+    def setSymbol(self, symbol:str, position=0, nested=False) -> None:
         """Set the symbol of a Word, 
         position 0 for single word component, 
         position 1 for the start of the component, 
@@ -240,7 +240,8 @@ def convertWordFormat(words:list) -> list[Word]:
 
 # Simple function for appending to the customWords list. Takes text, start and end parameters 
 # to facilitate multi word tokens(MWTs).
-def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int, spaces:int):
+def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int, spaces:int
+                     ) -> None:
     """Appends a Word to a list of Word objects. 
     Takes a Word, text, start, end and spaces parameters"""
     customWords.append(
@@ -326,7 +327,7 @@ def compoundWordsConj(words:list[Word]) -> list[Word]:
         i += 1
     return words
 
-def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int):
+def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int) -> None:
     """Helper function performing the logic for compoundWordsConj"""
     start = i
     end = words[i].head
@@ -412,7 +413,7 @@ def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int):
 # Takes a list of words, an id, the length of the list of words and a direction
 # Combines the word with the next (0) or 
 # previous (1) word and removes the extra word from the list of words
-def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
+def removeWord(words:list[Word], i:int, wordLen:int, direction=0) -> None:
     """ Takes a list of words, a location, the length of the list and a 
     direction 0 = left, 1 = right. Combines the word with the next in the given direction, then 
     removes the extra words."""
@@ -445,7 +446,7 @@ def removeWord(words:list[Word],i:int,wordLen:int,direction=0):
     del words[i]
     return i-1, wordLen-1
 
-def addWord(words:list[Word], i:int, wordText:str):
+def addWord(words:list[Word], i:int, wordText:str) -> None:
     """Appends a word to a list of words in the location with the index of i"""
     #print(i)
     for word in words:
@@ -469,7 +470,7 @@ def addWord(words:list[Word], i:int, wordText:str):
 
     return words
 
-def tokenToText(tokens):
+def tokenToText(tokens:list) -> None:
     """Takes a list of tokens, returns the output text contained within."""
     output = ""
     for token in tokens:
