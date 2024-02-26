@@ -2,6 +2,7 @@ import time
 import copy
 from utility import *
 from matchingUtils import *
+from matchingFunctionConstitutive import matchingFunctionConstitutive
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -150,7 +151,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
     return words
 
 def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
-                     wordLen:int, words2:list[Word]) -> bool:
+                     wordLen:int, words2:list[Word], constitutive:bool=False) -> bool:
     """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
     firstVal = i
     
@@ -183,7 +184,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
     if firstVal == 0:
         contents = []
 
-        condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
+        if constitutive:
+            condition = matchingFunctionConstitutive(reusePartSoS(wordsBak[:lastIndex], lastIndex))
+        else:
+            condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
 
         oblCount = 0
         for conditionWord in condition:
@@ -226,7 +230,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             if lastIndex - firstVal > 2:
                 words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
-        contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
+        if constitutive:
+            contents = matchingFunctionConstitutive(reusePartEoS(words[lastIndex+1:], lastIndex+1))
+        else:
+            contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
 
         # Copy over the old placement information to the 
         # newly generated words for proper formatting
@@ -247,8 +254,12 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
         # Add the values before the condition
         words2 += words[:firstVal]
-        condition = matchingFunction(
-                reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
+        if constitutive:
+            condition = matchingFunctionConstitutive(
+                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
+        else:
+            condition = matchingFunction(
+                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
 
         j = 0
         oblCount = 0
@@ -299,10 +310,15 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 lastPunct = True
                 lastVal = wordLen-1
                 wordLen -= 1
-
-            contents = matchingFunction(
-                reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
-            )   
+            
+            if constitutive:
+                contents = matchingFunctionConstitutive(
+                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
+                )   
+            else:
+                contents = matchingFunction(
+                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
+                )   
 
             # Copy over the old placement information to the 
             # newly generated words for proper formatting
@@ -322,7 +338,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         return False
 
 def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
-                  words2:list[Word], firstVal:int):
+                  words2:list[Word], firstVal:int, constitutive:bool=False):
     """Handler function for the Or else (O) component"""
 
     # Include everything but the last punct if it exists    
@@ -334,8 +350,12 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     # Add the values before the condition
     words2 += words[:firstVal]
 
-    orElseComponent = matchingFunction(
-            reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+    if constitutive:
+        orElseComponent = matchingFunctionConstitutive(
+                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+    else:
+        orElseComponent = matchingFunction(
+                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
     orElseComponent[0].spaces = 0
 
     words2.append(Word(
