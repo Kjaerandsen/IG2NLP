@@ -8,20 +8,20 @@ from matchingUtilsConstitutive import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-semanticAnnotations = False
+#semanticAnnotations = False
 numberAnnotation = False
 coref = True
 
-def matchingHandlerConstitutive(words:list[Word]) -> list[Word]:
+def matchingHandlerConstitutive(words:list[Word], semantic:bool) -> list[Word]:
     """takes a list of words, performs annotations using the matching function and returns 
     a formatted string of annotated text"""
     words = compoundWordsHandler(words)
-    words = matchingFunctionConstitutive(words)
-    if coref: words = corefReplaceConstitutive(words, semanticAnnotations)
-    if semanticAnnotations and numberAnnotation: words = attributeSemantic(words)
+    words = matchingFunctionConstitutive(words, semantic)
+    if coref: words = corefReplaceConstitutive(words, semantic)
+    if semantic and numberAnnotation: words = attributeSemantic(words)
     return WordsToSentence(words)
 
-def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
+def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
     """takes a list of words with dependency parse and pos-tag data.
        Returns a list of words with IG Script notation symbols."""
     wordLen = len(words)
@@ -45,7 +45,7 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
             # (Cac, Cex) Condition detection
             case "advcl":
                 if m.conditionHandler(words, wordsBak, i, wordLen, words2, 
-                                      semanticAnnotations, True):
+                                      semantic, True):
                     return words2
                 
             # (P) Constituting Properties detection
@@ -110,7 +110,7 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
             # (O) Or else detection
             case "cc":
                 if words[i+1].text == "else":
-                    m.orElseHandler(words, wordsBak, wordLen, words2, i, True)
+                    m.orElseHandler(words, wordsBak, wordLen, words2, i, semantic, True)
                     return words2
             # Advmod of Aim is correlated with execution constraints (Cex)
             # Might be too generic of a rule.
@@ -124,11 +124,11 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
             
             # (Cex) Execution constraint detection
             case "obl":
-                i = m.executionConstraintHandler(words, i, wordLen, semanticAnnotations)
+                i = m.executionConstraintHandler(words, i, wordLen, semantic)
             case "obl:tmod":
                 # Old implementation used
                 # i = words[i].head
-                i = m.executionConstraintHandler(words, i, wordLen, semanticAnnotations)
+                i = m.executionConstraintHandler(words, i, wordLen, semantic)
 
             # Default, for matches based on more than just a single deprel
             case _:

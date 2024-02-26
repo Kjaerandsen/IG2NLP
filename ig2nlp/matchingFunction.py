@@ -194,7 +194,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
         if constitutive:
             condition = mc.matchingFunctionConstitutive(
-                reusePartSoS(wordsBak[:lastIndex], lastIndex))
+                reusePartSoS(wordsBak[:lastIndex], lastIndex), constitutive)
         else:
             condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
 
@@ -241,7 +241,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
         if constitutive:
             contents = mc.matchingFunctionConstitutive(
-                reusePartEoS(words[lastIndex+1:], lastIndex+1))
+                reusePartEoS(words[lastIndex+1:], lastIndex+1), semantic)
         else:
             contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
 
@@ -265,14 +265,16 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         # Add the values before the condition
         if parseFirst:
             if constitutive:
-                words2 += mc.matchingFunctionConstitutive(reusePartSoS(words[:firstVal], firstVal))
+                words2 += mc.matchingFunctionConstitutive(reusePartSoS(words[:firstVal], firstVal),
+                                                          semantic)
             else:
                 words2 += matchingFunction(reusePartSoS(words[:firstVal], firstVal))
         else:
             words2 += words[:firstVal]
         if constitutive:
             condition = mc.matchingFunctionConstitutive(
-                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
+                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex),
+                    semantic)
         else:
             condition = matchingFunction(
                     reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
@@ -329,7 +331,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             
             if constitutive:
                 contents = mc.matchingFunctionConstitutive(
-                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
+                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1), semantic
                 )   
             else:
                 contents = matchingFunction(
@@ -354,7 +356,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         return False
 
 def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
-                  words2:list[Word], firstVal:int, constitutive:bool=False):
+                  words2:list[Word], firstVal:int, 
+                  semantic:bool=semanticAnnotations, constitutive:bool=False):
     """Handler function for the Or else (O) component"""
 
     # Include everything but the last punct if it exists    
@@ -368,7 +371,7 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
 
     if constitutive:
         orElseComponent = mc.matchingFunctionConstitutive(
-                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2), semantic)
     else:
         orElseComponent = matchingFunction(
                 reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))

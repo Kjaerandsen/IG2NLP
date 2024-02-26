@@ -6,6 +6,8 @@ from matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility import *
 import argparse
 
+semanticAnnotations = True
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("id", 
@@ -51,8 +53,6 @@ def main():
 
     # If argument is -1 then go through all the items
     if i == -1:
-        print("Running with ", len(jsonData), " items.")
-        
         jsonData = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
 
     # Else only go through the selected item
@@ -141,7 +141,7 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
             words = doc
 
         if constitutive:
-            output = matchingHandlerConstitutive(words)
+            output = matchingHandlerConstitutive(words, semanticAnnotations)
         else:
             output = matchingHandler(words)
         
