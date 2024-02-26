@@ -13,7 +13,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
     # Locations (ids) of determiners
     detLocs = []
 
-    if symbol == "I":
+    if symbol == "I" or symbol == "F":
         # Go through the word list and find the scope of the component
         while j < wordLen:
             if ifHeadRelationAim(words, j, i):
@@ -206,6 +206,7 @@ def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
 # List of allowed head connections for the function below
 allowedAimHeads = ["conj","cc","det","amod","advmod"]
 
+# TODO: Rename to root?
 def ifHeadRelationAim(words:list[Word], wordId:int, headId:int) -> bool:
     """Check if the word is connected to the headId through a head connection, 
     specifically for Aim (I) components"""
