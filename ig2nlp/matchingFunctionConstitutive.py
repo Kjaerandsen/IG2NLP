@@ -1,8 +1,6 @@
 import time
 import copy
-from matchingFunction import (
-    conditionHandler, orElseHandler, bdirHandler, bindHandler,
-    nmodDependencyHandler, executionConstraintHandler)
+import matchingFunction as m
 from utility import *
 from matchingUtils import *
 from matchingUtilsConstitutive import *
@@ -40,26 +38,26 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
         match deprel:
             # (Cac, Cex) Condition detection 
             case "advcl":
-                if conditionHandler(words, wordsBak, i, wordLen, words2, True):
+                if m.conditionHandler(words, wordsBak, i, wordLen, words2, True):
                     return words2
                 
-            # (Bdir) Object detection
+            # (P) Constituting Properties detection
             case "obj":
-                i = bdirHandler(words, i, wordLen)
+                i = constitutingPropertiesHandler(words, i, wordLen)
 
-            # (Bind) Indirect object detection
+            # (P) Constituting Properties detection 2
             case "iobj":
-                i = bindHandler(words, i, wordLen)
+                i = constitutingPropertiesHandler(words, i, wordLen)
 
-            # (I) Aim detection
+            # (F) Constitutive Function detection
             case "root":
                 i = rootHandlerConstitutive(words, i, wordLen)
 
             # Else if the word has an amod dependency type, check if the head is a symbol
             # that supports properties, if so, the word is a property of that symbol
-            # (Bdir,p, Bind,p, A,p)    
+            # (P,p, E,p)    
             case "amod":
-                i = amodPropertyHandler(words, i, wordLen)
+                i = amodPropertyHandlerConstitutive(words, i, wordLen)
                 # If the relation is a ccomp then handle it as a direct object
                 # This does nothing in testing
                 '''
@@ -70,41 +68,42 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
                     words[i+1].setSymbol(words[i+1],"bdir", 2)
                     i += 1
                 '''
+
             case "acl":
-                # (A,p) Attribute property detection 2
+                # (E,p) Constituted Entity Property detection 2
                 if words[word.head].symbol == "E":
                     word.setSymbol("E,p")
-                # (Bdir,p) Direct object property detection 3
+                # (P,p) Constituting Properties property detection 3
                 # TODO: Reconsider in the future if this is accurate enough
                 # There are currently false positives, but they should be mitigated by better
                 # Cex component detection
-                if words[word.head].symbol == "Bdir" and words[i-1].symbol == "Bdir":
-                    word.setSymbol("Bdir,p")
+                if words[word.head].symbol == "P" and words[i-1].symbol == "P":
+                    word.setSymbol("P,p")
 
-            # Direct object handling (Bdir), (Bdir,p)
+            # Constituting Properties handling (P), (P,p)
             case "nmod":
-                i = nmodDependencyHandler(words, i, wordLen)
+                i = nmodDependencyHandlerConstitutive(words, i, wordLen)
                 # TODO: Revisit and test
-                #else if words[word.head].symbol == "A":
-                #   print("\nnmod connected to Attribute(A): ", word)
+                #else if words[word.head].symbol == "E":
+                #   print("\nnmod connected to Constituted Entity(E): ", word)
 
-            # (Bdir,p) Direct object property detection 2
+            # (P,p) Constituting Properties Property detection 2
             case "nmod:poss":
                 if words[word.head].deprel == "obj" and word.head == i+1:
                     # Check if there is a previous amod connection and add both
                     if words[i-1].deprel == "amod" and words[i-1].head == i:
-                        words[i-1].setSymbol("Bdir,p", 1)
-                        word.setSymbol("Bdir,p", 2)
-                    # Else only add the Bdir,p
+                        words[i-1].setSymbol("P,p", 1)
+                        word.setSymbol("P,p", 2)
+                    # Else only add the P,p
                     else:
-                        word.setSymbol("Bdir,p")
+                        word.setSymbol("P,p")
                 #else:
                     #print("\nWord is nmod:poss: ", word)
             
             # (O) Or else detection
             case "cc":
                 if words[i+1].text == "else":
-                    orElseHandler(words, wordsBak, wordLen, words2, i, True)
+                    m.orElseHandler(words, wordsBak, wordLen, words2, i, True)
                     return words2
             # Advmod of Aim is correlated with execution constraints (Cex)
             # Might be too generic of a rule.
@@ -118,11 +117,11 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
             
             # (Cex) Execution constraint detection
             case "obl":
-                i = executionConstraintHandler(words, i, wordLen, True)
+                i = m.executionConstraintHandler(words, i, wordLen)
             case "obl:tmod":
                 # Old implementation used
                 # i = words[i].head
-                i = executionConstraintHandler(words, i, wordLen, True)
+                i = m.executionConstraintHandler(words, i, wordLen)
 
             # Default, for matches based on more than just a single deprel
             case _:
@@ -268,21 +267,77 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                         i = k
     return i
 
-def amodPropertyHandler(words:list[Word], i:int, wordLen:int) -> int:
+def amodPropertyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
     """Handler for properties detected using the amod dependency. Currently used for 
-       Direct object (Bdir), Indirect object (Bind) and Attribute (A) properties (,p)"""
-    # If the word is directly connected to an obj (Bdir)
-    if words[words[i].head].deprel == "obj":
-        i = smallLogicalOperator(words, i, "Bdir,p", wordLen)
-        #words[i].setSymbol("Bdir,p")
-    # Else if the word is directly connected to an iobj (Bind)
-    elif words[words[i].head].deprel == "iobj":
-        i = smallLogicalOperator(words, i, "Bind,p", wordLen)
-        #words[i].setSymbol("Bind,p")
+       Constituting Properties (P) and Constituted Entity (E) properties (,p)"""
+    # Head of the word to check for the component it is a potential property of
+    head = words[i].head
+    # If the word is directly connected to an obj (P)
+    if words[head].deprel == "obj":
+        i = smallLogicalOperator(words, i, "P,p", wordLen)
+    # Else if the word is directly connected to an iobj (P)
+    elif words[head].deprel == "iobj":
+        i = smallLogicalOperator(words, i, "P,p", wordLen)
     # Else if the word is connected to a nsubj connected directly to root (Attribute)
-    elif (words[words[i].head].deprel == "nsubj" 
-            and (words[words[words[i].head].head].deprel == "root" or 
-            words[words[words[i].head].head].symbol == "E")):
+    elif (words[head].deprel == "nsubj" 
+            and (words[words[head].head].deprel == "root" or 
+            words[words[head].head].symbol == "E")):
         i = smallLogicalOperator(words, i, "E,p", wordLen)
-        #words[i].setSymbol("A,p")
+    return i
+
+def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
+    """Handler for Constituting Properties (P) components 
+       detected using the obj and iobj dependencies"""
+    iBak = i
+    i = smallLogicalOperator(words, i, "P", wordLen)
+
+    # If the flag is True combine the object with single word properties preceeding 
+    # the object
+    if CombineObjandSingleWordProperty:
+        if (words[iBak-1].symbol == "P,p" and words[iBak-1].deprel == "amod"
+            and words[iBak-1].position == 0):
+            if (words[iBak-2].symbol != "P,p"):
+                if iBak != i:
+                    # Remove old annotation start
+                    words[iBak].setSymbol("", 0)
+                    words[iBak-1].setSymbol("P", 1)
+                else:
+                    words[iBak-1].setSymbol("P", 1)
+                    words[iBak].setSymbol("P", 2)
+
+    return i
+
+def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
+    """Handler for nmod dependency, currently used for Constituting Properties (P) components 
+    and its properties (,p)"""
+    # Too broad coverage in this case, detected instances which should be included in the main
+    # object in some instances, an instance of an indirect object component, and several 
+    # overlaps with execution constraints.
+    # TODO: Look into nmod inclusion further
+    if words[words[i].head].symbol == "P" and words[words[i].head].position in [0,2]:
+        #logger.debug("NMOD connected to Constituting Properties")
+        # positive lookahead
+        firstIndex = i
+        doubleNmod = False
+        # Find and encapsulate any other nmods connected to the last detected nmod
+        for j in range(wordLen):
+            if words[j].deprel == "nmod" and words[j].head == i:
+                lastIndex = j
+                doubleNmod = True
+                i = j
+        
+        # if two or more nmod dependencies are connected then treat it as a Bdir,p
+        if doubleNmod:
+            # Set the first word after the direct object component as the start of the component
+            words[words[firstIndex].head+1].setSymbol("P,p", 1)
+            words[lastIndex].setSymbol("P,p", 2)
+            i = lastIndex
+        else:
+            # Set the first word after the direct object component as the start of the component
+            if words[words[firstIndex].head].position == 0:
+                words[words[firstIndex].head].setSymbol("P", 1)
+            else:
+                # Remove the symbol from the head
+                words[words[firstIndex].head].setSymbol("", 0)
+            words[i].setSymbol("P", 2)
     return i

@@ -2,7 +2,7 @@ import time
 import copy
 from utility import *
 from matchingUtils import *
-from matchingFunctionConstitutive import matchingFunctionConstitutive
+import matchingFunctionConstitutive
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -185,7 +185,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         contents = []
 
         if constitutive:
-            condition = matchingFunctionConstitutive(reusePartSoS(wordsBak[:lastIndex], lastIndex))
+            condition = matchingFunctionConstitutive.matchingFunctionConstitutive(
+                reusePartSoS(wordsBak[:lastIndex], lastIndex))
         else:
             condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
 
@@ -231,7 +232,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
         if constitutive:
-            contents = matchingFunctionConstitutive(reusePartEoS(words[lastIndex+1:], lastIndex+1))
+            contents = matchingFunctionConstitutive.matchingFunctionConstitutive(
+                reusePartEoS(words[lastIndex+1:], lastIndex+1))
         else:
             contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
 
@@ -255,7 +257,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         # Add the values before the condition
         words2 += words[:firstVal]
         if constitutive:
-            condition = matchingFunctionConstitutive(
+            condition = matchingFunctionConstitutive.matchingFunctionConstitutive(
                     reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
         else:
             condition = matchingFunction(
@@ -312,7 +314,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 wordLen -= 1
             
             if constitutive:
-                contents = matchingFunctionConstitutive(
+                contents = matchingFunctionConstitutive.matchingFunctionConstitutive(
                     reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
                 )   
             else:
@@ -351,7 +353,7 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     words2 += words[:firstVal]
 
     if constitutive:
-        orElseComponent = matchingFunctionConstitutive(
+        orElseComponent = matchingFunctionConstitutive.matchingFunctionConstitutive(
                 reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
     else:
         orElseComponent = matchingFunction(
@@ -558,7 +560,7 @@ def bindHandler(words:list[Word], i:int, wordLen:int) -> int:
     return i
 
 def bdirHandler(words:list[Word], i:int, wordLen:int) -> int:
-    """Handler for indirect object (Bdir) components detected using the iobj dependency"""
+    """Handler for Direct object (Bdir) components detected using the obj dependency"""
     iBak = i
     i = smallLogicalOperator(words, i, "Bdir", wordLen)
     # Positive lookahead for nmod to include:

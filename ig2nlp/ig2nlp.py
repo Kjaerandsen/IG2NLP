@@ -1,7 +1,8 @@
 import json
 import stanza
 import requests
-from matchingFunction import *
+from matchingFunction import matchingHandler
+from matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility import *
 import argparse
 
@@ -13,7 +14,10 @@ def main():
         help="input file, defaults to json extension, i.e. input is treated as input.json")
     parser.add_argument("-s", "--single", 
         help="single mode, run one at a time instead of batching the nlp pipeline.", 
-        action='store_true')
+        action="store_true")
+    parser.add_argument("-c","--constitutive", 
+        help="Run the annotator in constitutive statement mode",
+        action="store_true")
     parser.add_argument("-b", "--batch", 
         help="Batch size for the nlp pipeline. Lower values require less memory,"+
         " recommended values between 10 and 30")
@@ -38,8 +42,6 @@ def main():
     else:
         batchSize = 0
 
-    singleMode = True if args.single else False
-
     # The testData.json is a json file containing an array of objects 
     # with a name, baseText and processedText.
     # The important fields are the baseText which is the input statement 
@@ -51,7 +53,7 @@ def main():
     if i == -1:
         print("Running with ", len(jsonData), " items.")
         
-        jsonData = MatcherMiddleware(jsonData, singleMode, batchSize)
+        jsonData = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
 
     # Else only go through the selected item
     else:
@@ -69,7 +71,7 @@ def main():
 
 
 
-def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> list:
+def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSize:int) -> list:
     """Initializes the nlp pipeline globally to reuse the pipeline across the
        statements and runs through all included statements."""
     global useREST
@@ -138,7 +140,10 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> list:
         else:
             words = doc
 
-        output = matchingHandler(words)
+        if constitutive:
+            output = matchingHandlerConstitutive(words)
+        else:
+            output = matchingHandler(words)
         
         #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
         logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")

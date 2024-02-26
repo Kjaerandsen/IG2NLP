@@ -87,7 +87,7 @@ def corefReplaceConstitutive(words:list[Word], semanticAnnotations:bool) -> list
         #print(key,val, wordLen)
         for id in locations[key]:
             if words[id].pos == "PRON":
-                logger.info("Replacing Constituted Entity (E) pronoun with"+ 
+                logger.info("Replacing Constituted Entity (E) pronoun with "+ 
                             "coreference resolution data: " 
                             + words[id].text + " -> " + corefStrings[key])
                 words = addWord(words, id, words[id].text)
