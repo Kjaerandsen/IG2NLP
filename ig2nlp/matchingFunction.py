@@ -2,7 +2,7 @@ import time
 import copy
 from utility import *
 from matchingUtils import *
-import matchingFunctionConstitutive
+import matchingFunctionConstitutive as mc
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -25,8 +25,15 @@ def matchingFunction(words:list[Word]) -> list[Word]:
        Returns a list of words with IG Script notation symbols."""
     wordLen = len(words)
     wordsBak = copy.deepcopy(words)
-    i = 0
     words2 = []
+
+    # Look for conditions only first, if enabled remove the advcl case from the matching below
+    #for i, word in enumerate(words):
+    #    if word.deprel == "advcl":
+    #        if conditionHandler(words, wordsBak, i, wordLen, words2, False, True):
+    #            return words2
+
+    i = 0
 
     while i < wordLen:
         word = words[i]
@@ -151,7 +158,8 @@ def matchingFunction(words:list[Word]) -> list[Word]:
     return words
 
 def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
-                     wordLen:int, words2:list[Word], constitutive:bool=False) -> bool:
+                     wordLen:int, words2:list[Word], constitutive:bool=False,
+                     parseFirst:bool=False) -> bool:
     """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
     firstVal = i
     
@@ -185,7 +193,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         contents = []
 
         if constitutive:
-            condition = matchingFunctionConstitutive.matchingFunctionConstitutive(
+            condition = mc.matchingFunctionConstitutive(
                 reusePartSoS(wordsBak[:lastIndex], lastIndex))
         else:
             condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
@@ -232,7 +240,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
         if constitutive:
-            contents = matchingFunctionConstitutive.matchingFunctionConstitutive(
+            contents = mc.matchingFunctionConstitutive(
                 reusePartEoS(words[lastIndex+1:], lastIndex+1))
         else:
             contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
@@ -255,9 +263,15 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         contents = []
 
         # Add the values before the condition
-        words2 += words[:firstVal]
+        if parseFirst:
+            if constitutive:
+                words2 += mc.matchingFunctionConstitutive(reusePartSoS(words[:firstVal], firstVal))
+            else:
+                words2 += matchingFunction(reusePartSoS(words[:firstVal], firstVal))
+        else:
+            words2 += words[:firstVal]
         if constitutive:
-            condition = matchingFunctionConstitutive.matchingFunctionConstitutive(
+            condition = mc.matchingFunctionConstitutive(
                     reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
         else:
             condition = matchingFunction(
@@ -314,7 +328,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 wordLen -= 1
             
             if constitutive:
-                contents = matchingFunctionConstitutive.matchingFunctionConstitutive(
+                contents = mc.matchingFunctionConstitutive(
                     reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
                 )   
             else:
@@ -353,7 +367,7 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     words2 += words[:firstVal]
 
     if constitutive:
-        orElseComponent = matchingFunctionConstitutive.matchingFunctionConstitutive(
+        orElseComponent = mc.matchingFunctionConstitutive(
                 reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
     else:
         orElseComponent = matchingFunction(

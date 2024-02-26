@@ -8,7 +8,7 @@ from matchingUtilsConstitutive import *
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-semanticAnnotations = True
+semanticAnnotations = False
 numberAnnotation = False
 coref = True
 
@@ -26,9 +26,15 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
        Returns a list of words with IG Script notation symbols."""
     wordLen = len(words)
     wordsBak = copy.deepcopy(words)
-    i = 0
     words2 = []
 
+    # Look for conditions only first, if enabled remove the advcl case from the matching below
+    #for i, word in enumerate(words):
+    #    if word.deprel == "advcl":
+    #        if m.conditionHandler(words, wordsBak, i, wordLen, words2, True, True):
+    #            return words2
+
+    i = 0
     while i < wordLen:
         word = words[i]
         deprel = word.deprel
@@ -36,7 +42,7 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
         #print(words[words[i].head], words[i].deprel, words[i].text)
 
         match deprel:
-            # (Cac, Cex) Condition detection 
+            # (Cac, Cex) Condition detection
             case "advcl":
                 if m.conditionHandler(words, wordsBak, i, wordLen, words2, True):
                     return words2
