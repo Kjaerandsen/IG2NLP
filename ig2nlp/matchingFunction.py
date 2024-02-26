@@ -44,7 +44,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
         match deprel:
             # (Cac, Cex) Condition detection 
             case "advcl":
-                if conditionHandler(words, wordsBak, i, wordLen, words2):
+                if conditionHandler(words, wordsBak, i, wordLen, words2, semanticAnnotations):
                     return words2
                 
             # (Bdir) Object detection
@@ -122,11 +122,11 @@ def matchingFunction(words:list[Word]) -> list[Word]:
             
             # (Cex) Execution constraint detection
             case "obl":
-                i = executionConstraintHandler(words, i, wordLen)
+                i = executionConstraintHandler(words, i, wordLen, semanticAnnotations)
             case "obl:tmod":
                 # Old implementation used
                 # i = words[i].head
-                i = executionConstraintHandler(words, i, wordLen)
+                i = executionConstraintHandler(words, i, wordLen, semanticAnnotations)
 
             # Default, for matches based on more than just a single deprel
             case _:
@@ -158,7 +158,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
     return words
 
 def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
-                     wordLen:int, words2:list[Word], constitutive:bool=False,
+                     wordLen:int, words2:list[Word], semantic:bool, constitutive:bool=False,
                      parseFirst:bool=False) -> bool:
     """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
     firstVal = i
@@ -217,7 +217,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             words2.append(Word(
             "","","",0,0,"","","",0,0,0,symbol,True,1
             ))
-            if semanticAnnotations:
+            if semantic:
                 if date:
                     words2[len(words2)-1].addSemantic("ctx:tmp")
                 if law:
@@ -229,7 +229,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += words[:lastIndex]
             words2[0].setSymbol(symbol,1)
-            if semanticAnnotations:
+            if semantic:
                 if date:
                     words2[0].addSemantic("ctx:tmp") 
                 if law:
@@ -297,7 +297,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             words2.append(Word(
             "","","",0,0,"","","",0,0,1,symbol,True,1
             ))
-            if semanticAnnotations:
+            if semantic:
                 if date:
                     words2[len(words2)-1].addSemantic("ctx:tmp") 
                 if law:
@@ -309,7 +309,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
         else:
             words2 += wordsBak[firstVal:lastIndex]
             words2[firstVal].setSymbol(symbol,1)
-            if semanticAnnotations:
+            if semantic:
                 if date:
                     words2[firstVal].addSemantic("ctx:tmp") 
                 if law:
@@ -383,7 +383,7 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
     if words[wordLen-1].deprel == "punct":
         words2.append(words[wordLen-1])
 
-def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
+def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bool) -> int:
     """Handler for execution constraint (Cex) components detected using the obl dependency"""
     # Check for connections to the obl both before and after
     scopeStart = i
@@ -429,7 +429,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int) -> int:
         # Add the words as a Cex
         #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
         words[scopeStart].setSymbol("Cex", 1)
-        if semanticAnnotations:
+        if semantic:
             if date:
                 words[scopeStart].addSemantic("ctx:tmp")
             if law:

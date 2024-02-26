@@ -44,7 +44,8 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
         match deprel:
             # (Cac, Cex) Condition detection
             case "advcl":
-                if m.conditionHandler(words, wordsBak, i, wordLen, words2, True):
+                if m.conditionHandler(words, wordsBak, i, wordLen, words2, 
+                                      semanticAnnotations, True):
                     return words2
                 
             # (P) Constituting Properties detection
@@ -123,11 +124,11 @@ def matchingFunctionConstitutive(words:list[Word]) -> list[Word]:
             
             # (Cex) Execution constraint detection
             case "obl":
-                i = m.executionConstraintHandler(words, i, wordLen)
+                i = m.executionConstraintHandler(words, i, wordLen, semanticAnnotations)
             case "obl:tmod":
                 # Old implementation used
                 # i = words[i].head
-                i = m.executionConstraintHandler(words, i, wordLen)
+                i = m.executionConstraintHandler(words, i, wordLen, semanticAnnotations)
 
             # Default, for matches based on more than just a single deprel
             case _:
