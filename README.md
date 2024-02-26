@@ -5,6 +5,6 @@ institutional statements to the IG Script notation of the Institutional Grammar 
 This includes an automatic annotator, and several utilities to facilitate the testing and development
 of this annotator.
 
-The folder "stanza" includes programs for automatically parsing institutional statements and other testing functions. 
+The folder "ig2nlp" includes programs for automatically parsing institutional statements and other testing functions. 
 
 The "parser" folder contains programs for testing the parsed statements with basic statistics.

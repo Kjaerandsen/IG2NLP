@@ -1,0 +1,24 @@
+# Example dotenv configuration. 
+# To use this configuration rename or make a copy of this file with the name ".env"
+# Alternatively environment variables with the same names and values can be used
+# USEREST is a bool that decides whether the programs use the rest api or not for the pipeline processes
+# Candidate values: True or False
+IG2USEREST=False
+# Stanza logging level
+# Candidate values: DEBUG, INFO, WARN, ERROR, CRITICAL, FATAL
+IG2STANZALOGLEVEL=ERROR
+# Logging level for application
+# Candidate values: DEBUG, INFO, WARN, ERROR, CRITICAL, FATAL
+# Default: INFO for console, DEBUG for file.
+IG2LOGLEVELCONSOLE=INFO
+IG2LOGLEVELFILE=DEBUG
+# Stanza download, configures the download method of Stanza
+# Candidate values: none, reuse, default 
+IG2STANZADLMETHOD=reuse
+# Decides whether to use the GPU or not, primarily used to force cpu processing
+# Candidate values: True, False, Default: None
+IG2USEGPU=True
+# Port for displacy in dependencyParsing programs, Default: 5001
+IG2DISPLACYPORT=5001
+# URL for flask, Default: http://localhost:5000
+IG2FLASKURL=http://localhost:5000

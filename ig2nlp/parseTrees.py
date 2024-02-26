@@ -2,15 +2,26 @@ import json
 import stanza
 from spacy import displacy
 
-from utility import compoundWordsMiddleware
+from utility import compoundWordsHandler, env
 
 filename = "../data/input.json"
 
-global nlp
-nlp = stanza.Pipeline('en', use_gpu=True,
-    processors='tokenize,pos,lemma,depparse,ner', 
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
+nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
+    processors='tokenize,pos,lemma,depparse,ner,mwt', 
+    package={
+        "tokenize": "combined",
+        "mwt": "combined",
+        "pos": "combined_electra-large",
+        "depparse": "combined_electra-large",
+        "lemma": "combined_charlm",
+        "ner": "ontonotes-ww-multi_charlm"
+    },
+    download_method=env['downloadMethod'],
+    logging_level=env['logLevel']
+    )
+
+# Delete the environment variables dictionary
+del env
 
 with open(filename, "r") as input:
     
@@ -38,7 +49,7 @@ with open(filename, "r") as input:
     # Based on the example found at: 
     # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
         for sentence in doc.sentences:
-            sentence.words = compoundWordsMiddleware(sentence.words)
+            sentence.words = compoundWordsHandler(sentence.words)
             for word in sentence.words:
                 # Generating the data structure for displacy visualization
                 depData["words"].append({"text":word.text, "tag": word.pos})

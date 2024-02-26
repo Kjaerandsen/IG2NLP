@@ -3,13 +3,8 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from utility import compoundWordsMiddleware
+from utility import compoundWordsHandler, env
 
-nlp = stanza.Pipeline('en', use_gpu=False, 
-    processors='tokenize,pos,lemma,constituency,depparse,ner', 
-    package={"ner": ["ontonotes_charlm","conll03_charlm"]},
-    download_method=stanza.DownloadMethod.REUSE_RESOURCES,
-    logging_level="fatal")
 # Take the system arguments
 args = sys.argv
 
@@ -19,19 +14,40 @@ if len(args)<2:
           'dependencyParsing "Input string here"')
     sys.exit()
 
+nlp = stanza.Pipeline('en', use_gpu=env['useGPU'], 
+    processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
+    package={
+        "tokenize": "combined",
+        "mwt": "combined",
+        "ner": ["ontonotes_charlm","conll03_charlm"],
+        "pos": "combined_electra-large",
+        "depparse": "combined_electra-large",
+        "lemma": "combined_charlm",
+        "ner": "ontonotes-ww-multi_charlm"
+    },
+    download_method=env['downloadMethod'],
+    logging_level=env['logLevel'])
+
+displacyPort = env['displacyPort']
+
+# Delete the environment variables dictionary
+del env
+
 # Take the input string
 doc = nlp(args[1])
 
 print('Now printing named entities\n')
 
-#for sentence in doc.sentences:
-#    print("Entity:")
-#    print(sentence.ents)
-
 print(doc.ents)
 
-print(doc.sentences[0].tokens[0:2])
-print(doc.sentences[0].tokens[8:10])
+print("DOC DATA\n", doc.__dict__.keys())
+
+print("Coref chains:\n")
+
+for item in doc.coref:
+    print("Index: ", item.index, "| Mentions: ",[value.__dict__ for value in item.mentions], 
+          "| Representative text: ", item.representative_text, 
+          "| Representative id: ", item.representative_index)
 
 depData = {"words":[],
            "arcs":[]}
@@ -45,7 +61,7 @@ pd.set_option('display.max_rows', None)
 
 for sentence in doc.sentences:
     df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency", "Lemma", "Feats"])
-    sentence.words = compoundWordsMiddleware(sentence.words)
+    sentence.words = compoundWordsHandler(sentence.words)
     for word in sentence.words:
         df = df._append({
             "Word": word.text, "POS":word.pos, "Head id":word.head, 
@@ -79,4 +95,4 @@ for sentence in doc.sentences:
     print(sentence.constituency)
 
 # Spin up a webserver on port 5000 with the dependency tree using displacy
-displacy.serve(depData, style="dep", manual=True)
+displacy.serve(depData, style="dep", manual=True, port=displacyPort)
