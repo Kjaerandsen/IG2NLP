@@ -20,7 +20,7 @@ def main():
         action="store_true")
     parser.add_argument("-b", "--batch", 
         help="Batch size for the nlp pipeline. Lower values require less memory,"+
-        " recommended values between 10 and 30")
+        " recommended values between 10 and 30, 0 batches everything. Default 30.")
     parser.add_argument("-o","--output", 
         help="output file, defaults to json extension, i.e. output is treated as output.json")
     args = parser.parse_args()
@@ -40,7 +40,7 @@ def main():
     if args.batch:
         batchSize = int(args.batch)
     else:
-        batchSize = 0
+        batchSize = 30
 
     # The testData.json is a json file containing an array of objects 
     # with a name, baseText and processedText.
