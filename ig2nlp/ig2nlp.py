@@ -6,7 +6,7 @@ from matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility import *
 import argparse
 
-semanticAnnotations = True
+semanticAnnotations = False
 
 def main():
     parser = argparse.ArgumentParser()
@@ -143,7 +143,7 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
         if constitutive:
             output = matchingHandlerConstitutive(words, semanticAnnotations)
         else:
-            output = matchingHandler(words)
+            output = matchingHandler(words, semanticAnnotations)
         
         #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
         logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")

@@ -7,20 +7,19 @@ import matchingFunctionConstitutive as mc
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
 minimumCexLength = 1
-semanticAnnotations = True
 numberAnnotation = False
 coref = True
 
-def matchingHandler(words:list[Word]) -> list[Word]:
+def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
     """takes a list of words, performs annotations using the matching function and returns 
     a formatted string of annotated text"""
     words = compoundWordsHandler(words)
-    words = matchingFunction(words)
-    if coref: words = corefReplace(words, semanticAnnotations)
-    if semanticAnnotations and numberAnnotation: words = attributeSemantic(words)
+    words = matchingFunction(words, semantic)
+    if coref: words = corefReplace(words, semantic)
+    if semantic and numberAnnotation: words = attributeSemantic(words)
     return WordsToSentence(words)
 
-def matchingFunction(words:list[Word]) -> list[Word]:
+def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
     """takes a list of words with dependency parse and pos-tag data.
        Returns a list of words with IG Script notation symbols."""
     wordLen = len(words)
@@ -44,7 +43,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
         match deprel:
             # (Cac, Cex) Condition detection 
             case "advcl":
-                if conditionHandler(words, wordsBak, i, wordLen, words2, semanticAnnotations):
+                if conditionHandler(words, wordsBak, i, wordLen, words2, semantic):
                     return words2
                 
             # (Bdir) Object detection
@@ -108,7 +107,7 @@ def matchingFunction(words:list[Word]) -> list[Word]:
             # (O) Or else detection
             case "cc":
                 if words[i+1].text == "else":
-                    orElseHandler(words, wordsBak, wordLen, words2, i)
+                    orElseHandler(words, wordsBak, wordLen, words2, i, semantic)
                     return words2
             # Advmod of Aim is correlated with execution constraints (Cex)
             # Might be too generic of a rule.
@@ -122,11 +121,11 @@ def matchingFunction(words:list[Word]) -> list[Word]:
             
             # (Cex) Execution constraint detection
             case "obl":
-                i = executionConstraintHandler(words, i, wordLen, semanticAnnotations)
+                i = executionConstraintHandler(words, i, wordLen, semantic)
             case "obl:tmod":
                 # Old implementation used
                 # i = words[i].head
-                i = executionConstraintHandler(words, i, wordLen, semanticAnnotations)
+                i = executionConstraintHandler(words, i, wordLen, semantic)
 
             # Default, for matches based on more than just a single deprel
             case _:
@@ -194,9 +193,9 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
         if constitutive:
             condition = mc.matchingFunctionConstitutive(
-                reusePartSoS(wordsBak[:lastIndex], lastIndex), constitutive)
+                reusePartSoS(wordsBak[:lastIndex], lastIndex), semantic)
         else:
-            condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex))
+            condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex), semantic)
 
         oblCount = 0
         for conditionWord in condition:
@@ -243,7 +242,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
             contents = mc.matchingFunctionConstitutive(
                 reusePartEoS(words[lastIndex+1:], lastIndex+1), semantic)
         else:
-            contents = matchingFunction(reusePartEoS(words[lastIndex+1:], lastIndex+1))
+            contents = matchingFunction(
+                reusePartEoS(words[lastIndex+1:], lastIndex+1), semantic)
 
         # Copy over the old placement information to the 
         # newly generated words for proper formatting
@@ -268,7 +268,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 words2 += mc.matchingFunctionConstitutive(reusePartSoS(words[:firstVal], firstVal),
                                                           semantic)
             else:
-                words2 += matchingFunction(reusePartSoS(words[:firstVal], firstVal))
+                words2 += matchingFunction(reusePartSoS(words[:firstVal], firstVal), semantic)
         else:
             words2 += words[:firstVal]
         if constitutive:
@@ -277,7 +277,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                     semantic)
         else:
             condition = matchingFunction(
-                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex))
+                    reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex),
+                    semantic)
 
         j = 0
         oblCount = 0
@@ -335,7 +336,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                 )   
             else:
                 contents = matchingFunction(
-                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1)
+                    reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1), semantic
                 )   
 
             # Copy over the old placement information to the 
@@ -355,9 +356,9 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
     else:
         return False
 
-def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
+def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
                   words2:list[Word], firstVal:int, 
-                  semantic:bool=semanticAnnotations, constitutive:bool=False):
+                  semantic:bool, constitutive:bool=False):
     """Handler function for the Or else (O) component"""
 
     # Include everything but the last punct if it exists    
@@ -374,7 +375,7 @@ def orElseHandler(words:list[Word], wordsBak:list[Word], wordLen:int,
                 reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2), semantic)
     else:
         orElseComponent = matchingFunction(
-                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2))
+                reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2), semantic)
     orElseComponent[0].spaces = 0
 
     words2.append(Word(
