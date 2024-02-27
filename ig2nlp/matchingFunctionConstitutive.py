@@ -48,9 +48,13 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                              semantic, True):
                return words2
             
-         # (P) Constituting Properties detection
+         # (P) Constituting Properties / (E,p) Constituted Entity detection
          case "obj":
-            i = constitutingPropertiesHandler(words, i, wordLen)
+            if words[word.head].deprel == "acl" and words[word.head].symbol == "E,p":
+               words[word.head].setSymbol("E,p",1)
+               word.setSymbol("E,p",2)
+            else:
+               i = constitutingPropertiesHandler(words, i, wordLen)
 
          # (P) Constituting Properties detection 2
          case "iobj":
@@ -450,6 +454,30 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                words[iBak-2].position = 2
                words[iBak-2].symbol = words[iBak-1].symbol
          words[iBak-1].setSymbol("F",1)
+
+      # Check for preceeding negation "not"
+      if words[iBak-1].text.lower() == "not":
+         # If preceeding Constitutive Function (F)
+         if words[iBak-2].symbol == "F":
+            if words[iBak-2].position == 0:
+               words[iBak-2].position = 1
+            else:
+               words[iBak-2].setSymbol("")
+            if words[iBak].position == 0:
+               words[iBak].position == 2
+            else:
+               words[iBak].setSymbol("")
+         
+         # If not preceeding Constitutive Function (F)
+         else:
+            words[iBak-1].setSymbol("F",1)
+            if words[iBak].position == 0:
+               words[iBak].position == 2
+            else:
+               words[iBak].setSymbol("")
+
+         if words[i].position == 0: words[i].position = 2
+
 
    '''
    if words[i+1].deprel == "case" and words[iBak-1].text == "be":
