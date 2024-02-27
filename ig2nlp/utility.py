@@ -266,7 +266,6 @@ def compoundWordsHandler(words:list) -> list[Word]:
    combines compound words in the list to single words"""
 
    words = compoundWords(words)
-   words = compoundWords(words)
    # For compound (punct or cc) conj x relations, where one or more of the same cc are present
    words = compoundWordsConj(words)
 
@@ -294,6 +293,8 @@ def compoundWords(words:list[Word]) -> list[Word]:
       # If the word is a compound word
       elif words[i].deprel == "compound" and words[i].head == i+1: 
          i, wordLen = removeWord(words, i, wordLen)
+         
+         i-=1
 
       
       elif (words[i].deprel == "case" and words[i].head == i-1 
