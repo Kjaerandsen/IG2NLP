@@ -129,6 +129,21 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             # Old implementation used
             # i = words[i].head
             i = m.executionConstraintHandler(words, i, wordLen, semantic)
+         case "obl:agent":
+            # TODO: Look into other use cases for obl:agent
+            head = words[word.head]
+            if head.symbol != "":
+               if head.position == 0:
+                  head.position = 1
+               else:
+                  # TODO: might need to check for other annotations within
+                  head.position = 1
+                  for j in range(head.position, i-1):
+                     if words[j].symbol != "":
+                        words[j].setSymbol("",0)
+               word.setSymbol(head.symbol, 2)
+            #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
+            #      words[word.head].pos)
 
          case "cop":
             print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
