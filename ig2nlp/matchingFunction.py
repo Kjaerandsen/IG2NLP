@@ -212,7 +212,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
          symbol = "Cac"
          date = False
 
-      if validateNested(condition):
+      if validateNested(condition, constitutive):
          words2.append(Word(
          "","","",0,0,"","","",0,0,0,symbol,True,1
          ))
@@ -296,7 +296,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
          symbol = "Cac"
          date = False
 
-      if validateNested(condition):
+      if validateNested(condition, constitutive):
          words2.append(Word(
          "","","",0,0,"","","",0,0,1,symbol,True,1
          ))

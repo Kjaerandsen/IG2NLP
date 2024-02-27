@@ -173,21 +173,29 @@ def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int,
    
    return scopeEnd, j
 
-def validateNested(words:list[Word]) -> bool:
+def validateNested(words:list[Word], constitutive:bool) -> bool:
    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
       be regarded as nested."""
-   Aim = False
-   Attribute = False
+   Activity = False
+   Entity = False
+
+   if constitutive:
+      entitySymbol = "E"
+      activitySymbol = "F"
+   else:
+      entitySymbol = "A"
+      activitySymbol = "I"
 
    for word in words:
-      if word.symbol == "A":
-         Attribute = True
-         if Aim:
+      if word.symbol == entitySymbol:
+         Entity = True
+         if Activity:
             return True
-      if word.symbol == "I":
-         Aim = True
-         if Attribute:
+      if word.symbol == activitySymbol:
+         Activity = True
+         if Entity:
             return True
+   
    return False
 
 def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
