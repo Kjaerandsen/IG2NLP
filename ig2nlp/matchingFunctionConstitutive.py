@@ -146,7 +146,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             #      words[word.head].pos)
 
          case "cop":
-            print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
+            #print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
             if word.pos == "AUX":
                i = constitutiveFunctionAuxHandler(words, i)
 
@@ -247,11 +247,17 @@ def modalHandler(words:list[Word], i:int) -> int:
       logger.debug("aux no MD xpos: " + words[i].text + " | pos" + words[i].pos + 
                    " | xpos" + words[i].xpos)
       i = constitutiveFunctionAuxHandler(words, i)
-      print(words[i].text, words[i].symbol,words[i].position)
+      #print(words[i].text, words[i].symbol,words[i].position)
       return constitutiveFunctionAuxHandler(words, i)
    
    if words[i].text == "be":
       words[i].setSymbol("F",0)
+      # Positive lookahead
+      # TODO: check this in a larger dataset potentially, 
+      # for now this is only applied in constitutiveFunctionAuxHandler
+      #if words[i+1].deprel == "det":
+      #   words[i+1].setSymbol("P")
+      #   i += 1
       return i
    
    # If previous word is a Modal, encapsulate both
@@ -295,12 +301,68 @@ def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
             words[i+1].setSymbol("P,p",1)
             i = words[i+1].head
       else:
-         print(words[i+1].pos, words[i].text, "caseThing")
+         #print(words[i+1].pos, words[i].text, "caseThing")
          words[i+1].setSymbol("P")
          i+=1
-   #elif word.text == "be":
-      #print("be")
+   elif word.text == "be":
 
+      if words[i+1].deprel == "det":
+         i += 2
+         iBak = i
+         if words[i].deprel == "amod" or words[i].deprel == "advmod":
+            i = smallLogicalOperator(words, i, "P,p", len(words))
+
+         if words[iBak].head != i+1:
+            logger.warning("P,p head is not adjacent")
+         
+         i+=1
+
+         # Positive lookahead for nmod deprels to include
+         possibleDeprels = ["appos","punct","case","det","nmod","amod"]
+         for j in range(i+1, len(words)):
+            # Find a nmod and all connected words if it exists
+            if words[j].deprel == "nmod" and words[j].head == i:
+               k = j
+               for j in range(k+1, len(words)):
+                  #print(words[j].text, words[j].deprel)
+                  # Validate that the word is connected to the nmod deprel
+                  if ifHeadRelation(words, j, k):
+                     # Validate the deprel of the current word
+                     if not (words[j].deprel in possibleDeprels):
+                        # if not in possible deprels include everything up to this point
+                        print("NOT IN DEPRELS", words[j].deprel)
+                        words[i-1].setSymbol("P",1)
+                        words[j-1].setSymbol("P",2)
+                        i = j-1
+                        return i
+                  else:
+                     # If not connected to the head then include everything up to this point
+                     #print("Not head related")
+                     if j-1 - i-1 == 1:
+                        words[i].setSymbol("P",1)
+                        words[j-1].setSymbol("P",2)
+                     else:
+                        words[i-1].setSymbol("P",1)
+                        words[j-1].setSymbol("P",2)
+                     i = j-1
+                     return i
+               # Exception
+               if j != len(words)-1:
+                  #print("EXCEPTION")
+                  words[i].setSymbol("P")
+               else:
+               # Include everything if at the end of the list of words
+                  #print("NOT IN DEPRELS", words[j].deprel)
+                  words[i-1].setSymbol("P",1)
+                  words[j].setSymbol("P",2)
+                  i = j
+
+               return i
+         
+         # If not nmod
+         words[i].setSymbol("P")
+         
+      #print("be")
    else:
       #print("Exception:", word.text)
       if words[i-1].symbol == "F":
@@ -323,6 +385,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    iBak = i
    i = smallLogicalOperator(words, i, "F", wordLen)
    if words[i].position != 0:
+      # Check for preceeding auxiliary or cop dependency
       if iBak-1 >= 0:
          if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
             if words[iBak].position == 1:
@@ -369,6 +432,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                   words[i].setSymbol("F",1)
                   words[k].setSymbol("F",2)
                   i = k
+   # Check for preceeding auxiliary or cop dependency
    if iBak-1 >= 0:
       if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
          if words[iBak].position == 1:
@@ -386,6 +450,18 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                words[iBak-2].position = 2
                words[iBak-2].symbol = words[iBak-1].symbol
          words[iBak-1].setSymbol("F",1)
+
+   '''
+   if words[i+1].deprel == "case" and words[iBak-1].text == "be":
+         if words[i].position == 2:
+            words[i].setSymbol("")
+            words[i+1].setSymbol("F",2)
+         else:
+            words[i].setSymbol("F",1)
+            words[i+1].setSymbol("F",2)
+         i += 1
+         print(words[i])
+   '''
    return i
 
 def amodPropertyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
