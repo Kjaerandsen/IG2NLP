@@ -261,10 +261,41 @@ def modalHandler(words:list[Word], i:int) -> int:
 
 def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
    """Handler for Constitutive Function (F) components detected using the aux dependency"""
-   print("Running constitutiveFunctionAuxHandler")
+   #print("Running constitutiveFunctionAuxHandler")
    word = words[i]
-   print(word.text, word.pos, word.xpos, word.deprel)
+   #print(word.text, word.pos, word.xpos, word.deprel)
    words[i].setSymbol("F",0)
+
+   if word.text == "are":
+      if words[i+1].deprel == "conj":
+         words[i+1].setSymbol("P")
+      elif words[i+1].deprel == "amod" or words[i+1].deprel == "advmod":
+         words[i+1].setSymbol("P,p")
+         if words[i+1].head == i+2:
+            words[i+2].setSymbol("P")
+            i += 2
+         else:
+            words[words[i+1].head].setSymbol("P")
+            words[words[i+1].head-1].setSymbol("P,p",2)
+            words[i+1].setSymbol("P,p",1)
+            i = words[i+1].head
+      else:
+         print(words[i+1].pos, words[i].text, "caseThing")
+         words[i+1].setSymbol("P")
+         i+=1
+   #elif word.text == "be":
+      #print("be")
+
+   else:
+      #print("Exception:", word.text)
+      if words[i-1].symbol == "F":
+         if words[i-1].position != 2:
+            words[i-1].position = 1
+         else:
+            words[i-1].position = 0
+         words[i].setSymbol("F",2)
+
+   # Positive lookahead, 
    return i
 
 def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
