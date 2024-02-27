@@ -130,6 +130,11 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             # i = words[i].head
             i = m.executionConstraintHandler(words, i, wordLen, semantic)
 
+         case "cop":
+            print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
+            if word.pos == "AUX":
+               i = constitutiveFunctionAuxHandler(words, i)
+
          # Default, for matches based on more than just a single deprel
          case _:
             # Print out more complex dependencies for future handling
@@ -137,7 +142,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             #   if deprel != "aux:pass" and deprel != "obl:tmod":
             #      print("\n", '":" dependency: ',words[i], "\n")
             
-            # (A) Attribute detection
+            # (E) Constituted Entity detection
             # TODO: Consider specyfing which nsubj dependencies specifically to include
             if "nsubj" in deprel:
                i = constitutedEntityHandler(words, i, wordLen)
@@ -146,8 +151,10 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                if words[word.head].deprel == "ccomp":
                   logger.debug("NSUBJ CCOMP OBJ")
 
-            # (D) Deontic detection
-            elif words[word.head].deprel == "root" and "aux" in deprel:
+            # (M) Modal detection
+            #elif words[word.head].deprel == "root" and "aux" in deprel:
+            elif "aux" in deprel:
+               #print(words[i].text, words[i].deprel)
                i = modalHandler(words, i)
 
             elif (deprel != "punct" and deprel != "conj" and deprel != "cc"
@@ -216,41 +223,77 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
 
 def modalHandler(words:list[Word], i:int) -> int:
    """Handler for modal (M) components detected using the aux dependency"""
-   if words[words[i].head].pos == "VERB":
+   #if words[words[i].head].pos == "VERB":
       #print("Modal: ", words[i].xpos) 
-      #Might be worth looking into deontics that do not have xpos of MD
-      # Combine two adjacent deontics if present.
-      if words[i-1].symbol == "M":
-         words[i-1].setSymbol("M",1)
+      #Might be worth looking into Modals that do not have xpos of MD
+      # Combine two adjacent Modals if present.
+   #print(words[i].xpos, words[i].text)
+   if words[i].xpos != "MD":
+      logger.debug("aux no MD xpos: " + words[i].text + " | pos" + words[i].pos + 
+                   " | xpos" + words[i].xpos)
+      i = constitutiveFunctionAuxHandler(words, i)
+      print(words[i].text, words[i].symbol,words[i].position)
+      return constitutiveFunctionAuxHandler(words, i)
+   
+   if words[i].text == "be":
+      words[i].setSymbol("F",0)
+      return i
+   
+   # If previous word is a Modal, encapsulate both
+   if words[i-1].symbol == "M":
+      words[i-1].setSymbol("M",1)
+      words[i].setSymbol("M",2)
+   
+   else:
+      '''
+      if (words[i].head - i) > 1:
+         words[i].setSymbol("M",1)
+         i = words[i].head-1
          words[i].setSymbol("M",2)
       else:
-         if (words[i].head - i) > 1:
-            words[i].setSymbol("M",1)
-            i = words[i].head-1
-            words[i].setSymbol("M",2)
-         else:
-            words[i].setSymbol("M")
-   else:
-      logger.debug("Modal, no verb")
+         words[i].setSymbol("M")
+   '''
 
+      words[i].setSymbol("M")
+
+   return i
+
+
+def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
+   """Handler for Constitutive Function (F) components detected using the aux dependency"""
+   print("Running constitutiveFunctionAuxHandler")
+   word = words[i]
+   print(word.text, word.pos, word.xpos, word.deprel)
+   words[i].setSymbol("F",0)
    return i
 
 def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for Constitutive Function (F) components detected using the root dependency"""
-   # Potentially unmatch all occurences where the aim is not a verb
+   # Potentially unmatch all occurences where the Constitutive Function is not a verb
    #if words[i].pos != "VERB":
-   #   print("Aim is not VERB:", words[i].pos, words[i])
+   #   print("Constitutive Function is not VERB:", words[i].pos, words[i])
    # Look for logical operators
-   print("F word: ", words[i].text, words[i-1].deprel, words[i-1].text)
    words[i].setSymbol("F")
    iBak = i
    i = smallLogicalOperator(words, i, "F", wordLen)
    if words[i].position != 0:
-      if iBak-1 >= 0 and words[iBak-1].deprel == "aux:pass":
-         # Include the previous word and remove the old start annotation
-         #if words[i-1].text == "be":
-            words[iBak-1].setSymbol("F", 1)
-            words[iBak].setSymbol("", 0)
+      if iBak-1 >= 0:
+         if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
+            if words[iBak].position == 1:
+               words[iBak].setSymbol("",0)
+            elif words[iBak].position == 0:
+               words[iBak].setSymbol("F",2)
+            else:
+               logger.warning("Error finding scope of Constitutive Function in rootHandlerConstitutive")
+               return i
+            # Check if the word overlaps with the end of another symbol. If so move the end back one word.
+            if words[iBak-1].position == 2:
+               if words[iBak-2].position == 1:
+                  words[iBak-2].position = 0
+               else:
+                  words[iBak-2].position = 2
+                  words[iBak-2].symbol = words[iBak-1].symbol
+            words[iBak-1].setSymbol("F",1)
    else:
       # Look for xcomp dependencies
       k = 0
@@ -280,22 +323,23 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                   words[i].setSymbol("F",1)
                   words[k].setSymbol("F",2)
                   i = k
-   if words[iBak-1].deprel == "aux:pass":
-      if words[iBak].position == 1:
-         words[iBak].setSymbol("",0)
-      elif words[iBak].position == 0:
-         words[iBak].setSymbol("F",2)
-      else:
-         logger.warning("Error finding scope of Constitutive Function in rootHandlerConstitutive")
-         return i
-      # Check if the word overlaps with the end of another symbol. If so move the end back one word.
-      if words[iBak-1].position == 2:
-         if words[iBak-2].position == 1:
-            words[iBak-2].position = 0
+   if iBak-1 >= 0:
+      if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
+         if words[iBak].position == 1:
+            words[iBak].setSymbol("",0)
+         elif words[iBak].position == 0:
+            words[iBak].setSymbol("F",2)
          else:
-            words[iBak-2].position = 2
-            words[iBak-2].symbol = words[iBak-1].symbol
-      words[iBak-1].setSymbol("F",1)
+            logger.warning("Error finding scope of Constitutive Function in rootHandlerConstitutive")
+            return i
+         # Check if the word overlaps with the end of another symbol. If so move the end back one word.
+         if words[iBak-1].position == 2:
+            if words[iBak-2].position == 1:
+               words[iBak-2].position = 0
+            else:
+               words[iBak-2].position = 2
+               words[iBak-2].symbol = words[iBak-1].symbol
+         words[iBak-1].setSymbol("F",1)
    return i
 
 def amodPropertyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
