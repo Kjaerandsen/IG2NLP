@@ -241,9 +241,17 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
     #if words[i].pos != "VERB":
     #    print("Aim is not VERB:", words[i].pos, words[i])
     # Look for logical operators
+    print("F word: ", words[i].text, words[i-1].deprel, words[i-1].text)
     words[i].setSymbol("F")
+    iBak = i
     i = smallLogicalOperator(words, i, "F", wordLen)
-    if words[i].position == 0:
+    if words[i].position != 0:
+        if iBak-1 >= 0 and words[iBak-1].deprel == "aux:pass":
+            # Include the previous word and remove the old start annotation
+            #if words[i-1].text == "be":
+                words[iBak-1].setSymbol("F", 1)
+                words[iBak].setSymbol("", 0)
+    else:
         # Look for xcomp dependencies
         k = 0
 
@@ -272,6 +280,22 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
                         words[i].setSymbol("F",1)
                         words[k].setSymbol("F",2)
                         i = k
+    if words[iBak-1].deprel == "aux:pass":
+        if words[iBak].position == 1:
+            words[iBak].setSymbol("",0)
+        elif words[iBak].position == 0:
+            words[iBak].setSymbol("F",2)
+        else:
+            logger.warning("Error finding scope of Constitutive Function in rootHandlerConstitutive")
+            return i
+        # Check if the word overlaps with the end of another symbol. If so move the end back one word.
+        if words[iBak-1].position == 2:
+            if words[iBak-2].position == 1:
+                words[iBak-2].position = 0
+            else:
+                words[iBak-2].position = 2
+                words[iBak-2].symbol = words[iBak-1].symbol
+        words[iBak-1].setSymbol("F",1)
     return i
 
 def amodPropertyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
