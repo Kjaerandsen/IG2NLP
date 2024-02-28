@@ -44,21 +44,23 @@ def corefReplaceConstitutive(words:list[Word], semanticAnnotations:bool) -> list
                locations[words[i].corefid] = [i]
 
             if words[i].position == 0:
-               if words[i].corefid in corefStrings:
-                  if len(corefStrings[words[i].corefid]) < len(words[i].text):
+               if words[i].pos != "PRON":
+                  if words[i].corefid in corefStrings:
+                     if len(corefStrings[words[i].corefid]) < len(words[i].text):
+                        corefStrings[words[i].corefid]=words[i].text
+                  else:
                      corefStrings[words[i].corefid]=words[i].text
-               else:
-                  corefStrings[words[i].corefid]=words[i].text
             else:
                iBak = i
                while words[i].position != 2:
                   i+=1
-               if words[i].corefid in corefStrings:
-                  if (len(corefStrings[words[i].corefid]) < 
-                     len(WordsToSentence(words[iBak:i+1]))):
+               if words[i].pos != "PRON":
+                  if words[i].corefid in corefStrings:
+                     if (len(corefStrings[words[i].corefid]) < 
+                        len(WordsToSentence(words[iBak:i+1]))):
+                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                  else:
                      corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
-               else:
-                  corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
       elif (words[i].symbol == "" and words[i].corefid != -1 
            and words[i].pos == "PRON" and brackets == 0):
          if words[i].corefid in corefIds:
@@ -86,7 +88,7 @@ def corefReplaceConstitutive(words:list[Word], semanticAnnotations:bool) -> list
    for key, val in corefIds.items():
       #print(key,val, wordLen)
       for id in locations[key]:
-         if words[id].pos == "PRON":
+         if words[id].pos == "PRON" and key in corefStrings:
             logger.info("Replacing Constituted Entity (E) pronoun with "+ 
                      "coreference resolution data: " 
                      + words[id].text + " -> " + corefStrings[key])
@@ -100,8 +102,9 @@ def corefReplaceConstitutive(words:list[Word], semanticAnnotations:bool) -> list
          #print("val over 1")
          for id in locations[key]:
             #print(id, "adding entity semanticannotation")
-            words[id].addSemantic("Entity="+corefStrings[key])
-   
+            if key in corefStrings:
+               words[id].addSemantic("Entity="+corefStrings[key])
+
    return words
 
 def constitutedEntitySemantic(words:list[Word]) -> list[Word]:

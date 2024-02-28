@@ -302,21 +302,23 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
                locations[words[i].corefid] = [i]
 
             if words[i].position == 0:
-               if words[i].corefid in corefStrings:
-                  if len(corefStrings[words[i].corefid]) < len(words[i].text):
+               if words[i].pos != "PRON":
+                  if words[i].corefid in corefStrings:
+                     if len(corefStrings[words[i].corefid]) < len(words[i].text):
+                        corefStrings[words[i].corefid]=words[i].text
+                  else:
                      corefStrings[words[i].corefid]=words[i].text
-               else:
-                  corefStrings[words[i].corefid]=words[i].text
             else:
                iBak = i
                while words[i].position != 2:
                   i+=1
-               if words[i].corefid in corefStrings:
-                  if (len(corefStrings[words[i].corefid]) < 
-                     len(WordsToSentence(words[iBak:i+1]))):
+               if words[i].pos != "PRON":
+                  if words[i].corefid in corefStrings:
+                     if (len(corefStrings[words[i].corefid]) < 
+                        len(WordsToSentence(words[iBak:i+1]))):
+                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                  else:
                      corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
-               else:
-                  corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
       elif (words[i].symbol == "" and words[i].corefid != -1 
            and words[i].pos == "PRON" and brackets == 0):
          if words[i].corefid in corefIds:
@@ -344,9 +346,10 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
    for key, val in corefIds.items():
       #print(key,val, wordLen)
       for id in locations[key]:
-         if words[id].pos == "PRON":
+         if words[id].pos == "PRON" and key in corefStrings:
             logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
                      + words[id].text + " -> " + corefStrings[key])
+            
             words = addWord(words, id, words[id].text)
             words[id+1].text = "["+corefStrings[key]+"]"
             words[id+1].spaces = 1
@@ -357,7 +360,8 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
          #print("val over 1")
          for id in locations[key]:
             #print(id, "adding entity semanticannotation")
-            words[id].addSemantic("Entity="+corefStrings[key])
+            if key in corefStrings:
+               words[id].addSemantic("Entity="+corefStrings[key])
    
    return words
 
@@ -389,6 +393,32 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
          #print("CC", words[j])
       #else:
       #   print(words[j].text)
+   
+   # Internal scoping test
+   '''
+   j = start
+   while j < end:
+      if j-1 >= 0 and words[j].deprel == "conj" and words[j-1].deprel == "cc":
+         head = words[j].head
+         if (words[words[j].head-1].deprel in ["amod", "advmod"] and 
+             words[words[j].head-1].head == words[j].head):
+            words[head-1].text = "(" + words[head-1].text
+         else:
+            words[head].text = "(" + words[head].text
+         # Positive lookahead for nmod
+         foundNmod = False
+         for k in range(j+1, len(words)):
+            if words[k].head == head and words[k].deprel == "nmod":
+               words[k].text += ")"
+               foundNmod = True
+               j = k
+               break
+         
+         if not foundNmod:
+            words[j].text += ")"
+      j += 1
+   '''
+      
    if andCount > 0 and orCount > 0:
       logger.warning('Found both "and" and "or" logical operators in component, '+
                   "please review manually to solve encapsulation issues.")
