@@ -20,6 +20,9 @@ def main():
    parser.add_argument("-c","--constitutive", 
       help="Run the annotator in constitutive statement mode",
       action="store_true")
+   parser.add_argument("-r","--reuse", 
+      help="Run the annotator using cached items",
+      action="store_true")
    parser.add_argument("-b", "--batch", 
       help="Batch size for the nlp pipeline. Lower values require less memory,"+
       " recommended values between 10 and 30, 0 batches everything. Default 30.")
@@ -51,24 +54,38 @@ def main():
    with open(filename, "r") as input:
       jsonData = json.load(input)
 
-   # If argument is -1 then go through all the items
-   if i == -1:
-      jsonData = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
+   if not args.reuse:
+      # If argument is -1 then go through all the items
+      if i == -1:
+         jsonData = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
 
-   # Else only go through the selected item
-   else:
-      #print(jsonData[i]['baseText'])
-      if i >= len(jsonData):
-         print("Error, the index provided is higher than "+
-            "or equal to the amount of items in the input data.")
+      # Else only go through the selected item
       else:
-         jsonData[i] = MatcherMiddleware(
-            jsonData[i:i+1], args.constitutive, args.single, batchSize)[0]
+         #print(jsonData[i]['baseText'])
+         if i >= len(jsonData):
+            print("Error, the index provided is higher than "+
+               "or equal to the amount of items in the input data.")
+         else:
+            jsonData[i] = MatcherMiddleware(
+               jsonData[i:i+1], args.constitutive, args.single, batchSize)[0]
 
+   # Use cache version
+   else:
+
+      if i == -1:
+         jsonData = cacheMatcher(jsonData, args.constitutive)
+      else:
+         #print(jsonData[i]['baseText'])
+         if i >= len(jsonData):
+            print("Error, the index provided is higher than "+
+               "or equal to the amount of items in the input data.")
+         else:
+            jsonData[i] = cacheMatcher(
+               jsonData[i:i+1], args.constitutive)[0]
+         
    # Write the automatically parsed statement(s) to the file
    with open(outfilename, "w") as outputFile:
       json.dump(jsonData, outputFile, indent=2)
-
 
 
 
@@ -159,7 +176,6 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
       jsonData[i]["autoTx"] = output
-      i+=1
 
    logger.info("Finished running matcher\n\n")
    return jsonData
@@ -214,5 +230,66 @@ def nlpPipeline(textDoc:str):
    logger.debug("Finished running single statement pipeline")
    return doc
 
+def cacheMatcher(jsonData:list, constitutive:bool):
+   """Initializes the nlp pipeline globally to reuse the pipeline across the
+      statements and runs through all included statements."""
+   global useREST
+   global flaskURL
+   global env
+
+   jsonLen = len(jsonData)
+   logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
+
+   # Delete the environment variables dictionary
+   del env
+
+   docs=[]
+   print(len(jsonData))
+   for jsonObject in jsonData:
+      # Read contents of the cache file
+      fileName = "../data/cache/" + jsonObject['name']
+      with open(fileName, "rb") as file:
+         data = file.read()
+      # Convert to DOC
+      doc = stanza.Document.from_serialized(data)
+      # Append to docs
+      docs.append(doc)
+   
+   print(len(docs))
+   
+   for i, doc in enumerate(docs):
+      print("\nStatement", str(i) + ": " + jsonData[i]['name'])
+      logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
+      for j in range(len(doc.sentences)):
+         words=[]
+         #words = doc.sentences
+         #print(len(doc.sentences))
+         words.append(convertWordFormat(doc.sentences[j].words))
+
+
+      if constitutive:
+         print(WordsToSentence(words[0]))
+         output = matchingHandlerConstitutive(words[0], semanticAnnotations)
+         if len(words) > 1:
+            for sentence in words[1:]:
+               print(WordsToSentence(sentence))
+               output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
+               
+      else:
+         print(WordsToSentence(words[0]))
+         output = matchingHandler(words[0], semanticAnnotations)
+         if len(words) > 1:
+            for sentence in words[1:]:
+               print(WordsToSentence(sentence))
+               output += " " + matchingHandler(sentence, semanticAnnotations)
+
+      print(jsonData[i]['baseTx'])
+      #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
+      logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
+      jsonData[i]["autoTx"] = output
+
+   logger.info("Finished running matcher\n\n")
+   return jsonData
+   
 # Run the main function
 main()
