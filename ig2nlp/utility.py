@@ -488,7 +488,7 @@ def tokenToText(tokens:list) -> None:
    return output
 
 # Builds the final annotated statement or reconstructs the base statement.
-def WordsToSentence(words:list[Word]) -> str:
+def WordsToSentence(words:list[Word], stripFormatting:bool=False) -> str:
    """Takes a list of Word class instances, returns their content as text in the form of 
    a formatted output string with IG Script Notation syntax if present."""
    i = 0
@@ -496,6 +496,8 @@ def WordsToSentence(words:list[Word]) -> str:
    sentence = ""
 
    for word in words:
+      if stripFormatting:
+         word.setSymbol()
       sentence += word.buildString()
       i += 1
    

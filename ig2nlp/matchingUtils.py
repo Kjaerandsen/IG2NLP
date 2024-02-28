@@ -315,10 +315,10 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
                if words[i].pos != "PRON":
                   if words[i].corefid in corefStrings:
                      if (len(corefStrings[words[i].corefid]) < 
-                        len(WordsToSentence(words[iBak:i+1]))):
-                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                        len(WordsToSentence(words[iBak:i+1], True))):
+                        corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1], True)
                   else:
-                     corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1])
+                     corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1], True)
       elif (words[i].symbol == "" and words[i].corefid != -1 
            and words[i].pos == "PRON" and brackets == 0):
          if words[i].corefid in corefIds:
