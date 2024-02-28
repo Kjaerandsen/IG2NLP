@@ -645,9 +645,9 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
    # object in some instances, an instance of an indirect object component, and several 
    # overlaps with execution constraints.
    # TODO: Look into nmod inclusion further
-   print("Starting nmoddependencyHandler")
+   #print("Starting nmoddependencyHandler")
    if words[words[i].head].symbol == "Bdir" and words[words[i].head].position in [0,2]:
-      print("Within if")
+      #print("Within if")
       #logger.debug("NMOD connected to BDIR")
       # positive lookahead
       firstIndex = i
