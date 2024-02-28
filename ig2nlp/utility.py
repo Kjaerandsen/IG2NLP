@@ -78,7 +78,7 @@ class Word:
          self.text = "[" + self.text.upper() + "]"
          self.logical = 4
    
-   def setSymbol(self, symbol:str, position=0, nested=False) -> None:
+   def setSymbol(self, symbol:str="", position:int=0, nested=False) -> None:
       """Set the symbol of a Word, 
       position 0 for single word component, 
       position 1 for the start of the component, 
