@@ -4,7 +4,7 @@ from spacy import displacy
 
 from utility import compoundWordsHandler, convertWordFormat, env
 
-filename = "../data/input.json"
+filename = "../data/inputRegFull.json"
 
 nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
    processors='tokenize,pos,lemma,depparse,ner,mwt', 
@@ -35,7 +35,16 @@ with open(filename, "r") as input:
       textDocs.append(jsonData[i]['baseTx'])
       i+=1
 
-   docs = nlp.bulk_process(textDocs)
+   docs = []
+   batchSize = 30
+   while len(textDocs) > batchSize:
+      pipelineResults = nlp.bulk_process(textDocs[:batchSize])
+      for doc in pipelineResults: docs.append(doc)
+      textDocs = textDocs[batchSize:]
+   # Add the remaining items
+   pipelineResults = nlp.bulk_process(textDocs)
+   for doc in pipelineResults: docs.append(doc)
+   #docs = nlp.bulk_process(textDocs)
 
    i = 0
    while i < len(docs):
