@@ -31,8 +31,8 @@ This statement is located in a JSON object in the file
   {
     "name": "Custom name for the statement",
     "baseTx": "Base statement text",
-    "manual": "Manually annotated statement",
-    "stanza": "Automatically annotated statement using stanza",
+    "manuTx": "Manually annotated statement",
+    "autoTx": "Automatically annotated statement using stanza",
   },
 ]
 ```

@@ -156,9 +156,9 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
             for sentence in words[1:]:
                output += " " + matchingHandler(sentence, semanticAnnotations)
 
-      #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
+      #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
-      jsonData[i]["stanza"] = output
+      jsonData[i]["autoTx"] = output
       i+=1
 
    logger.info("Finished running matcher\n\n")
