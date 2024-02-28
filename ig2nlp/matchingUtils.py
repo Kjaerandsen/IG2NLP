@@ -151,9 +151,34 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
    else:
       words[i].setSymbol(symbol)
       return i
+   
+def includeConj(words:list[Word], i:int, wordLen:int) -> int:
+   """Function for including logical operators in symbols without handling (annotating) them"""
+   symbol = words[i].symbol
+   scopeEnd = i
+
+   j = i
+   if symbol == "I" or symbol == "F":
+      # Go through the word list and find the scope of the component
+      while j < wordLen:
+         if ifHeadRelationAim(words, j, i):
+            scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, [], j)
+         j += 1
+   else:
+      while j < wordLen:
+         # Go through the word list and find the scope of the component
+         if ifHeadRelation(words, j, i):
+            scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, [], j)
+         j += 1
+
+   if scopeEnd != i and scopeEnd < wordLen:
+      words[scopeEnd].setSymbol(words[i].symbol,2)
+      words[i].setSymbol("")
+
+   return scopeEnd
 
 def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, 
-                    ccLocs:list[int], j:int) -> tuple[int, int]:
+                    ccLocs:list[int], j:int):
    """Adds cc deprels to ccLocs and escapes the sequence if
       an unsupported deprel is detected"""
    supported = ["punct","det","advmod","amod"]

@@ -50,6 +50,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             
          # (P) Constituting Properties / (E,p) Constituted Entity detection
          case "obj":
+            #print(WordsToSentence(words),"\n", words[i])
             if words[word.head].deprel == "acl" and words[word.head].symbol == "E,p":
                words[word.head].setSymbol("E,p",1)
                word.setSymbol("E,p",2)
@@ -135,17 +136,35 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             i = m.executionConstraintHandler(words, i, wordLen, semantic)
          case "obl:agent":
             # TODO: Look into other use cases for obl:agent
+            #print("obl:agent", word)
             head = words[word.head]
-            if head.symbol != "":
+            if head.symbol != "" and head.symbol != "F":
                if head.position == 0:
                   head.position = 1
                else:
                   # TODO: might need to check for other annotations within
                   head.position = 1
-                  for j in range(head.position, i-1):
+                  for j in range(head.position+1, i-1):
                      if words[j].symbol != "":
                         words[j].setSymbol("",0)
                word.setSymbol(head.symbol, 2)
+               i = includeConj(words, i, wordLen)
+               #print(WordsToSentence)
+               #print(word)
+            elif head.symbol == "F":
+               if head.position == 1:
+                  for j in range(head.position+1, i-1):
+                     if words[j].position == 2:
+                        start = j+1
+                        break
+               else: start = word.head+1
+               words[start].setSymbol("P",1)
+               word.setSymbol("P",2)
+               i = includeConj(words, i, wordLen)
+            else:
+               head.setSymbol("P",1)
+               word.setSymbol("P",2)
+               i = includeConj(words, i, wordLen)
             #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
             #      words[word.head].pos)
 
@@ -175,12 +194,16 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             elif "aux" in deprel:
                #print(words[i].text, words[i].deprel)
                i = modalHandler(words, i)
+               #print("After modal, ", WordsToSentence(words))
+               #print(i)
 
             elif (deprel != "punct" and deprel != "conj" and deprel != "cc"
                  and deprel != "det" and deprel != "case"):
                logger.debug("Unhandled dependency: " + deprel)
       
+      #print(words[i])
       # Iterate to the next word
+      #print(WordsToSentence(words))
       i += 1
 
    return words
@@ -252,10 +275,10 @@ def modalHandler(words:list[Word], i:int) -> int:
                    " | xpos" + words[i].xpos)
       i = constitutiveFunctionAuxHandler(words, i)
       #print(words[i].text, words[i].symbol,words[i].position)
-      return constitutiveFunctionAuxHandler(words, i)
+      return i
    
    if words[i].text == "be":
-      words[i].setSymbol("F",0)
+      words[i].setSymbol("F")
       # Positive lookahead
       # TODO: check this in a larger dataset potentially, 
       # for now this is only applied in constitutiveFunctionAuxHandler
@@ -289,7 +312,25 @@ def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
    #print("Running constitutiveFunctionAuxHandler")
    word = words[i]
    #print(word.text, word.pos, word.xpos, word.deprel)
-   words[i].setSymbol("F",0)
+   
+   #if len(words) > i+3:
+   #   print(words[i].text,words[i+1].text,words[i+2].text,words[i+3].text)
+   #   print(words[i].deprel,words[i+1].deprel,words[i+2].deprel,words[i+3].deprel)
+   if words[i+1].deprel == "root":
+      if (len(words) > i+3 and words[i+2].deprel == "mark" 
+         and words[i+3].deprel == "xcomp" and words[i+3].head == i+1):
+            words[i].setSymbol("F",1)
+            words[i+3].setSymbol("F",2)
+            #print(words[i+3])
+            return i+3
+   '''
+      if len(words) > i+2 and words[i+2].deprel == "xcomp":
+         words[i].setSymbol("M",1)
+         words[i+1].setSymbol("M",2)
+         words[i+2].setSymbol("F")
+         return i+2
+   '''
+   words[i].setSymbol("F")
 
    if word.text == "are":
       if words[i+1].deprel == "conj":
@@ -304,6 +345,11 @@ def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
             words[words[i+1].head-1].setSymbol("P,p",2)
             words[i+1].setSymbol("P,p",1)
             i = words[i+1].head
+      elif words[i+1].deprel == "root" and words[i+1].pos == "VERB":
+         words[i].position = 1
+         words[i+1].setSymbol("F",2)
+         #print(WordsToSentence(words))
+         return i+1
       else:
          #print(words[i+1].pos, words[i].text, "caseThing")
          words[i+1].setSymbol("P")
@@ -384,9 +430,9 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    # Potentially unmatch all occurences where the Constitutive Function is not a verb
    #if words[i].pos != "VERB":
    #   print("Constitutive Function is not VERB:", words[i].pos, words[i])
-   # Look for logical operators
    words[i].setSymbol("F")
    iBak = i
+   # Look for logical operators
    i = smallLogicalOperator(words, i, "F", wordLen)
    if words[i].position != 0:
       # Check for preceeding auxiliary or cop dependency
@@ -514,6 +560,7 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for Constituting Properties (P) components 
       detected using the obj and iobj dependencies"""
    iBak = i
+   #print(WordsToSentence(words),"\n", words[i])
    i = smallLogicalOperator(words, i, "P", wordLen)
 
    # If the flag is True combine the object with single word properties preceeding 
@@ -529,12 +576,13 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
             else:
                words[iBak-1].setSymbol("P", 1)
                words[iBak].setSymbol("P", 2)
-
+   #print(WordsToSentence(words),"\n", words[i])
    return i
 
 def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for nmod dependency, currently used for Constituting Properties (P) components 
    and its properties (,p)"""
+   #print("nmod:", words[i])
    # Too broad coverage in this case, detected instances which should be included in the main
    # object in some instances, an instance of an indirect object component, and several 
    # overlaps with execution constraints.
@@ -551,7 +599,7 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
             doubleNmod = True
             i = j
       
-      # if two or more nmod dependencies are connected then treat it as a Bdir,p
+      # if two or more nmod dependencies are connected then treat it as a P,p
       if doubleNmod:
          # Set the first word after the direct object component as the start of the component
          words[words[firstIndex].head+1].setSymbol("P,p", 1)
