@@ -62,7 +62,8 @@ def main():
          print("Error, the index provided is higher than "+
             "or equal to the amount of items in the input data.")
       else:
-         jsonData[i] = MatcherMiddleware(jsonData[i:i+1])[0]
+         jsonData[i] = MatcherMiddleware(
+            jsonData[i:i+1], args.constitutive, args.single, batchSize)[0]
 
    # Write the automatically parsed statement(s) to the file
    with open(outfilename, "w") as outputFile:
@@ -135,16 +136,26 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
       if not useREST:
-         words = doc.sentences[0].words
-         words = convertWordFormat(words)
+         words=[]
+         #words = doc.sentences
+         #print(len(doc.sentences))
+         for j in range(len(doc.sentences)):
+            words.append(convertWordFormat(doc.sentences[j].words))
+         words = words
       else:
          words = doc
 
       if constitutive:
-         output = matchingHandlerConstitutive(words, semanticAnnotations)
+         output = matchingHandlerConstitutive(words[0], semanticAnnotations)
+         if len(words) > 1:
+            for sentence in words[1:]:
+               output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
       else:
-         output = matchingHandler(words, semanticAnnotations)
-      
+         output = matchingHandler(words[0], semanticAnnotations)
+         if len(words) > 1:
+            for sentence in words[1:]:
+               output += " " + matchingHandler(sentence, semanticAnnotations)
+
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manual'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
       jsonData[i]["stanza"] = output
