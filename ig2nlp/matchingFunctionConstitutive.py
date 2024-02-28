@@ -201,9 +201,9 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                  and deprel != "det" and deprel != "case"):
                logger.debug("Unhandled dependency: " + deprel)
       
-      #print(words[i])
+      #print("\nNew word", words[i])
       # Iterate to the next word
-      #print(WordsToSentence(words))
+      #print(WordsToSentence(words),"\n")
       i += 1
 
    return words
@@ -582,12 +582,14 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
 def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for nmod dependency, currently used for Constituting Properties (P) components 
    and its properties (,p)"""
-   #print("nmod:", words[i])
+   #words[i].setSymbol()
    # Too broad coverage in this case, detected instances which should be included in the main
    # object in some instances, an instance of an indirect object component, and several 
    # overlaps with execution constraints.
    # TODO: Look into nmod inclusion further
    if words[words[i].head].symbol == "P" and words[words[i].head].position in [0,2]:
+      # Remove old annotation if present
+      words[i].setSymbol()
       #logger.debug("NMOD connected to Constituting Properties")
       # positive lookahead
       firstIndex = i
@@ -613,4 +615,7 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
             # Remove the symbol from the head
             words[words[firstIndex].head].setSymbol("", 0)
          words[i].setSymbol("P", 2)
+   
+   #print(WordsToSentence(words))
+   #print(words[i])
    return i
