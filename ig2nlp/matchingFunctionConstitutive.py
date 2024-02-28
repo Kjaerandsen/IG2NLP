@@ -54,6 +54,9 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             if words[word.head].deprel == "acl" and words[word.head].symbol == "E,p":
                words[word.head].setSymbol("E,p",1)
                word.setSymbol("E,p",2)
+            #elif words[word.head].deprel == "root":
+            #   i = smallLogicalOperator(words, i, "E", wordLen)
+            #   i = constitutedEntityHandler(words, i, wordLen)
             else:
                i = constitutingPropertiesHandler(words, i, wordLen)
 
@@ -146,7 +149,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                   head.position = 1
                   for j in range(head.position+1, i-1):
                      if words[j].symbol != "":
-                        words[j].setSymbol("",0)
+                        words[j].setSymbol()
                word.setSymbol(head.symbol, 2)
                i = includeConj(words, i, wordLen)
                #print(WordsToSentence)
@@ -219,9 +222,9 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
             #print("Nmod head relation to a: ", words[j], words[i])
             j = smallLogicalOperator(words, j, "E", wordLen)
             other = True
-            if words[i+1].deprel == "appos" and words[i+1].head == i:
+            if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
                if words[i].position == 2:
-                  words[i].setSymbol("")
+                  words[i].setSymbol()
                   words[i+1].setSymbol("E",2)
                   i+=1
                else:
@@ -230,9 +233,9 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
                   i+=1
       if not other:
          i = smallLogicalOperator(words, i, "E", wordLen)
-         if words[i+1].deprel == "appos" and words[i+1].head == i:
+         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
             if words[i].position == 2:
-               words[i].setSymbol("")
+               words[i].setSymbol()
                words[i+1].setSymbol("E",2)
                i+=1
             else:
@@ -245,9 +248,9 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
    # in that case, the coreference resolution will be used to add the appropriate attribute
    elif words[words[i].head].deprel == "root":
       i = smallLogicalOperator(words, i, "E", wordLen)
-      if words[i+1].deprel == "appos" and words[i+1].head == i:
+      if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
          if words[i].position == 2:
-            words[i].setSymbol("")
+            words[i].setSymbol()
             words[i+1].setSymbol("E",2)
             i+=1
          else:
@@ -255,9 +258,9 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
             words[i+1].setSymbol("E",2)
             i+=1
 
-   # (A,p) detection mechanism, might be too specific. 
+   # (E,p) detection mechanism, might be too specific. 
    # Is overwritten by Aim (I) component in several cases
-   if words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
+   if i+1 < wordLen and words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
       #print("ADVCL")
       words[i+1].setSymbol("E,p")
 
@@ -439,7 +442,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
       if iBak-1 >= 0:
          if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
             if words[iBak].position == 1:
-               words[iBak].setSymbol("",0)
+               words[iBak].setSymbol()
             elif words[iBak].position == 0:
                words[iBak].setSymbol("F",2)
             else:
@@ -486,7 +489,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    if iBak-1 >= 0:
       if words[iBak-1].deprel == "aux:pass" or words[iBak-1].deprel == "cop":
          if words[iBak].position == 1:
-            words[iBak].setSymbol("",0)
+            words[iBak].setSymbol()
          elif words[iBak].position == 0:
             words[iBak].setSymbol("F",2)
          else:
@@ -508,11 +511,11 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
             if words[iBak-2].position == 0:
                words[iBak-2].position = 1
             else:
-               words[iBak-2].setSymbol("")
+               words[iBak-2].setSymbol()
             if words[iBak].position == 0:
                words[iBak].position == 2
             else:
-               words[iBak].setSymbol("")
+               words[iBak].setSymbol()
          
          # If not preceeding Constitutive Function (F)
          else:
@@ -520,7 +523,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
             if words[iBak].position == 0:
                words[iBak].position == 2
             else:
-               words[iBak].setSymbol("")
+               words[iBak].setSymbol()
 
          if words[i].position == 0: words[i].position = 2
 
@@ -528,7 +531,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    '''
    if words[i+1].deprel == "case" and words[iBak-1].text == "be":
          if words[i].position == 2:
-            words[i].setSymbol("")
+            words[i].setSymbol()
             words[i+1].setSymbol("F",2)
          else:
             words[i].setSymbol("F",1)
@@ -571,7 +574,7 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
          if (words[iBak-2].symbol != "P,p"):
             if iBak != i:
                # Remove old annotation start
-               words[iBak].setSymbol("", 0)
+               words[iBak].setSymbol()
                words[iBak-1].setSymbol("P", 1)
             else:
                words[iBak-1].setSymbol("P", 1)
@@ -613,7 +616,7 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
             words[words[firstIndex].head].setSymbol("P", 1)
          else:
             # Remove the symbol from the head
-            words[words[firstIndex].head].setSymbol("", 0)
+            words[words[firstIndex].head].setSymbol()
          words[i].setSymbol("P", 2)
    
    #print(WordsToSentence(words))

@@ -116,6 +116,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                      ccLocs2.append(j)
                      ccTypes.append("OR")
                      orConj = True
+               # TODO: potentially remove "as" (as well as) as a logical operator match for "and"
                elif words[j].text.lower() == "as":
                   words[j].text = "[AND] " + words[j].text
                   ccLocs2.append(j)
@@ -191,7 +192,7 @@ def includeConj(words:list[Word], i:int, wordLen:int) -> int:
 
    if scopeEnd != i and scopeEnd < wordLen:
       words[scopeEnd].setSymbol(words[i].symbol,2)
-      words[i].setSymbol("")
+      words[i].setSymbol()
 
    return scopeEnd
 
@@ -202,6 +203,7 @@ def LogicalOperatorHelper(word:Word, wordLen:int, scopeEnd:int,
    supported = ["punct","det","advmod","amod"]
 
    if word.deprel == "cc":
+      # TODO: potentially remove "as" (as well as) as a logical operator match for "and"
       if word.text.lower() in ["and","or","as"]:
          ccLocs.append(j)
          scopeEnd = j
@@ -376,6 +378,7 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
             # Remove preceeding puncts
             if j-1 >= 0 and words[j-1].text == ",":
                words[j-1].text = ""
+         # TODO: potentially remove "as" (as well as) as a logical operator match for "and"
          elif words[j].text.lower() == "as":
             words[j].text = "[AND] " + words[j].text
             andCount += 1

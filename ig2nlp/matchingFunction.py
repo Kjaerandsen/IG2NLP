@@ -457,7 +457,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
             other = True
             if words[i+1].deprel == "appos" and words[i+1].head == i:
                if words[i].position == 2:
-                  words[i].setSymbol("")
+                  words[i].setSymbol()
                   words[i+1].setSymbol("A",2)
                   i+=1
                else:
@@ -468,7 +468,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
          i = smallLogicalOperator(words, i, "A", wordLen)
          if words[i+1].deprel == "appos" and words[i+1].head == i:
             if words[i].position == 2:
-               words[i].setSymbol("")
+               words[i].setSymbol()
                words[i+1].setSymbol("A",2)
                i+=1
             else:
@@ -483,7 +483,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
       i = smallLogicalOperator(words, i, "A", wordLen)
       if words[i+1].deprel == "appos" and words[i+1].head == i:
          if words[i].position == 2:
-            words[i].setSymbol("")
+            words[i].setSymbol()
             words[i+1].setSymbol("A",2)
             i+=1
          else:
