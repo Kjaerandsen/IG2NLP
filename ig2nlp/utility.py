@@ -111,13 +111,12 @@ class Word:
          self.semanticAnnotation += "," + annotation
 
    def __str__(self):
-      return("Word: "+ self.text + " | pos: "+ self.pos + " | " + self.xpos  
+      return("Word: "+ self.text + "\n pos: "+ self.pos + " | " + self.xpos  
             + " | deprel: "+ str(self.deprel) + " | id: " + str(self.id)
             + " | head: " + str(self.head) 
-            + " | start: " + str(self.start) + " | end: " + str(self.end)
             + "\nLemma: " + self.lemma + " | Symbol: " + self.symbol + " "
             + str(self.position) + " " + str(self.nested) + " | NER:" + self.ner 
-            + "\nFeats: " + self.feats)
+            + "\nFeats: " + self.feats + "\n")
 
 def convertWordFormat(words:list) -> list[Word]:
    """ Takes the words from the Stanza nlp pipeline, converts the words and data into a list of the
