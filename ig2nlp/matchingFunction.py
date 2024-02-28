@@ -640,11 +640,14 @@ def amodPropertyHandler(words:list[Word], i:int, wordLen:int) -> int:
 def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for nmod dependency, currently used for Direct object (Bdir) components 
    and its properties"""
+   iBak = i
    # Too broad coverage in this case, detected instances which should be included in the main
    # object in some instances, an instance of an indirect object component, and several 
    # overlaps with execution constraints.
    # TODO: Look into nmod inclusion further
+   print("Starting nmoddependencyHandler")
    if words[words[i].head].symbol == "Bdir" and words[words[i].head].position in [0,2]:
+      print("Within if")
       #logger.debug("NMOD connected to BDIR")
       # positive lookahead
       firstIndex = i
@@ -669,4 +672,4 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
          else:
             words[words[firstIndex].head].setSymbol("", 0)
          words[i].setSymbol("Bdir", 2)
-   return i
+   return i if i > iBak else iBak
