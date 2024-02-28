@@ -106,6 +106,23 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                         "Error, punct not followed by a logical operator in logical"+
                         " operator handling.")
             elif words[j].deprel == "cc":
+               if words[j].text.lower() in ["and", "or"]:
+                  words[j].toLogical()
+                  if words[j].text == "[AND]":
+                     ccLocs2.append(j)
+                     ccTypes.append("AND")
+                     andConj = True
+                  else:
+                     ccLocs2.append(j)
+                     ccTypes.append("OR")
+                     orConj = True
+               elif words[j].text.lower() == "as":
+                  words[j].text = "[AND] " + words[j].text
+                  ccLocs2.append(j)
+                  ccTypes.append("AND")
+                  andConj = True
+
+               '''
                words[j].toLogical()
                if words[j].text == "[AND]":
                   ccLocs2.append(j)
@@ -115,7 +132,8 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                   ccLocs2.append(j)
                   ccTypes.append("OR")
                   orConj = True
-         
+               '''
+
          originalType = ccTypes[0]
          prevOperator = ccTypes[0]
          prevOperatorLoc = ccLocs2[0]
@@ -177,15 +195,16 @@ def includeConj(words:list[Word], i:int, wordLen:int) -> int:
 
    return scopeEnd
 
-def LogicalOperatorHelper(word:list[Word], wordLen:int, scopeEnd:int, 
+def LogicalOperatorHelper(word:Word, wordLen:int, scopeEnd:int, 
                     ccLocs:list[int], j:int):
    """Adds cc deprels to ccLocs and escapes the sequence if
       an unsupported deprel is detected"""
    supported = ["punct","det","advmod","amod"]
 
    if word.deprel == "cc":
-      ccLocs.append(j)
-      scopeEnd = j
+      if word.text.lower() in ["and","or","as"]:
+         ccLocs.append(j)
+         scopeEnd = j
    elif word.deprel == "conj":
       scopeEnd = j
    # Also include advmod dependencies
@@ -348,15 +367,22 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
    orCount = 0
    for j in range(start, end):
       if words[j].deprel == "cc":
-         words[j].toLogical()
-         if words[j].text == "[AND]":
+         if words[j].text.lower() in ["and", "or"]:
+            words[j].toLogical()
+            if words[j].text == "[AND]":
+               andCount += 1
+            else:
+               orCount += 1
+            # Remove preceeding puncts
+            if j-1 >= 0 and words[j-1].text == ",":
+               words[j-1].text = ""
+         elif words[j].text.lower() == "as":
+            words[j].text = "[AND] " + words[j].text
             andCount += 1
-         else:
-            orCount += 1
+            # Remove preceeding puncts
+            if j-1 >= 0 and words[j-1].text == ",":
+               words[j-1].text = ""
          
-         # Remove preceeding puncts
-         if j-1 >= 0 and words[j-1].text == ",":
-            words[j-1].text = ""
          #print("CC", words[j])
       #else:
       #   print(words[j].text)
