@@ -322,7 +322,7 @@ def compoundWordsConj(words:list[Word]) -> list[Word]:
    wordLen = len(words)
    i = 0
    while i < wordLen:
-      if words[i].deprel == "compound":
+      if words[i].deprel == "compound" and words[words[i].head].deprel == "obj":
          i, _, wordLen = compoundWordsConjHelper(words, i, wordLen)
       i += 1
    return words
