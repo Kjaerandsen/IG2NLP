@@ -31,16 +31,18 @@ func AutoRunnerGeneric(file string, outFile string) {
 	fmt.Println(len(data))
 
 	for i := 0; i < len(data); i++ {
+		fmt.Println("\nParsing statement: ", i, " ", data[i].Name)
+
 		var stats StatisticsGeneric
 
 		// Get the statistics from the manually parsed statement
-		stats, success := requestHandlerGeneric(data[i].ManuTx)
+		stats, success := requestHandlerGeneric(data[i].ManuTx, false)
 		if success {
 			data[i].ManualParsed = stats
 		}
 
 		// Get the statistics from the automatically parsed statement
-		stats, success = requestHandlerGeneric(data[i].AutoTx)
+		stats, success = requestHandlerGeneric(data[i].AutoTx, true)
 		if success {
 			data[i].StanzaParsed = stats
 		}
@@ -61,41 +63,67 @@ func AutoRunnerGeneric(file string, outFile string) {
 	}
 }
 
-func requestHandlerGeneric(inputStatement string) (StatisticsGeneric, bool) {
+func requestHandlerGeneric(inputStatement string, split bool) (StatisticsGeneric, bool) {
 	var output StatisticsGeneric
+	var nestedComponents []JSONComponent
+	var sentences []string
 
-	// Parse IGScript statement into tree
-	stmts, err := parser.ParseStatement(inputStatement)
-	if err.ErrorCode != tree.PARSING_NO_ERROR {
-		fmt.Println("Error: ", err.ErrorCode)
-		fmt.Println("Statement: ", inputStatement)
-		return output, false
-	}
+	if split {
+		sentences = strings.Split(inputStatement, ".")
 
-	statement := stmts[0].Entry.(*tree.Statement)
-
-	// Get all components without nesting
-	statementHandlerGeneric(statement, &output)
-
-	// Count occurrences of logical operators
-	output.Count[17] = strings.Count(inputStatement, "[OR]")
-	output.Count[18] = strings.Count(inputStatement, "[XOR]")
-	output.Count[19] = strings.Count(inputStatement, "[AND]")
-
-	// Get all components with nesting
-	nestedComponents := getNestedComponents(inputStatement)
-
-	// Go through all nested components detected
-	for i := 0; i < len(nestedComponents); i++ {
-		// If the type is within the ComponentNames add the component to the matched component type
-		for j := 0; j < len(NestedComponentNames); j++ {
-			if nestedComponents[i].ComponentType == ComponentNames[j] {
-				output.Components[j] = append(output.Components[j], nestedComponents[i])
-				output.Count[j]++
+		//print(sentences[0])
+	start:
+		for i := 0; i < len(sentences); i++ {
+			if len(sentences[i]) == 0 {
+				if i+1 < len(sentences) {
+					sentences = append(sentences[:i], sentences[i+1:]...)
+					break start
+				} else {
+					sentences = sentences[:i]
+				}
 			}
 		}
-	}
 
+		for i := 0; i < len(sentences); i++ {
+			response, _ := requestHandlerGeneric(sentences[i], false)
+
+			output = combineStatisticsGeneric(response, output)
+		}
+		fmt.Println(output.Components)
+	} else {
+		// Parse IGScript statement into tree
+		stmts, err := parser.ParseStatement(inputStatement)
+		if err.ErrorCode != tree.PARSING_NO_ERROR {
+			fmt.Println("Error: ", err.ErrorCode)
+			fmt.Println("Statement: ", inputStatement)
+			return output, false
+		}
+
+		statement := stmts[0].Entry.(*tree.Statement)
+
+		// Get all components without nesting
+		statementHandlerGeneric(statement, &output)
+
+		// Count occurrences of logical operators
+		output.Count[17] += strings.Count(inputStatement, "[OR]")
+		output.Count[18] += strings.Count(inputStatement, "[XOR]")
+		output.Count[19] += strings.Count(inputStatement, "[AND]")
+
+		// Get all components with nesting
+		nestedComponents = append(nestedComponents, getNestedComponents(inputStatement)...)
+
+		// Go through all nested components detected
+		for i := 0; i < len(nestedComponents); i++ {
+			// If the type is within the ComponentNames add the component to the matched component type
+			for j := 0; j < len(NestedComponentNames); j++ {
+				if nestedComponents[i].ComponentType == ComponentNames[j] {
+					output.Components[j] = append(output.Components[j], nestedComponents[i])
+					output.Count[j]++
+				}
+			}
+		}
+
+	}
 	return output, true
 }
 
@@ -186,4 +214,17 @@ func getComponentInfoGeneric(componentNode *tree.Node, symbol string, stats *Sta
 			}
 		}
 	}
+}
+
+// Combine the contents of two statisticsGeneric structs, input into output
+func combineStatisticsGeneric(input, output StatisticsGeneric) StatisticsGeneric {
+	for i := 0; i < 17; i++ {
+		output.Components[i] = append(output.Components[i], input.Components[i]...)
+	}
+
+	for i := 0; i < 20; i++ {
+		output.Count[i] += input.Count[i]
+	}
+
+	return output
 }
