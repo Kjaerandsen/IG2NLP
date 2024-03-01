@@ -422,6 +422,11 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
    if andCount > 0 and orCount > 0:
       logger.warning('Found both "and" and "or" logical operators in component, '+
                   "please review manually to solve encapsulation issues.")
+      for j in range(start,end):
+         if words[j+1].text == "[OR]":
+            words[j].text = "(" + words[j].text
+         elif words[j-1].text == "[OR]":
+            words[j].text += ")"
 
    return words
 
