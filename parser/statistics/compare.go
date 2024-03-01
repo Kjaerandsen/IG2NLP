@@ -31,8 +31,8 @@ func CompareParsed(inputFile string, outputFile string) {
 
 	for i := 0; i < len(data); i++ {
 		outData = append(outData, *new(CompareStatisticsGeneric))
-		outData[i].Manual = data[i].Manual
-		outData[i].Stanza = data[i].Stanza
+		outData[i].ManuTx = data[i].ManuTx
+		outData[i].AutoTx = data[i].AutoTx
 		outData[i].BaseTx = data[i].BaseTx
 		outData[i].Count[0] = data[i].ManualParsed.Count
 		outData[i].Count[1] = data[i].StanzaParsed.Count
@@ -52,8 +52,8 @@ func CompareParsed(inputFile string, outputFile string) {
 		var newOutput CompareOut
 
 		newOutput.BaseTx = outData[i].BaseTx
-		newOutput.Manual = outData[i].Manual
-		newOutput.Stanza = outData[i].Stanza
+		newOutput.ManuTx = outData[i].ManuTx
+		newOutput.AutoTx = outData[i].AutoTx
 		newOutput.PartialPool = outData[i].PartialPool
 
 		// Add all extra components
@@ -599,10 +599,10 @@ func createCompareJSON(newOutput CompareOut, jsonData []byte) []byte {
 	jsonData = appendToJSON(newOutput.BaseTx, jsonData)
 
 	jsonData = append(jsonData, []byte(",\n    "+`"manual": `)...)
-	jsonData = appendToJSON(newOutput.Manual, jsonData)
+	jsonData = appendToJSON(newOutput.ManuTx, jsonData)
 
 	jsonData = append(jsonData, []byte(",\n    "+`"stanza": `)...)
-	jsonData = appendToJSON(newOutput.Stanza, jsonData)
+	jsonData = appendToJSON(newOutput.AutoTx, jsonData)
 
 	jsonData = append(jsonData, []byte(",\n    "+`"extraComponents": `)...)
 	jsonContents, err := json.MarshalIndent(newOutput.ExtraComponents, "    ", "  ")

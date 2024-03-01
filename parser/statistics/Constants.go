@@ -47,8 +47,8 @@ var NestedComponentNames = [11]string{
 type inputStructure []struct {
 	Name         string     `json:"name"`
 	BaseTx       string     `json:"baseTx"`
-	Manual       string     `json:"manual"`
-	Stanza       string     `json:"stanza"`
+	ManuTx       string     `json:"manuTx"`
+	AutoTx       string     `json:"autoTX"`
 	ManualParsed Statistics `json:"manualParsed"`
 	StanzaParsed Statistics `json:"stanzaParsed"`
 }
@@ -56,8 +56,8 @@ type inputStructure []struct {
 type textComparison struct {
 	Name             string   `json:"name"`
 	BaseTx           string   `json:"baseTx"`
-	Manual           string   `json:"manual"`
-	Stanza           string   `json:"stanza"`
+	ManuTx           string   `json:"manuTx"`
+	AutoTx           string   `json:"autoTx"`
 	ManualReversed   string   `json:"manualReversed"`
 	StanzaReversed   string   `json:"stanzaReversed"`
 	StanzaDifference []string `json:"stanzaDifference"`
@@ -67,8 +67,8 @@ type textComparison struct {
 type inputStructureGeneric []struct {
 	Name         string            `json:"name"`
 	BaseTx       string            `json:"baseTx"`
-	Manual       string            `json:"manual"`
-	Stanza       string            `json:"stanza"`
+	ManuTx       string            `json:"manuTx"`
+	AutoTx       string            `json:"autoTx"`
 	ManualParsed StatisticsGeneric `json:"manualParsed"`
 	StanzaParsed StatisticsGeneric `json:"stanzaParsed"`
 }
@@ -80,8 +80,8 @@ type StatisticsGeneric struct {
 
 type CompareStatisticsGeneric struct {
 	BaseTx string `json:"baseTx"`
-	Manual string `json:"manual"`
-	Stanza string `json:"stanza"`
+	ManuTx string `json:"manuTx"`
+	AutoTx string `json:"autoTx"`
 	// Amount of true positive matches
 	TP [17]int `json:"tp"`
 	// Components which are not true positive matches
@@ -97,8 +97,8 @@ type CompareStatisticsGeneric struct {
 
 type CompareOut struct {
 	BaseTx string `json:"baseTx"`
-	Manual string `json:"manual"`
-	Stanza string `json:"stanza"`
+	ManuTx string `json:"manuTx"`
+	AutoTx string `json:"autoTx"`
 	// Components which are not true positive matches
 	ExtraComponents [2][]JSONComponent `json:"extraComponents"`
 	PartialPool     []PartialPool      `json:"partialPool"`

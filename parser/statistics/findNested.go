@@ -45,7 +45,7 @@ func RunStatistics(inputFile string, outputFile string) {
 		var stats Statistics
 
 		// Remove Suffixes from the manually annotated text
-		text = data[i].Manual
+		text = data[i].ManuTx
 		text = removeSuffixes(text)
 
 		/*
@@ -68,7 +68,7 @@ func RunStatistics(inputFile string, outputFile string) {
 		*/
 
 		// Retrieve the statistics
-		stats = findSymbols(data[i].Stanza)
+		stats = findSymbols(data[i].AutoTx)
 		data[i].StanzaParsed = stats
 	}
 

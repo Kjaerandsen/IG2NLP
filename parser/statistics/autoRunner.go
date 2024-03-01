@@ -34,13 +34,13 @@ func AutoRunnerGeneric(file string, outFile string) {
 		var stats StatisticsGeneric
 
 		// Get the statistics from the manually parsed statement
-		stats, success := requestHandlerGeneric(data[i].Manual)
+		stats, success := requestHandlerGeneric(data[i].ManuTx)
 		if success {
 			data[i].ManualParsed = stats
 		}
 
 		// Get the statistics from the automatically parsed statement
-		stats, success = requestHandlerGeneric(data[i].Stanza)
+		stats, success = requestHandlerGeneric(data[i].AutoTx)
 		if success {
 			data[i].StanzaParsed = stats
 		}

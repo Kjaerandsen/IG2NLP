@@ -34,15 +34,15 @@ func ReverseAnnotation(inputFile string, outputFile string) {
 	for i := 0; i < len(data); i++ {
 		var outDataElement textComparison
 		// Remove Suffixes from the manually annotated text
-		text = data[i].Manual
+		text = data[i].ManuTx
 		text = removeSuffixes(text)
 
 		outDataElement.Name = data[i].Name
 		outDataElement.BaseTx = data[i].BaseTx
-		outDataElement.Manual = data[i].Manual
-		outDataElement.Stanza = data[i].Stanza
+		outDataElement.ManuTx = data[i].ManuTx
+		outDataElement.AutoTx = data[i].AutoTx
 		outDataElement.ManualReversed = removeSymbols(text)
-		outDataElement.StanzaReversed = removeSymbols(data[i].Stanza)
+		outDataElement.StanzaReversed = removeSymbols(data[i].AutoTx)
 
 		var compStanza []string
 		var compManual []string
