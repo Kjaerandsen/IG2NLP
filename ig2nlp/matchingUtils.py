@@ -440,3 +440,68 @@ def attributeSemantic(words:list[Word]) -> list[Word]:
             word.addSemantic("Number=Plur")
 
    return words
+
+def logicalOperatorImbalanced(words:list[Word]):
+   wordLen = len(words)
+   for i in range(1, wordLen):
+      # If a logical operator is the start and or end of a component 
+      # remove the logical operator from the component
+      if words[i].text in ["[AND]", "[OR]"] and words[i].symbol != "":
+         words[i].text = words[i].text[1:len(words[i].text)-1].lower()
+         if words[i].position == 1 and i+1 < wordLen:
+            if words[i+1].position != 2:
+               words[i+1].setSymbol(words[i].symbol,1)
+            else: words[i+1].position == 2
+         elif words[i].position == 2:
+            if words[i-1].position != 1:
+               words[i-1].setSymbol(words[i].symbol,2)
+            else: words[i-1].position == 0
+         
+         # Remove the old annotation of the logical operator
+         words[i].setSymbol()
+
+def handleScopingIssues(words:list[Word]):
+   """Handler to fix scoping issues causing parsing errors"""
+   wordLen = len(words)
+   within = False
+   start = 0
+   i = 0
+   while i < wordLen:
+      #print("i:", words[i].text, words[i].symbol, words[i].position, words[i].nested)
+      if words[i].position == 1 and words[i].nested == False:
+         if not within:
+            #print("NOT WITHIN")
+            within = True
+            start = i
+         else:
+            #print("WITHIN")
+            remove = False
+            # Look for closing bracket
+            for j in range(i+1, wordLen):
+               if words[j].symbol == words[start].symbol and words[start].nested == False:
+                  #print("j: ", words[j].text, words[j].symbol, words[j].position, words[j].nested)
+                  if words[j].position == 0 or 2:
+                     words[j].position = 2
+                     remove = True
+                     within = False
+                     #print("FOUND END")
+                     break
+                  else:
+                     #print("Removing annotation start: ", words[j].symbol, words[j].position)
+                     words[j].setSymbol()
+            # If found then remove all internal operators
+            if remove:
+               for k in range(start+1, j-1):
+                  #print("Removing annotation: ", words[j].symbol, words[j].position)
+                  words[k].setSymbol()
+               i = j
+            else:
+               #print("Setting start to 0")
+               words[start].position = 0
+               within = False
+      if words[i].position == 2 and words[i].nested == False:
+         #print("POSITION 2")
+         if within:
+            if words[i].symbol == words[start].symbol:
+               within = False
+      i += 1

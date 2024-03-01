@@ -17,6 +17,9 @@ def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
    words = matchingFunction(words, semantic)
    if coref: words = corefReplace(words, semantic)
    if semantic and numberAnnotation: words = attributeSemantic(words)
+   # Handle cases where a logical operator is included in a component without a matching wor
+   logicalOperatorImbalanced(words)
+   handleScopingIssues(words)
    return WordsToSentence(words)
 
 def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:

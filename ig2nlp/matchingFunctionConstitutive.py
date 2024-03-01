@@ -19,6 +19,10 @@ def matchingHandlerConstitutive(words:list[Word], semantic:bool) -> list[Word]:
    words = matchingFunctionConstitutive(words, semantic)
    if coref: words = corefReplaceConstitutive(words, semantic)
    if semantic and numberAnnotation: words = attributeSemantic(words)
+   # Handle cases where a logical operator is included in a component without a matching wor
+   logicalOperatorImbalanced(words)
+   # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
+   handleScopingIssues(words)
    return WordsToSentence(words)
 
 def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
