@@ -106,7 +106,8 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                         "Error, punct not followed by a logical operator in logical"+
                         " operator handling.")
             elif words[j].deprel == "cc":
-               if words[j].text.lower() in ["and", "or"]:
+               logger.warning(words[j].text + " " + words[j].deprel)
+               if words[j].text.lower() in ["and", "or", "[and]", "[or]"]:
                   words[j].toLogical()
                   if words[j].text == "[AND]":
                      ccLocs2.append(j)
@@ -122,18 +123,6 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                   ccLocs2.append(j)
                   ccTypes.append("AND")
                   andConj = True
-
-               '''
-               words[j].toLogical()
-               if words[j].text == "[AND]":
-                  ccLocs2.append(j)
-                  ccTypes.append("AND")
-                  andConj = True
-               elif words[j].text == "[OR]":
-                  ccLocs2.append(j)
-                  ccTypes.append("OR")
-                  orConj = True
-               '''
 
          originalType = ccTypes[0]
          prevOperator = ccTypes[0]

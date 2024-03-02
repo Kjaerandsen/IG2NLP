@@ -66,6 +66,9 @@ def test_Word_setSymbol():
    word.setSymbol("D")
    assert word.position == 0 and word.symbol == "D" and word.nested == False
 
+   word.setSymbol()
+   assert word.position == 0 and word.symbol == "" and word.nested == False
+
 
 def test_Word_buildString():
    word = createTestWord("test")

@@ -47,7 +47,7 @@ def test_smallLogicalOperator():
    # Assert that it works for other components on a basic case
    wordsBak = copy.deepcopy(words)
    wordsBak[0].deprel = "Bdir"
-   i = smallLogicalOperator(wordsBak, 0, "Bdir", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "Bdir", len(wordsBak))
    assert i == 2
    assert WordsToSentence(wordsBak) == "Bdir(a [AND] b)"
 
@@ -56,7 +56,7 @@ def test_smallLogicalOperator():
    words.append(createCC("and", 3))
    words.append(createConj("c",0))
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 4
    assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] c)"
 
@@ -64,7 +64,7 @@ def test_smallLogicalOperator():
    # "a and b or c"
    words[3].text = "or"
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 4
    assert WordsToSentence(wordsBak) == "I(a [AND] (b [OR] c))"
 
@@ -73,7 +73,7 @@ def test_smallLogicalOperator():
    words.append(createCC("and",5))
    words.append(createConj("d",0))
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 6
    assert WordsToSentence(wordsBak) == "I(a [AND] (b [OR] c) [AND] d)"
 
@@ -85,7 +85,7 @@ def test_smallLogicalOperator():
       elif word.text == "or":
          word.text = "and"
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 6
    assert WordsToSentence(wordsBak) == "I(a [OR] (b [AND] c) [OR] d)"
 
@@ -96,7 +96,7 @@ def test_smallLogicalOperator():
    words.append(createCC("anD", 9))
    words.append(createConj("f", 0))
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 10
    assert WordsToSentence(wordsBak) == "I(a [OR] (b [AND] c) [OR] (d [AND] e [AND] f))"
 
@@ -108,7 +108,7 @@ def test_smallLogicalOperator():
    words[5].deprel = "punct"
    words[7].text = "or"
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 10
    assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] (c [OR] d [OR] e) [AND] f)"
 
@@ -120,7 +120,7 @@ def test_smallLogicalOperator():
    words[6].deprel = "det"
    words.append(createConj("d",0))
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 7
    assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] (c [OR] d))"
 
@@ -129,14 +129,14 @@ def test_smallLogicalOperator():
    words[6].deprel = "amod"
    words[6].text = "amod"
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "I", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "I", len(wordsBak))
    assert i == 7
    assert WordsToSentence(wordsBak) == "I(a [AND] b [AND] (c [OR] amod d))"
 
    # With Bdir instead
    words[0].deprel = "obj"
    wordsBak = copy.deepcopy(words)
-   i = smallLogicalOperator(wordsBak, 0, "Bdir", len(words))
+   i = smallLogicalOperator(wordsBak, 0, "Bdir", len(wordsBak))
    assert i == 7
    assert WordsToSentence(wordsBak) == "Bdir(a [AND] b [AND] (c [OR] amod d))"
 
@@ -146,19 +146,19 @@ def test_validateNested():
    words.append(createTestWord("2"))
 
    # No symbols
-   assert validateNested(words) == False
+   assert validateNested(words, False) == False
 
    # Only aim
    words[0].setSymbol("I")
-   assert validateNested(words) == False
+   assert validateNested(words, False) == False
 
    # Only attribute
    words[0].setSymbol("A")
-   assert validateNested(words) == False
+   assert validateNested(words, False) == False
 
    # Both aim and attribute
    words[1].setSymbol("I")
-   assert validateNested(words) == True
+   assert validateNested(words, False) == True
 
 def test_ifHeadRelation():
    """Test for ifHeadRelation and ifHeadRelationAim functions"""
