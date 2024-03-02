@@ -1,6 +1,5 @@
 import json
 import stanza
-import requests
 from matchingFunction import matchingHandler
 from matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility import *
@@ -129,26 +128,23 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    for jsonObject in jsonData:
       textDocs.append(jsonObject['baseTx'])
 
-   if useREST:
-      docs = nlpPipelineMulti(jsonData)
+   if singleMode:
+      docs=[]
+      for sentence in textDocs:
+         docs.append(nlpPipeline(sentence))
    else:
-      if singleMode:
-         docs=[]
-         for sentence in textDocs:
-            docs.append(nlpPipeline(sentence))
+      if batchSize == 0:
+         docs = nlpPipelineMulti(textDocs)
       else:
-         if batchSize == 0:
-            docs = nlpPipelineMulti(textDocs)
-         else:
-            docs=[]
-            # Go through the nlp pipeline in batches of batchSize
-            while len(textDocs) > batchSize:
-               pipelineResults = nlpPipelineMulti(textDocs[:batchSize])
-               for doc in pipelineResults: docs.append(doc)
-               textDocs = textDocs[batchSize:]
-            # Add the remaining items
-            pipelineResults = nlpPipelineMulti(textDocs)
+         docs=[]
+         # Go through the nlp pipeline in batches of batchSize
+         while len(textDocs) > batchSize:
+            pipelineResults = nlpPipelineMulti(textDocs[:batchSize])
             for doc in pipelineResults: docs.append(doc)
+            textDocs = textDocs[batchSize:]
+         # Add the remaining items
+         pipelineResults = nlpPipelineMulti(textDocs)
+         for doc in pipelineResults: docs.append(doc)
 
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
@@ -182,46 +178,10 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
 
 def nlpPipelineMulti(textDocs:list) -> list:
    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
-   if not useREST:
-      logger.debug("Running multiple statement pipeline")
-      docs = nlp.bulk_process(textDocs)
-      logger.debug("Finished running multiple statement pipeline")
-      return docs
-   else:
-      response = requests.post(flaskURL, json = textDocs)
-      responseJSON = response.json()
-
-      docs:list = []
-      # Convert the response json to words
-      for sentence in responseJSON:
-         sentenceWords:list[Word] = []
-         for word in sentence:
-            sentenceWords.append(
-               Word(
-                  word['text'],
-                  word['pos'],
-                  word['deprel'],
-                  word['head'],
-                  word['id'],
-                  word['lemma'],
-                  word['xpos'],
-                  word['feats'],
-                  word['start'],
-                  word['end'],
-                  word['spaces'],
-                  word['symbol'],
-                  word['nested'],
-                  word['position'],
-                  word['ner'],
-                  word['logical'],
-                  word['corefid'],
-                  word['coref'],
-                  word['corefScope'],
-                  word['isRepresentative']
-               )
-            )
-         docs.append(sentenceWords)
-      return docs
+   logger.debug("Running multiple statement pipeline")
+   docs = nlp.bulk_process(textDocs)
+   logger.debug("Finished running multiple statement pipeline")
+   return docs
    
 def nlpPipeline(textDoc:str):
    """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
@@ -233,7 +193,6 @@ def nlpPipeline(textDoc:str):
 def cacheMatcher(jsonData:list, constitutive:bool):
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
-   global useREST
    global flaskURL
    global env
 
