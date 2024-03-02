@@ -92,6 +92,7 @@ def main():
 def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSize:int) -> list:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
+   
    global useREST
    global flaskURL
    global env
@@ -266,27 +267,17 @@ def cacheMatcher(jsonData:list, constitutive:bool):
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
-      #words=[]
-      #for j in range(len(doc.sentences)):
-         #words = doc.sentences
-         #print(len(doc.sentences))
-      #   words.extend(convertWordFormat(doc.sentences[j].words))
-   
 
       if constitutive:
-         #print(WordsToSentence(doc[0]))
          output = matchingHandlerConstitutive(doc[0], semanticAnnotations)
          if len(doc) > 1:
             for sentence in doc[1:]:
-               #print(WordsToSentence(sentence))
                output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
                
       else:
-         #print(WordsToSentence(doc[0]))
          output = matchingHandler(doc[0], semanticAnnotations)
          if len(doc) > 1:
             for sentence in doc[1:]:
-               #print(WordsToSentence(sentence))
                output += " " + matchingHandler(sentence, semanticAnnotations)
 
       print(jsonData[i]['baseTx'])

@@ -47,6 +47,7 @@ class Word:
    def buildString(self) -> None:
       """Builds the contents as a component with brackets, 
       the symbol and proper spacing in string form"""
+      
       output = " " * self.spaces
       if self.symbol != "":
          if self.position == 2:
@@ -54,6 +55,7 @@ class Word:
                output += self.text + "}"
             else:
                output += self.text + ")"
+
          else:
             output += self.symbol
             if self.semanticAnnotation != "":
@@ -70,10 +72,12 @@ class Word:
                   output += "(" + self.text
       else:
          output += self.text
+
       return output
 
    def toLogical(self) -> None:
       """Converts the text of the Word to a logical operator i.e. 'and' -> '[AND]'"""
+
       if self.logical == 0:
          self.text = "[" + self.text.upper() + "]"
          self.logical = 4
@@ -84,6 +88,7 @@ class Word:
       position 1 for the start of the component, 
       position 2 for the end.
       Nested decides whether to use '()' or '{}' brackets."""
+
       self.symbol = symbol
       self.nested = nested
       self.position = position
@@ -94,9 +99,11 @@ class Word:
    def combineWords(self, otherWord:"Word", direction:bool):
       """Takes another word and a direction, combines the contents of the two words. 
       direction True for right into left, False for left into right"""
+
       if direction:
          self.end = otherWord.end
          self.text = self.text + " " * otherWord.spaces + otherWord.text
+
       else:
          self.start = otherWord.start
          self.text = otherWord.text + " " * self.spaces + self.text
@@ -105,15 +112,17 @@ class Word:
    def addSemantic(self, annotation:str):
       """Takes a semantic annotation and 
       appends it to the list of semantic annotations in the Word"""
+
       if self.semanticAnnotation == "":
          self.semanticAnnotation = annotation
+
       else:
          self.semanticAnnotation += "," + annotation
 
    def toJSON(self) -> dict:
       """Create a JSON Object from a Word instance (for JSON serialization)"""
-      output = {}
 
+      output:dict = {}
       output["id"] = self.id
       output["text"] = self.text
       output["deprel"] = self.deprel
@@ -148,11 +157,12 @@ class Word:
 
 def wordFromDict(input:dict) -> Word:
    """Create a Word class instance from a dict (for JSON serialization)"""
+
    output = Word(
       input["text"],
       input["pos"],
       input["deprel"],
-      input["head"]+1,
+      input["head"]+1, # Plus one as the creation of a Word class instance uses head-1
       input["id"],
       input["lemma"],
       input["xpos"],
@@ -177,6 +187,7 @@ def wordFromDict(input:dict) -> Word:
 def convertWordFormat(words:list) -> list[Word]:
    """ Takes the words from the Stanza nlp pipeline, converts the words and data into a list of the
    Word class"""
+
    i = 0
    wordLen = len(words)
 
@@ -209,8 +220,6 @@ def convertWordFormat(words:list) -> list[Word]:
             spaces = startChar - customWords[i-1].end
          else:
             spaces = 0
-
-         
 
          addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
          customWords[i].ner = words[i].parent.multi_ner[0]
@@ -295,10 +304,11 @@ def convertWordFormat(words:list) -> list[Word]:
 
 # Simple function for appending to the customWords list. Takes text, start and end parameters 
 # to facilitate multi word tokens(MWTs).
-def addToCustomWords(customWords:list[Word], word, text:str, start:int, end:int, spaces:int
-                ) -> None:
+def addToCustomWords(
+      customWords:list[Word], word, text:str, start:int, end:int, spaces:int) -> None:
    """Appends a Word to a list of Word objects. 
    Takes a Word, text, start, end and spaces parameters"""
+
    customWords.append(
          Word(
             text,
@@ -348,9 +358,7 @@ def compoundWords(words:list[Word]) -> list[Word]:
       # If the word is a compound word
       elif words[i].deprel == "compound" and words[i].head == i+1: 
          i, wordLen = removeWord(words, i, wordLen)
-         
          i-=1
-
       
       elif (words[i].deprel == "case" and words[i].head == i-1 
            and words[i].pos == "PART"):
@@ -375,6 +383,7 @@ def compoundWords(words:list[Word]) -> list[Word]:
 
 def compoundWordsConj(words:list[Word]) -> list[Word]:
    """Compound words handling for conj dependencies of the form compound cc conj root"""
+
    wordLen = len(words)
    i = 0
    while i < wordLen:
@@ -385,6 +394,7 @@ def compoundWordsConj(words:list[Word]) -> list[Word]:
 
 def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int) -> None:
    """Helper function performing the logic for compoundWordsConj"""
+
    start = i
    end = words[i].head
    ccLocs = []
@@ -431,14 +441,17 @@ def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int) -> None:
       #print(
       #      "compoundHandler did not detect a logical operator.")
       return start, False, wordLen
+   
    if len(conjLocs) == 0:
       return start, False, wordLen
+   
    else:
       for punct in punctLocs:
          words[punct].text = words[ccLocs[0]].text
          words[punct].spaces = 1
          words[punct].deprel = "cc"
       conjLocs = conjLocs[:len(conjLocs)-1]
+
       for conj in conjLocs:
          #print("Word in conjLocs: " + words[conj].text)
          words[conj].text = words[conj].text + " [" + words[end].text + "]"
@@ -455,6 +468,7 @@ def compoundWordsConjHelper(words:list[Word], i:int, wordLen:int) -> None:
       # the last word should have the first word as the head
       words[end].head = start
       words[end].deprel = "conj"
+
       # Every conj should have the first word as the head
       if len(conjLocs) > 1:
          for conjLoc in conjLocs[1:]:
@@ -473,6 +487,7 @@ def removeWord(words:list[Word], i:int, wordLen:int, direction=0) -> None:
    """ Takes a list of words, a location, the length of the list and a 
    direction 0 = left, 1 = right. Combines the word with the next in the given direction, then 
    removes the extra words."""
+
    if direction == 0:
       if i == wordLen-1:
          raise Exception(
@@ -480,6 +495,7 @@ def removeWord(words:list[Word], i:int, wordLen:int, direction=0) -> None:
          )
       id = i+1
       words[id].combineWords(words[i], False)
+
    else:
       if i == 0:
          raise Exception(
@@ -504,7 +520,7 @@ def removeWord(words:list[Word], i:int, wordLen:int, direction=0) -> None:
 
 def addWord(words:list[Word], i:int, wordText:str) -> None:
    """Appends a word to a list of words in the location with the index of i"""
-   #print(i)
+   
    for word in words:
       #print(word.head-1, word.head)
       if word.head >= i and word.head != -1:
@@ -515,19 +531,13 @@ def addWord(words:list[Word], i:int, wordText:str) -> None:
 
    newWord = []
    newWord.append(Word(wordText,"","",0,i,"","","",0,0,words[i].spaces))
-   #print(WordsToSentence(words[:i+1]))
-   #print(WordsToSentence(newWord))
-   #print(WordsToSentence(words[:i+1] + newWord + words[i+1:]))
-   #print(WordsToSentence(words[:i+1] + words[i+1:]))
-   #print(newWord[0].text)
-
-   
    words = words[:i] + newWord + words[i:]
 
    return words
 
 def tokenToText(tokens:list) -> None:
    """Takes a list of tokens, returns the output text contained within."""
+   
    output = ""
    for token in tokens:
       output += str(token)
@@ -547,8 +557,8 @@ def tokenToText(tokens:list) -> None:
 def WordsToSentence(words:list[Word], stripFormatting:bool=False) -> str:
    """Takes a list of Word class instances, returns their content as text in the form of 
    a formatted output string with IG Script Notation syntax if present."""
-   i = 0
 
+   i = 0
    sentence = ""
 
    for word in words:
@@ -564,7 +574,9 @@ def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
    """Function for reusing a subset of a list of Words for matching components.
    Sets all connections to words before the index of firstVal to 'root' 
    dependencies and their headId to 0"""
+
    outsideCount = 0
+
    for word in words:
       if word.head < firstVal:
          word.head = -1
@@ -575,6 +587,7 @@ def reusePartEoS(words:list[Word], firstVal:int) -> list[Word]:
    
    if outsideCount == 0:
       logger.warning("utility: reusePartEoS found no root dependency")
+
    elif outsideCount > 1:
       logger.warning("utility: reusePartEoS found multiple root dependencies")
 
@@ -585,7 +598,9 @@ def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
    """Function for reusing a subset of a list of Words for matching components.
    Sets all connections to words after the index of lastVal to 'root' 
    dependencies and their headId to 0"""
+
    outsideCount = 0
+
    for word in words:
       if word.head > lastVal:
          word.head = -1
@@ -594,6 +609,7 @@ def reusePartSoS(words:list[Word], lastVal:int) -> list[Word]:
 
    if outsideCount == 0:
       logger.warning("utility: reusePartSoS found no root dependency")
+
    elif outsideCount > 1:
       logger.warning("utility: reusePartSoS found multiple root dependencies")
 
@@ -604,7 +620,9 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
    """Function for reusing a subset of a list of Words for matching components.
    Sets all connections to words before the index of firstVal or after lastVal to 'root' 
    dependencies and their headId to 0"""
+
    outsideCount = 0
+
    for word in words:
       if word.head > lastVal or word.head < firstVal:
          word.head = -1
@@ -615,6 +633,7 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
 
    if outsideCount == 0:
       logger.warning("utility: reusePartMoS found no root dependency")
+
    elif outsideCount > 1:
       logger.warning("utility: reusePartMoS found multiple root dependencies")
 
@@ -623,6 +642,7 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
 def loadEnvironmentVariables() -> dict:
    """Function that loads all environment variables from a ".env" file or 
    the environment variables"""
+
    load_dotenv()
    # Dict for return values
    global env
@@ -631,7 +651,6 @@ def loadEnvironmentVariables() -> dict:
    # Take the environment variable, default to false
    # If the variable is "True", then True
    env['useREST'] = getenv("IG2USEREST", 'False') == 'True'
-
    # Take the environment variable, default to None
    env['useGPU'] = getenv("IG2USEGPU", None)
    if env['useGPU'] == "False":
@@ -674,6 +693,7 @@ def loadEnvironmentVariables() -> dict:
 
 def createLogger():
    """Creates a custom logger instance shared with all programs importing this file"""
+
    global logger
 
    logger = logging.getLogger(__name__)

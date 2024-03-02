@@ -106,7 +106,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
                         "Error, punct not followed by a logical operator in logical"+
                         " operator handling.")
             elif words[j].deprel == "cc":
-               logger.warning(words[j].text + " " + words[j].deprel)
+               #logger.warning(words[j].text + " " + words[j].deprel)
                if words[j].text.lower() in ["and", "or", "[and]", "[or]"]:
                   words[j].toLogical()
                   if words[j].text == "[AND]":
