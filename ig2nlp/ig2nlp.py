@@ -158,7 +158,6 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
          #print(len(doc.sentences))
          for j in range(len(doc.sentences)):
             words.append(convertWordFormat(doc.sentences[j].words))
-         words = words
       else:
          words = doc
 
@@ -247,40 +246,47 @@ def cacheMatcher(jsonData:list, constitutive:bool):
    print(len(jsonData))
    for jsonObject in jsonData:
       # Read contents of the cache file
-      fileName = "../data/cache/" + jsonObject['name']
-      with open(fileName, "rb") as file:
-         data = file.read()
+      fileName = "../data/cache/" + jsonObject['name'] + ".json"
+      with open(fileName, "r") as file:
+         data = json.load(file)
+      
+      sentences = []
+      for sentence in data:
+         wordList:list[Word] = []
+         for word in sentence:
+            wordList.append(wordFromDict(word))
+         sentences.append(wordList)
       # Convert to DOC
-      doc = stanza.Document.from_serialized(data)
+      #doc = stanza.Document.from_serialized(data)
       # Append to docs
-      docs.append(doc)
+      docs.append(sentences)
    
    print(len(docs))
    
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
-      for j in range(len(doc.sentences)):
-         words=[]
+      #words=[]
+      #for j in range(len(doc.sentences)):
          #words = doc.sentences
          #print(len(doc.sentences))
-         words.append(convertWordFormat(doc.sentences[j].words))
-
+      #   words.extend(convertWordFormat(doc.sentences[j].words))
+   
 
       if constitutive:
-         print(WordsToSentence(words[0]))
-         output = matchingHandlerConstitutive(words[0], semanticAnnotations)
-         if len(words) > 1:
-            for sentence in words[1:]:
-               print(WordsToSentence(sentence))
+         #print(WordsToSentence(doc[0]))
+         output = matchingHandlerConstitutive(doc[0], semanticAnnotations)
+         if len(doc) > 1:
+            for sentence in doc[1:]:
+               #print(WordsToSentence(sentence))
                output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
                
       else:
-         print(WordsToSentence(words[0]))
-         output = matchingHandler(words[0], semanticAnnotations)
-         if len(words) > 1:
-            for sentence in words[1:]:
-               print(WordsToSentence(sentence))
+         #print(WordsToSentence(doc[0]))
+         output = matchingHandler(doc[0], semanticAnnotations)
+         if len(doc) > 1:
+            for sentence in doc[1:]:
+               #print(WordsToSentence(sentence))
                output += " " + matchingHandler(sentence, semanticAnnotations)
 
       print(jsonData[i]['baseTx'])

@@ -110,6 +110,34 @@ class Word:
       else:
          self.semanticAnnotation += "," + annotation
 
+   def toJSON(self) -> dict:
+      """Create a JSON Object from a Word instance (for JSON serialization)"""
+      output = {}
+
+      output["id"] = self.id
+      output["text"] = self.text
+      output["deprel"] = self.deprel
+      output["head"] = self.head
+      output["start"] = self.start
+      output["end"] = self.end
+      output["pos"] = self.pos
+      output["xpos"] = self.xpos
+      output["lemma"] = self.lemma
+      output["symbol"] = self.symbol
+      output["nested"] = self.nested
+      output["position"] = self.position
+      output["spaces"] = self.spaces
+      output["feats"] = self.feats
+      output["ner"] = self.ner
+      output["logical"] = self.logical
+      output["coref"] = self.coref
+      output["corefid"] = self.corefid
+      output["corefScope"] = self.corefScope
+      output["isRepresentative"] = self.isRepresentative
+      output["semanticAnnotation"] = self.semanticAnnotation
+
+      return output
+
    def __str__(self):
       return("Word: "+ self.text + "\n pos: "+ self.pos + " | " + self.xpos  
             + " | deprel: "+ str(self.deprel) + " | id: " + str(self.id)
@@ -117,6 +145,34 @@ class Word:
             + "\nLemma: " + self.lemma + " | Symbol: " + self.symbol + " "
             + str(self.position) + " " + str(self.nested) + " | NER:" + self.ner 
             + "\nFeats: " + self.feats + "\n")
+
+def wordFromDict(input:dict) -> Word:
+   """Create a Word class instance from a dict (for JSON serialization)"""
+   output = Word(
+      input["text"],
+      input["pos"],
+      input["deprel"],
+      input["head"]+1,
+      input["id"],
+      input["lemma"],
+      input["xpos"],
+      input["feats"],
+      input["start"],
+      input["end"],
+      input["spaces"],
+      input["symbol"],
+      input["nested"],
+      input["position"],
+      input["ner"],
+      input["logical"],
+      input["corefid"],
+      input["coref"],
+      input["corefScope"],
+      input["isRepresentative"],
+      input["semanticAnnotation"]
+   )
+
+   return output
 
 def convertWordFormat(words:list) -> list[Word]:
    """ Takes the words from the Stanza nlp pipeline, converts the words and data into a list of the

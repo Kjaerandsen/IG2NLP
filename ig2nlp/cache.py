@@ -107,10 +107,21 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int):
 
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
-      outFile = "../data/cache/" + jsonData[i]['name']
+      outFile = "../data/cache/" + jsonData[i]['name'] + ".json"
+      wordLists:list[list[Word]]=[]
+      for j in range(len(doc.sentences)):
+         wordLists.append(convertWordFormat(doc.sentences[j].words))
+      
+      outList = []
+      for words in wordLists:
+         jsonWords = []
+         for word in words:
+            jsonWords.append(word.toJSON())
+         outList.append(jsonWords)
+
       # Write the automatically parsed statement(s) to the file
-      with open(outFile, "wb") as outputFile:
-         outputFile.write(doc.to_serialized())
+      with open(outFile, "w") as outputFile:
+         outputFile.write(json.dumps(outList, indent=4))
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished writing to file.")
       i+=1
