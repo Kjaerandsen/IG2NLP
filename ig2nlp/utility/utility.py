@@ -535,24 +535,6 @@ def addWord(words:list[Word], i:int, wordText:str) -> None:
 
    return words
 
-def tokenToText(tokens:list) -> None:
-   """Takes a list of tokens, returns the output text contained within."""
-   
-   output = ""
-   for token in tokens:
-      output += str(token)
-
-   # Remove leading space if present
-   if output[0] == " ":
-      output = output[1:]
-
-   outputLen = len(output)
-      # Remove leading space if present
-   if output[outputLen-2] == " ":
-      output = output[:outputLen-2] + output[outputLen-1]
-
-   return output
-
 # Builds the final annotated statement or reconstructs the base statement.
 def WordsToSentence(words:list[Word], stripFormatting:bool=False) -> str:
    """Takes a list of Word class instances, returns their content as text in the form of 
