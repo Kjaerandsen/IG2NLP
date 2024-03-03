@@ -1,5 +1,5 @@
 import stanza
-from utility import env, convertWordFormat
+from utility.utility import env, convertWordFormat
 import json
 from flask import Flask, request, Response
 
@@ -45,7 +45,7 @@ def handleSingle():
    if reqLen == 1:
       docs = [nlp(textDocs[0])]
    elif reqLen == 0:
-      return 'Invalid input', 400
+      return 'Invalid input', status.
    else:
       docs = nlp.bulk_process(textDocs)
 

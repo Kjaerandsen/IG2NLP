@@ -3,7 +3,7 @@ import sys
 from spacy import displacy
 import requests
 
-from utility import Word, compoundWordsHandler, env
+from utility.utility import Word, compoundWordsHandler, env
 
 # Take the system arguments
 args = sys.argv

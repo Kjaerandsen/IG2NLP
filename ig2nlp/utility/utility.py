@@ -643,7 +643,7 @@ def loadEnvironmentVariables() -> dict:
    """Function that loads all environment variables from a ".env" file or 
    the environment variables"""
 
-   load_dotenv()
+   load_dotenv(dotenv_path="../data/.env")
    # Dict for return values
    global env
    env = {}

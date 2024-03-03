@@ -2,7 +2,7 @@ import json
 import stanza
 from spacy import displacy
 
-from utility import compoundWordsHandler, convertWordFormat, env
+from utility.utility import compoundWordsHandler, convertWordFormat, env
 
 filename = "../data/inputRegFull.json"
 

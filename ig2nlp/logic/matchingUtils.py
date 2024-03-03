@@ -1,4 +1,4 @@
-from utility import *
+from utility.utility import *
 
 def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
    """Finds the scope of components with logical operators and handles the logical operators"""

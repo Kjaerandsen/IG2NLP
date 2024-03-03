@@ -1,4 +1,4 @@
-from utility import *
+from utility.utility import *
 
 def validateNestedConstitutive(words:list[Word]) -> bool:
    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to

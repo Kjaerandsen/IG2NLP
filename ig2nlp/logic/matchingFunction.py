@@ -1,8 +1,8 @@
 import time
 import copy
-from utility import *
-from matchingUtils import *
-import matchingFunctionConstitutive as mc
+from utility.utility import *
+from logic.matchingUtils import *
+import logic.matchingFunctionConstitutive as mc
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True

@@ -1,8 +1,8 @@
 import json
 import stanza
-from matchingFunction import matchingHandler
-from matchingFunctionConstitutive import matchingHandlerConstitutive
-from utility import *
+from logic.matchingFunction import matchingHandler
+from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
+from utility.utility import *
 import argparse
 
 semanticAnnotations = False
