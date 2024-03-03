@@ -1,4 +1,5 @@
 from utility.utility import *
+import numpy as np
 
 def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
    """Finds the scope of components with logical operators and handles the logical operators"""
@@ -236,8 +237,17 @@ def validateNested(words:list[Word], constitutive:bool) -> bool:
 def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection"""
    word = words[wordId]
-   
+   # array of visited id's to prevent infinite recursion
+   visited = np.array(words[word.head])
+
    while words[word.head].deprel != "root":
+      # If the head is already visited then return False
+      if word.head in visited:
+         return False
+      else:
+         # Add the new head to visited
+         visited = np.append(visited, word.head)
+
       if word.deprel == "root":
          return False
       if word.head == headId:
@@ -252,12 +262,23 @@ allowedRootHeads = ["conj","cc","det","amod","advmod"]
 def ifHeadRelationRoot(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection, 
    specifically for components detected by the root deprel (Constituted Function (F) and Aim (I))"""
-   while words[words[wordId].head].deprel != "root":
-      if words[wordId].head == headId:
-         return True
-      if not words[words[wordId].head].deprel in allowedRootHeads:
+   word = words[wordId]
+   # array of visited id's to prevent infinite recursion
+   visited = np.array(words[word.head])
+
+   while words[word.head].deprel != "root":
+      # If the head is already visited then return False
+      if word.head in visited:
          return False
-      wordId = words[wordId].head
+      else:
+         # Add the new head to visited
+         visited = np.append(visited, word)
+
+      if word.head == headId:
+         return True
+      if not words[word.head].deprel in allowedRootHeads:
+         return False
+      word = words[word.head]
    # Exception for the case where the headId is the root
    if words[headId].deprel == "root":
       return True
