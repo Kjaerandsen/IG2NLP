@@ -609,11 +609,11 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
       firstIndex = i
       doubleNmod = False
       # Find and encapsulate any other nmods connected to the last detected nmod
-      for j in range(wordLen):
+      for j in range(i, wordLen):
          if words[j].deprel == "nmod" and words[j].head == i:
             lastIndex = j
             doubleNmod = True
-            i = j
+            i = lastIndex
       
       # if two or more nmod dependencies are connected then treat it as a P,p
       if doubleNmod:
