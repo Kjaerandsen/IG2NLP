@@ -16,7 +16,7 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
    if symbol == "I" or symbol == "F":
       # Go through the word list and find the scope of the component
       while j < wordLen:
-         if ifHeadRelationAim(words, j, i):
+         if ifHeadRelationRoot(words, j, i):
             scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, ccLocs, j)
          j += 1
    else:
@@ -169,7 +169,7 @@ def includeConj(words:list[Word], i:int, wordLen:int) -> int:
    if symbol == "I" or symbol == "F":
       # Go through the word list and find the scope of the component
       while j < wordLen:
-         if ifHeadRelationAim(words, j, i):
+         if ifHeadRelationRoot(words, j, i):
             scopeEnd, j = LogicalOperatorHelper(words[j], wordLen, scopeEnd, [], j)
          j += 1
    else:
@@ -247,16 +247,15 @@ def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
    return False
 
 # List of allowed head connections for the function below
-allowedAimHeads = ["conj","cc","det","amod","advmod"]
+allowedRootHeads = ["conj","cc","det","amod","advmod"]
 
-# TODO: Rename to root?
-def ifHeadRelationAim(words:list[Word], wordId:int, headId:int) -> bool:
+def ifHeadRelationRoot(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection, 
-   specifically for Aim (I) components"""
+   specifically for components detected by the root deprel (Constituted Function (F) and Aim (I))"""
    while words[words[wordId].head].deprel != "root":
       if words[wordId].head == headId:
          return True
-      if not words[words[wordId].head].deprel in allowedAimHeads:
+      if not words[words[wordId].head].deprel in allowedRootHeads:
          return False
       wordId = words[wordId].head
    # Exception for the case where the headId is the root

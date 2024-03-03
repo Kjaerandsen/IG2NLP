@@ -161,7 +161,7 @@ def test_validateNested():
    assert validateNested(words, False) == True
 
 def test_ifHeadRelation():
-   """Test for ifHeadRelation and ifHeadRelationAim functions"""
+   """Test for ifHeadRelation and ifHeadRelationRoot functions"""
    words:list[Word] = []
    words.append(createTestWord("1"))
    words.append(createTestWord("2"))
@@ -174,11 +174,11 @@ def test_ifHeadRelation():
 
    # Check if Word 1 is connected to word 0 for aim (root deprel)
    words[0].deprel = "root"
-   assert ifHeadRelationAim(words, 1, 0)
+   assert ifHeadRelationRoot(words, 1, 0)
 
    # Check if word 1 is connected to itself (False)
    assert ifHeadRelation(words, 1, 1) == False
-   assert ifHeadRelationAim(words, 1, 1) == False
+   assert ifHeadRelationRoot(words, 1, 1) == False
 
    # Check the detection through two extra chains
    words.append(createTestWord("3"))
@@ -204,15 +204,15 @@ def test_ifHeadRelation():
    words[3].deprel = "root"
    assert not ifHeadRelation(words, 2, 0)
 
-   # Should now fail because link in the chain are not in the allowedAimHeads
+   # Should now fail because link in the chain are not in the allowedRootHeads
    words[3].deprel = ""
    words[0].deprel = "root"
 
-   assert not ifHeadRelationAim(words,2,0)
+   assert not ifHeadRelationRoot(words,2,0)
 
    # Set all words to have allowed deprels
    for word in words:
       word.deprel="conj"
 
    # Should now be True
-   assert ifHeadRelationAim(words,2,0)
+   assert ifHeadRelationRoot(words,2,0)
