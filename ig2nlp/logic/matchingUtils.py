@@ -36,11 +36,11 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> in
          if words[j].deprel == "det":
             if j == scopeStart:
                detLocs.append(j)
-            elif words[j-1].deprel == "cc":
+            elif j-1 >= 0 and words[j-1].deprel == "cc":
                detLocs.append(j)
          # Remove additional puncts (i.e. "x, and y" -> "x and y")
          elif words[j].deprel == "punct" and words[j].text == ",":
-            if words[j+1].deprel == "cc":
+            if j+1 < wordLen and words[j+1].deprel == "cc":
                words[j].spaces = 0
                words[j].text = ""
             # If the word is a punct connected to the conj, then it should be replaced by a
@@ -411,10 +411,14 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
    if andCount > 0 and orCount > 0:
       logger.warning('Found both "and" and "or" logical operators in component, '+
                   "please review manually to solve encapsulation issues.")
+      # Basic internal scoping, if both [AND] and [OR] are present then encapsulate [OR]
+      # TODO: Handle a [AND] b [OR] c [OR] d (encapsulate (b [OR] c [OR] d) not (b [OR] (c) [OR] d))
+      # Potentially best to just note all [OR] locs and cc locs, if ccLocs i+1 is not in or locs 
+      # close, else just iterate
       for j in range(start,end):
-         if words[j+1].text == "[OR]":
+         if j+1 < end and words[j+1].text == "[OR]":
             words[j].text = "(" + words[j].text
-         elif words[j-1].text == "[OR]":
+         elif j-1 >= start and words[j-1].text == "[OR]":
             words[j].text += ")"
 
    return words
@@ -437,15 +441,14 @@ def logicalOperatorImbalanced(words:list[Word]):
       # remove the logical operator from the component
       if words[i].text in ["[AND]", "[OR]"] and words[i].symbol != "":
          words[i].text = words[i].text[1:len(words[i].text)-1].lower()
-         if words[i].position == 1 and i+1 < wordLen:
+         if i+1 < wordLen and words[i].position == 1:
             if words[i+1].position != 2:
                words[i+1].setSymbol(words[i].symbol,1)
             else: words[i+1].position == 2
          elif words[i].position == 2:
-            if words[i-1].position != 1:
+            if i-1 >= 0 and words[i-1].position != 1:
                words[i-1].setSymbol(words[i].symbol,2)
-            else: words[i-1].position == 0
-         
+            elif i-1 >= 0: words[i-1].position == 0
          # Remove the old annotation of the logical operator
          words[i].setSymbol()
 
@@ -466,18 +469,19 @@ def handleScopingIssues(words:list[Word]):
             #print("WITHIN")
             remove = False
             # Look for closing bracket
-            for j in range(i+1, wordLen):
-               if words[j].symbol == words[start].symbol and words[start].nested == False:
-                  #print("j: ", words[j].text, words[j].symbol, words[j].position, words[j].nested)
-                  if words[j].position == 0 or 2:
-                     words[j].position = 2
-                     remove = True
-                     within = False
-                     #print("FOUND END")
-                     break
-                  else:
-                     #print("Removing annotation start: ", words[j].symbol, words[j].position)
-                     words[j].setSymbol()
+            if i+1 < wordLen:
+               for j in range(i+1, wordLen):
+                  if words[j].symbol == words[start].symbol and words[start].nested == False:
+                     #print("j: ", words[j].text, words[j].symbol, words[j].position, words[j].nested)
+                     if words[j].position == 0 or 2:
+                        words[j].position = 2
+                        remove = True
+                        within = False
+                        #print("FOUND END")
+                        break
+                     else:
+                        #print("Removing annotation start: ", words[j].symbol, words[j].position)
+                        words[j].setSymbol()
             # If found then remove all internal operators
             if remove:
                for k in range(start+1, j-1):

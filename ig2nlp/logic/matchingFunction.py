@@ -85,7 +85,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
             # TODO: Reconsider in the future if this is accurate enough
             # There are currently false positives, but they should be mitigated by better
             # Cex component detection
-            if words[word.head].symbol == "Bdir" and words[i-1].symbol == "Bdir":
+            if i-1 >= 0 and words[word.head].symbol == "Bdir" and words[i-1].symbol == "Bdir":
                word.setSymbol("Bdir,p")
 
          # Direct object handling (Bdir), (Bdir,p)
@@ -99,7 +99,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
          case "nmod:poss":
             if words[word.head].deprel == "obj" and word.head == i+1:
                # Check if there is a previous amod connection and add both
-               if words[i-1].deprel == "amod" and words[i-1].head == i:
+               if i-1 >= 0 and words[i-1].deprel == "amod" and words[i-1].head == i:
                   words[i-1].setSymbol("Bdir,p", 1)
                   word.setSymbol("Bdir,p", 2)
                # Else only add the Bdir,p
@@ -110,7 +110,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
          
          # (O) Or else detection
          case "cc":
-            if words[i+1].text == "else":
+            if i+1 < wordLen and words[i+1].text == "else":
                orElseHandler(words, wordsBak, wordLen, words2, i, semantic)
                return words2
          # Advmod of Aim is correlated with execution constraints (Cex)
@@ -177,8 +177,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
    # Until the word is no longer connected to the advcl
       
    # Set the lastVal to the current id -1   
-   lastIndex = i+1
-   for j in range(i+1,wordLen):
+   lastIndex = i+1 if i+1 < wordLen else i
+   for j in range(lastIndex,wordLen):
       if not ifHeadRelation(words, j, i):
          lastIndex = j-1
          break
@@ -459,7 +459,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
             #print("Nmod head relation to a: ", words[j], words[i])
             j = smallLogicalOperator(words, j, "A", wordLen)
             other = True
-            if words[i+1].deprel == "appos" and words[i+1].head == i:
+            if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
                if words[i].position == 2:
                   words[i].setSymbol()
                   words[i+1].setSymbol("A",2)
@@ -470,7 +470,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                   i+=1
       if not other:
          i = smallLogicalOperator(words, i, "A", wordLen)
-         if words[i+1].deprel == "appos" and words[i+1].head == i:
+         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
             if words[i].position == 2:
                words[i].setSymbol()
                words[i+1].setSymbol("A",2)
@@ -485,7 +485,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    # in that case, the coreference resolution will be used to add the appropriate attribute
    elif words[words[i].head].deprel == "root":
       i = smallLogicalOperator(words, i, "A", wordLen)
-      if words[i+1].deprel == "appos" and words[i+1].head == i:
+      if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
          if words[i].position == 2:
             words[i].setSymbol()
             words[i+1].setSymbol("A",2)
@@ -497,7 +497,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
 
    # (A,p) detection mechanism, might be too specific. 
    # Is overwritten by Aim (I) component in several cases
-   if words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
+   if i+1 < wordLen and words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
       #print("ADVCL")
       words[i+1].setSymbol("A,p")
 
@@ -509,12 +509,14 @@ def deonticHandler(words:list[Word], i:int) -> int:
       #print("Deontic: ", words[i].xpos) 
       #Might be worth looking into deontics that do not have xpos of MD
       # Combine two adjacent deontics if present.
-      if words[i-1].symbol == "D":
+      if i-1 >= 0 and words[i-1].symbol == "D":
          words[i-1].setSymbol("D",1)
          words[i].setSymbol("D",2)
       else:
+         # If the head is a word after the deontic
          if (words[i].head - i) > 1:
             words[i].setSymbol("D",1)
+            # Encapsulate everything before the head (head is Aim (I))
             i = words[i].head-1
             words[i].setSymbol("D",2)
          else:

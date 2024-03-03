@@ -121,7 +121,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
          
          # (O) Or else detection
          case "cc":
-            if words[i+1].text == "else":
+            if i+1 < wordLen and words[i+1].text == "else":
                m.orElseHandler(words, wordsBak, wordLen, words2, i, semantic, True)
                return words2
          # Advmod of Aim is correlated with execution constraints (Cex)
@@ -178,7 +178,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
          case "cop":
             #print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
             if word.pos == "AUX":
-               i = constitutiveFunctionAuxHandler(words, i)
+               i = constitutiveFunctionAuxHandler(words, wordLen, i)
 
          # Default, for matches based on more than just a single deprel
          case _:
@@ -280,7 +280,7 @@ def modalHandler(words:list[Word], i:int) -> int:
    if words[i].xpos != "MD":
       logger.debug("aux no MD xpos: " + words[i].text + " | pos" + words[i].pos + 
                    " | xpos" + words[i].xpos)
-      i = constitutiveFunctionAuxHandler(words, i)
+      i = constitutiveFunctionAuxHandler(words, len(words), i)
       #print(words[i].text, words[i].symbol,words[i].position)
       return i
    
@@ -314,24 +314,24 @@ def modalHandler(words:list[Word], i:int) -> int:
    return i
 
 
-def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
+def constitutiveFunctionAuxHandler(words:list[Word], wordLen:int, i:int) -> int:
    """Handler for Constitutive Function (F) components detected using the aux dependency"""
    #print("Running constitutiveFunctionAuxHandler")
    word = words[i]
    #print(word.text, word.pos, word.xpos, word.deprel)
    
-   #if len(words) > i+3:
+   #if wordLen > i+3:
    #   print(words[i].text,words[i+1].text,words[i+2].text,words[i+3].text)
    #   print(words[i].deprel,words[i+1].deprel,words[i+2].deprel,words[i+3].deprel)
-   if words[i+1].deprel == "root":
-      if (len(words) > i+3 and words[i+2].deprel == "mark" 
+   if i+1 < wordLen and words[i+1].deprel == "root":
+      if (wordLen > i+3 and words[i+2].deprel == "mark" 
          and words[i+3].deprel == "xcomp" and words[i+3].head == i+1):
             words[i].setSymbol("F",1)
             words[i+3].setSymbol("F",2)
             #print(words[i+3])
             return i+3
    '''
-      if len(words) > i+2 and words[i+2].deprel == "xcomp":
+      if wordLen > i+2 and words[i+2].deprel == "xcomp":
          words[i].setSymbol("M",1)
          words[i+1].setSymbol("M",2)
          words[i+2].setSymbol("F")
@@ -340,30 +340,36 @@ def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
    words[i].setSymbol("F")
 
    if word.text == "are":
-      if words[i+1].deprel == "conj":
-         words[i+1].setSymbol("P")
-      elif words[i+1].deprel == "amod" or words[i+1].deprel == "advmod":
-         words[i+1].setSymbol("P,p")
-         if words[i+1].head == i+2:
-            words[i+2].setSymbol("P")
-            i += 2
+      if i+1 < wordLen:
+         if words[i+1].deprel == "conj":
+            words[i+1].setSymbol("P")
+         elif words[i+1].deprel == "amod" or words[i+1].deprel == "advmod":
+            words[i+1].setSymbol("P,p")
+            if words[i+1].head == i+2:
+               words[i+2].setSymbol("P")
+               i += 2
+            else:
+               words[words[i+1].head].setSymbol("P")
+               words[words[i+1].head-1].setSymbol("P,p",2)
+               words[i+1].setSymbol("P,p",1)
+               i = words[i+1].head
+         elif words[i+1].deprel == "root" and words[i+1].pos == "VERB":
+            words[i].position = 1
+            words[i+1].setSymbol("F",2)
+            #print(WordsToSentence(words))
+            return i+1
          else:
-            words[words[i+1].head].setSymbol("P")
-            words[words[i+1].head-1].setSymbol("P,p",2)
-            words[i+1].setSymbol("P,p",1)
-            i = words[i+1].head
-      elif words[i+1].deprel == "root" and words[i+1].pos == "VERB":
-         words[i].position = 1
-         words[i+1].setSymbol("F",2)
-         #print(WordsToSentence(words))
-         return i+1
+            #print(words[i+1].pos, words[i].text, "caseThing")
+            words[i+1].setSymbol("P")
+            i+=1
       else:
          #print(words[i+1].pos, words[i].text, "caseThing")
          words[i+1].setSymbol("P")
          i+=1
+
    elif word.text == "be":
 
-      if words[i+1].deprel == "det":
+      if i+1 < wordLen and words[i+1].deprel == "det":
          i += 2
          iBak = i
          if words[i].deprel == "amod" or words[i].deprel == "advmod":
@@ -422,7 +428,7 @@ def constitutiveFunctionAuxHandler(words:list[Word], i:int) -> int:
       #print("be")
    else:
       #print("Exception:", word.text)
-      if words[i-1].symbol == "F":
+      if i-1 >= 0 and words[i-1].symbol == "F":
          if words[i-1].position != 2:
             words[i-1].position = 1
          else:
@@ -501,17 +507,18 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
             return i
          # Check if the word overlaps with the end of another symbol. If so move the end back one word.
          if words[iBak-1].position == 2:
-            if words[iBak-2].position == 1:
-               words[iBak-2].position = 0
-            else:
-               words[iBak-2].position = 2
-               words[iBak-2].symbol = words[iBak-1].symbol
+            if iBak-2 >= 0:
+               if words[iBak-2].position == 1:
+                  words[iBak-2].position = 0
+               else:
+                  words[iBak-2].position = 2
+                  words[iBak-2].symbol = words[iBak-1].symbol
          words[iBak-1].setSymbol("F",1)
 
       # Check for preceeding negation "not"
       if words[iBak-1].text.lower() == "not":
          # If preceeding Constitutive Function (F)
-         if words[iBak-2].symbol == "F":
+         if iBak-2 >= 0 and words[iBak-2].symbol == "F":
             if words[iBak-2].position == 0:
                words[iBak-2].position = 1
             else:
@@ -573,9 +580,9 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
    # If the flag is True combine the object with single word properties preceeding 
    # the object
    if CombineObjandSingleWordProperty:
-      if (words[iBak-1].symbol == "P,p" and words[iBak-1].deprel == "amod"
+      if (iBak-1 >= 0 and words[iBak-1].symbol == "P,p" and words[iBak-1].deprel == "amod"
          and words[iBak-1].position == 0):
-         if (words[iBak-2].symbol != "P,p"):
+         if (iBak-2 >= 0 and words[iBak-2].symbol != "P,p"):
             if iBak != i:
                # Remove old annotation start
                words[iBak].setSymbol()
@@ -611,9 +618,10 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
       # if two or more nmod dependencies are connected then treat it as a P,p
       if doubleNmod:
          # Set the first word after the direct object component as the start of the component
-         words[words[firstIndex].head+1].setSymbol("P,p", 1)
-         words[lastIndex].setSymbol("P,p", 2)
-         i = lastIndex
+         if words[firstIndex].head+1 < lastIndex:
+            words[words[firstIndex].head+1].setSymbol("P,p", 1)
+            words[lastIndex].setSymbol("P,p", 2)
+            i = lastIndex
       else:
          # Set the first word after the direct object component as the start of the component
          if words[words[firstIndex].head].position == 0:
