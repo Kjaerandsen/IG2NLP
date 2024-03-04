@@ -92,21 +92,16 @@ def main() -> None:
 def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSize:int) -> list:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
-   
-   global useREST
+
    global flaskURL
    global env
-   
-   flaskURL = env['flaskURL']
-   useREST = env['useREST']
 
    jsonLen = len(jsonData)
    logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
 
-   if not useREST or jsonLen != 1:
+   if jsonLen != 1:
       logger.info("Loading nlp pipeline")
       global nlp
-      useREST = False
       nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
                      processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
                      package={
@@ -150,18 +145,15 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
-      if not useREST:
-         words:list[Word]=[]
-         #words = doc.sentences
-         #print(len(doc.sentences))
-         for j in range(len(doc.sentences)):
-            #for word in doc.sentences[j].words:
-            #   print(word.text)
-            words.append(convertWordFormat(doc.sentences[j].words))
-            #for word in words[0]:
-               #print(word.text)
-      else:
-         words = doc
+      words:list[Word]=[]
+      #words = doc.sentences
+      #print(len(doc.sentences))
+      for j in range(len(doc.sentences)):
+         #for word in doc.sentences[j].words:
+         #   print(word.text)
+         words.append(convertWordFormat(doc.sentences[j].words))
+         #for word in words[0]:
+            #print(word.text)
 
       if constitutive:
          output = matchingHandlerConstitutive(words[0], semanticAnnotations)
@@ -198,7 +190,6 @@ def nlpPipeline(textDoc:str) -> list[stanza.Document]:
 def cacheMatcher(jsonData:list, constitutive:bool) -> list:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
-   global flaskURL
    global env
 
    jsonLen = len(jsonData)
