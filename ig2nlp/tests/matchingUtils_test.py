@@ -29,7 +29,7 @@ def createConj(text:str, headId:int) -> Word:
    word.spaces = 1
    return word
 
-def test_smallLogicalOperator():
+def test_smallLogicalOperator() -> None:
    words:list[Word] = []
    words.append(createTestWord("a"))
    words[0].deprel = "root"
@@ -140,7 +140,7 @@ def test_smallLogicalOperator():
    assert i == 7
    assert WordsToSentence(wordsBak) == "Bdir(a [AND] b [AND] (c [OR] amod d))"
 
-def test_validateNested():
+def test_validateNested() -> None:
    words:list[Word] = []
    words.append(createTestWord("1"))
    words.append(createTestWord("2"))
@@ -160,7 +160,7 @@ def test_validateNested():
    words[1].setSymbol("I")
    assert validateNested(words, False) == True
 
-def test_ifHeadRelation():
+def test_ifHeadRelation() -> None:
    """Test for ifHeadRelation and ifHeadRelationRoot functions"""
    words:list[Word] = []
    words.append(createTestWord("1"))

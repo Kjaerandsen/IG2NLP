@@ -15,7 +15,9 @@ def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
    a formatted string of annotated text"""
    words = compoundWordsHandler(words)
    words = matchingFunction(words, semantic)
+   print(WordsToSentence(words))
    if coref: words = corefReplace(words, semantic)
+   print(WordsToSentence(words))
    if semantic and numberAnnotation: words = attributeSemantic(words)
    # Handle cases where a logical operator is included in a component without a matching word
    logicalOperatorImbalanced(words)
@@ -158,6 +160,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
       
       #print(words[i].text, words[i].symbol, words[i].position)
       # Iterate to the next word
+      #print(WordsToSentence(words))
       i += 1
 
    return words
@@ -453,8 +456,11 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
 
 def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for attribute (A) components detected using the nsubj dependency"""
+   print("Running attributeHandler, ", words[i].text, words[i].deprel, words[words[i].head].deprel)
    if words[i].pos != "PRON":
       # Look for nmod connected to the word i
+
+      #i = smallLogicalOperator(words, i, "A", wordLen)
       other = False
       for j in range(wordLen):
          if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
@@ -482,7 +488,6 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                words[i].setSymbol("A",1)
                words[i+1].setSymbol("A",2)
                i+=1
-
    # If the nsubj is a pronoun connected to root then handle it as an attribute
    # This may need to be reverted in the future if coreference resolution is used
    # in that case, the coreference resolution will be used to add the appropriate attribute
@@ -504,6 +509,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
       #print("ADVCL")
       words[i+1].setSymbol("A,p")
 
+   #print(WordsToSentence(words))
    return i
 
 def deonticHandler(words:list[Word], i:int) -> int:

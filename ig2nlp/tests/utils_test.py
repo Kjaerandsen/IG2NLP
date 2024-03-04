@@ -1,7 +1,7 @@
 from utility.utility import *
 import pytest
 
-def createTestWord(name):
+def createTestWord(name) -> Word:
    word = Word(name,"","",0,0,"","","")
 
    return word
@@ -10,7 +10,7 @@ def createTestWord(name):
    Word class tests
 '''
 
-def test_Word_combineWords():
+def test_Word_combineWords() -> None:
    # Test function without spaces
    # Left to Right
    word1 = createTestWord("1")
@@ -36,13 +36,13 @@ def test_Word_combineWords():
    word1.combineWords(word2, True)
    assert word1.text == "1  2"
 
-def test_Word_toLogical():
+def test_Word_toLogical() -> None:
    word = createTestWord("and")
 
    word.toLogical()
    assert word.text == "[AND]"
 
-def test_Word_setSymbol():
+def test_Word_setSymbol() -> None:
    word = createTestWord("and")
 
    word.setSymbol("A")
@@ -70,7 +70,7 @@ def test_Word_setSymbol():
    assert word.position == 0 and word.symbol == "" and word.nested == False
 
 
-def test_Word_buildString():
+def test_Word_buildString() -> None:
    word = createTestWord("test")
    
    # Word without any spaces or symbols
@@ -121,7 +121,7 @@ def test_Word_buildString():
    Tests for functions manipulating lists of Word class objects
 '''
 
-def test_addToCustomWords():
+def test_addToCustomWords() -> None:
    words = []
    words.append(createTestWord("1"))
 
@@ -132,7 +132,7 @@ def test_addToCustomWords():
 
 # Test for removeWord function, tests that text contents are maintained, and error handling
 # Does not test the head connection adjustment functionality
-def test_removeWord():
+def test_removeWord() -> None:
    # Create wordist with text 0,1,2,3,4
    words = []
    i = 0
@@ -176,7 +176,7 @@ def test_removeWord():
 
 # Basic test of addWord function
 # Does not test the head connection adjustment functionality
-def test_addWord():
+def test_addWord() -> None:
    words = []
    i = 0
    while i < 5:
@@ -189,7 +189,7 @@ def test_addWord():
 
    assert words[4].text == "3.5"
 
-def test_WordsToSentence():
+def test_WordsToSentence() -> None:
    words:list[Word] = []
    i = 0
    while i < 5:
@@ -211,7 +211,7 @@ def test_WordsToSentence():
    # Verify the updated output
    assert WordsToSentence(words) == " Cac{0} A(1 2) 3 3.5 4"
 
-def test_semanticAnnotation():
+def test_semanticAnnotation() -> None:
    # A new word should not have a semantic annotation present
    word=createTestWord("Word")
    assert word.buildString() == "Word"
