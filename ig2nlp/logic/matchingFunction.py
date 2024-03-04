@@ -39,6 +39,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
    i = 0
 
    while i < wordLen:
+      #print(words[i].text, words[i].symbol, words[i].position)
       word = words[i]
       deprel = word.deprel
 
@@ -155,6 +156,7 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
                  and deprel != "det" and deprel != "case"):
                logger.debug("Unhandled dependency: " + deprel)
       
+      #print(words[i].text, words[i].symbol, words[i].position)
       # Iterate to the next word
       i += 1
 
@@ -197,9 +199,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
       if constitutive:
          condition = mc.matchingFunctionConstitutive(
-            reusePartSoS(wordsBak[:lastIndex], lastIndex), semantic)
+            reusePartSoS(copy.deepcopy(wordsBak[:lastIndex]), lastIndex), semantic)
       else:
-         condition = matchingFunction(reusePartSoS(wordsBak[:lastIndex], lastIndex), semantic)
+         condition = matchingFunction(reusePartSoS(copy.deepcopy(wordsBak[:lastIndex]), lastIndex), 
+                                      semantic)
 
       oblCount = 0
       for conditionWord in condition:
@@ -230,7 +233,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
          words2.append(Word("","","",0,0,"","","",0,0,0,symbol,True,2))
          words2.append(words[lastIndex])
       else:
-         words2 += words[:lastIndex]
+         words2 += wordsBak[:lastIndex]
          words2[0].setSymbol(symbol,1)
          if semantic:
             if date:
