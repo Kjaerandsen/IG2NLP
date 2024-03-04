@@ -1,6 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 import stanza
+import copy
 from stanza.models.common.doc import Token
 from stanza.models.common.doc import Word as StanzaWord
 import logging
@@ -537,8 +538,11 @@ def WordsToSentence(words:list[Word], stripFormatting:bool=False) -> str:
 
    for word in words:
       if stripFormatting:
-         word.setSymbol()
-      sentence += word.buildString()
+         wordCopy:Word = copy.deepcopy(word)
+         wordCopy.setSymbol()
+         sentence += word.buildString()
+      else:
+         sentence += word.buildString()
       i += 1
    
    return sentence
