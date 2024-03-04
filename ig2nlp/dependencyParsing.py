@@ -14,7 +14,7 @@ if len(args)<2:
         'dependencyParsing "Input string here"')
    sys.exit()
 
-nlp = stanza.Pipeline('en', use_gpu=env['useGPU'], 
+nlp = stanza.Pipeline(lang='en', use_gpu=env['useGPU'], 
    processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
    package={
       "tokenize": "combined",
@@ -34,7 +34,7 @@ displacyPort = env['displacyPort']
 del env
 
 # Take the input string
-doc = nlp(args[1])
+doc:stanza.Document = nlp(args[1])
 
 print('Now printing named entities\n')
 

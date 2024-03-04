@@ -1,5 +1,6 @@
 import json
 import stanza
+from stanza.models.common.doc import Sentence
 from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility.utility import *
@@ -7,7 +8,7 @@ import argparse
 
 semanticAnnotations = False
 
-def main():
+def main() -> None:
    parser = argparse.ArgumentParser()
    parser.add_argument("id", 
       help="Id from the input to run through the parser, -1 goes through all statements")
@@ -34,10 +35,10 @@ def main():
    if not args.input:
       filename = "../data/input.json"
    else:
-      filename = "../data/"+args.input+".json"
+      filename:str = "../data/"+args.input+".json"
 
    if args.output:
-      outfilename = "../data/"+args.output+".json"
+      outfilename:str = "../data/"+args.output+".json"
    else:
       outfilename = filename
 
@@ -56,7 +57,7 @@ def main():
    if not args.reuse:
       # If argument is -1 then go through all the items
       if i == -1:
-         jsonData = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
+         jsonData: list = MatcherMiddleware(jsonData, args.constitutive, args.single, batchSize)
 
       # Else only go through the selected item
       else:
@@ -124,12 +125,12 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    # Delete the environment variables dictionary
    del env
 
-   textDocs=[]
+   textDocs:list[str]=[]
    for jsonObject in jsonData:
       textDocs.append(jsonObject['baseTx'])
 
    if singleMode:
-      docs=[]
+      docs:list[stanza.Document]=[]
       for sentence in textDocs:
          docs.append(nlpPipeline(sentence))
    else:
@@ -150,11 +151,15 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
       if not useREST:
-         words=[]
+         words:list[Word]=[]
          #words = doc.sentences
          #print(len(doc.sentences))
          for j in range(len(doc.sentences)):
+            #for word in doc.sentences[j].words:
+            #   print(word.text)
             words.append(convertWordFormat(doc.sentences[j].words))
+            #for word in words[0]:
+               #print(word.text)
       else:
          words = doc
 
@@ -176,21 +181,21 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    logger.info("Finished running matcher\n\n")
    return jsonData
 
-def nlpPipelineMulti(textDocs:list) -> list:
+def nlpPipelineMulti(textDocs:list) -> list[stanza.Document]:
    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
    logger.debug("Running multiple statement pipeline")
    docs = nlp.bulk_process(textDocs)
    logger.debug("Finished running multiple statement pipeline")
    return docs
    
-def nlpPipeline(textDoc:str):
+def nlpPipeline(textDoc:str) -> list[stanza.Document]:
    """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
    logger.debug("Running single statement pipeline")
    doc = nlp.process(textDoc)
    logger.debug("Finished running single statement pipeline")
    return doc
 
-def cacheMatcher(jsonData:list, constitutive:bool):
+def cacheMatcher(jsonData:list, constitutive:bool) -> list:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
    global flaskURL
