@@ -1,6 +1,8 @@
 from os import getenv
 from dotenv import load_dotenv
 import stanza
+from stanza.models.common.doc import Token
+from stanza.models.common.doc import Word as StanzaWord
 import logging
 
 # Word for handling words,
@@ -184,17 +186,18 @@ def wordFromDict(input:dict) -> Word:
 
    return output
 
-def convertWordFormat(words:list) -> list[Word]:
+def convertWordFormat(words:list[StanzaWord]) -> list[Word]:
    """ Takes the words from the Stanza nlp pipeline, converts the words and data into a list of the
    Word class"""
 
    i = 0
-   wordLen = len(words)
+   wordLen:int = len(words)
 
-   customWords = []
+   customWords:list[Word] = []
 
    while i < wordLen:
-      token = words[i].parent
+      #print("WORD", i, words[i].text)
+      token:Token = words[i].parent
       # This may need separate handling for MWT's to handle the BIE formatting
       if token.multi_ner != None and token.multi_ner[0] != 'O':
          if len(token.multi_ner) > 1 and token.multi_ner[0] != token.multi_ner[1]:
@@ -204,47 +207,37 @@ def convertWordFormat(words:list) -> list[Word]:
       # If no start char then it is a mwt
       # Handle the words of the mwt then iterate
       if words[i].start_char == None:
+         # Set the start location
+         start = token.start_char
+         # If the previous word ends before the start char, then set the location to the end of that
+         # word instead
+         if i-1 >= 0 and start < customWords[i-1].end:
+            start = customWords[i-1].end
 
-         # Get the amount of words to handle
-         tokenSize = len(token.id)-1
+         # Set the end to the start + the length of the word
+         end = start + len(words[i].text)
 
+         # Get the matching substring from the token to replace the word text
+         # This fixes cases where the token has capitalization, and the word text does not
          tokenText = token.text
-
-         startChar = token.start_char
-         endChar = startChar + len(words[i].text)
-
-         wordText = tokenText[:endChar]
-         tokenText = tokenText[len(words[i].text):]
-
+         startLoc = tokenText.lower().find(words[i].text.lower())
+         tokenText = tokenText[startLoc:startLoc+len(words[i].text)]
+         
+         # Set the spaces according to the start of the new word and the end of the previous
+         spaces = 0
          if i > 0:
-            spaces = startChar - customWords[i-1].end
-         else:
-            spaces = 0
+            spaces = start - customWords[i-1].end
+            if spaces < 0: spaces = 0
 
-         addToCustomWords(customWords,words[i], wordText, startChar,endChar,spaces)
+         #if i+1 < len(words):
+         #   print(end, words[i+1].start_char, customWords[i-1].end, len(words[i].text))
+
+         # Add the word to the customWords list
+         addToCustomWords(customWords,words[i], tokenText, start, end, spaces)
          customWords[i].ner = words[i].parent.multi_ner[0]
-         i+=1
-
-         # TODO: look into the statement below
-         j=0
-         while j < tokenSize:
-            word = words[i]
-
-            startLoc = tokenText.find(word.text)
-
-            spaces = startLoc
-            startChar = endChar + spaces
-            endChar = startChar + len(word.text)
-
-            wordText = tokenText[startChar:endChar]
-            tokenText = tokenText[endChar:]
-            
-            addToCustomWords(customWords, words[i], wordText, startChar, endChar, spaces)
-            customWords[i].ner = words[i].parent.multi_ner[0]
-            i+=1
-            j+=1
-
+         
          # Go to the next iteration
+         i+=1
          continue
       
       # Else calculate the number of spaces and add the word to the list
@@ -258,7 +251,6 @@ def convertWordFormat(words:list) -> list[Word]:
       customWords[i].ner = words[i].parent.multi_ner[0]
 
       if words[i].coref_chains != None and len(words[i].coref_chains) > 0:
-         #print("\n\nNEW WORD\n\n")
          coref = words[i].coref_chains[0]
          #print(coref.__dict__.keys())
          #print(coref.__dict__)
