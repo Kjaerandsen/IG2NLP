@@ -540,7 +540,7 @@ def WordsToSentence(words:list[Word], stripFormatting:bool=False) -> str:
       if stripFormatting:
          wordCopy:Word = copy.deepcopy(word)
          wordCopy.setSymbol()
-         sentence += word.buildString()
+         sentence += wordCopy.buildString()
       else:
          sentence += word.buildString()
       i += 1
