@@ -5,7 +5,7 @@ import argparse
 
 semanticAnnotations = False
 
-def main():
+def main() -> None:
    parser = argparse.ArgumentParser()
    parser.add_argument("-i", "--input", 
       help="input file, defaults to json extension, i.e. input is treated as input.json")
@@ -15,8 +15,6 @@ def main():
    parser.add_argument("-b", "--batch", 
       help="Batch size for the nlp pipeline. Lower values require less memory,"+
       " recommended values between 10 and 30, 0 batches everything. Default 30.")
-   parser.add_argument("-o","--output", 
-      help="output file, defaults to json extension, i.e. output is treated as output.json")
    args = parser.parse_args()
 
    i = -1
@@ -29,6 +27,9 @@ def main():
       batchSize = int(args.batch)
    else:
       batchSize = 30
+
+   if args.single:
+      batchSize = 1
 
    # The testData.json is a json file containing an array of objects 
    # with a name, baseText and processedText.

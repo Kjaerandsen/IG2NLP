@@ -1,10 +1,34 @@
 import json
 import stanza
 from spacy import displacy
+import argparse
 
 from utility.utility import compoundWordsHandler, convertWordFormat, env
 
-filename = "../data/inputRegFull.json"
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", 
+   help="input file, defaults to json extension, i.e. input is treated as input.json")
+parser.add_argument("-s", "--single", 
+   help="single mode, run one at a time instead of batching the nlp pipeline.", 
+   action="store_true")
+parser.add_argument("-b", "--batch", 
+   help="Batch size for the nlp pipeline. Lower values require less memory,"+
+   " recommended values between 10 and 30, 0 batches everything. Default 30.")
+args = parser.parse_args()
+
+i = -1
+if not args.input:
+   filename = "../data/input.json"
+else:
+   filename = "../data/"+args.input+".json"
+
+if args.batch:
+   batchSize = int(args.batch)
+else:
+   batchSize = 30
+
+if args.single:
+   batchSize = 1
 
 nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
    processors='tokenize,pos,lemma,depparse,ner,mwt', 
@@ -36,7 +60,6 @@ with open(filename, "r") as input:
       i+=1
 
    docs = []
-   batchSize = 30
    while len(textDocs) > batchSize:
       pipelineResults = nlp.bulk_process(textDocs[:batchSize])
       for doc in pipelineResults: docs.append(doc)
