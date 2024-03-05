@@ -3,9 +3,11 @@ import stanza
 from stanza.models.common.doc import Sentence
 from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
+from logic.matchingFunctionShared import parseAndCompare
 from utility.utility import *
 import argparse
 from logic.classifier import *
+from copy import deepcopy
 
 semanticAnnotations = False
 
@@ -218,11 +220,21 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
 
       '''
       if constitutive:
+         #docBak = copy.deepcopy(doc[0])
          output = matchingHandlerConstitutive(doc[0], semanticAnnotations)
+         #outputComp = matchingHandler(docBak, semanticAnnotations)
+         #reg, const = parseAndCompare(doc[0], semanticAnnotations)
+         #output = const
          if len(doc) > 1:
             for sentence in doc[1:]:
-               output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
-               
+               output += " " + parseAndCompare(sentence, semanticAnnotations)
+               #sentenceBak = copy.deepcopy(sentence)
+               output += " " + matchingHandlerConstitutive(sentence, 
+                                                           semanticAnnotations)
+               #outputComp += " " + matchingHandler(sentenceBak, semanticAnnotations)
+         #print(output)
+         #print(outputComp)
+
       else:
          output = matchingHandler(doc[0], semanticAnnotations)
          if len(doc) > 1:

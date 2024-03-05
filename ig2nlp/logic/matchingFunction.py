@@ -3,6 +3,7 @@ import copy
 from utility.utility import *
 from logic.matchingUtils import *
 import logic.matchingFunctionConstitutive as mc
+from logic.classifier import *
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -15,14 +16,13 @@ def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
    a formatted string of annotated text"""
    words = compoundWordsHandler(words)
    words = matchingFunction(words, semantic)
-   print(WordsToSentence(words))
    if coref: words = corefReplace(words, semantic)
-   print(WordsToSentence(words))
    if semantic and numberAnnotation: words = attributeSemantic(words)
    # Handle cases where a logical operator is included in a component without a matching word
    logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
    handleScopingIssues(words)
+   print("Regulative coverage: ", coverage(words))
    return WordsToSentence(words)
 
 def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
@@ -456,7 +456,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
 
 def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for attribute (A) components detected using the nsubj dependency"""
-   print("Running attributeHandler, ", words[i].text, words[i].deprel, words[words[i].head].deprel)
+   #print("Running attributeHandler, ", words[i].text, words[i].deprel, words[words[i].head].deprel)
    if words[i].pos != "PRON":
       # Look for nmod connected to the word i
 

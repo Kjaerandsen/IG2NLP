@@ -4,6 +4,7 @@ import logic.matchingFunction as m
 from utility.utility import *
 from logic.matchingUtils import *
 from logic.matchingUtilsConstitutive import *
+from logic.classifier import *
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True
@@ -23,6 +24,7 @@ def matchingHandlerConstitutive(words:list[Word], semantic:bool) -> list[Word]:
    logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
    handleScopingIssues(words)
+   print("Constitutive coverage: ", coverage(words))
    return WordsToSentence(words)
 
 def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
