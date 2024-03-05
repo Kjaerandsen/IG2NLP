@@ -5,6 +5,7 @@ from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
 from utility.utility import *
 import argparse
+from logic.classifier import *
 
 semanticAnnotations = False
 
@@ -173,20 +174,6 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    logger.info("Finished running matcher\n\n")
    return jsonData
 
-def nlpPipelineMulti(textDocs:list) -> list[stanza.Document]:
-   """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
-   logger.debug("Running multiple statement pipeline")
-   docs = nlp.bulk_process(textDocs)
-   logger.debug("Finished running multiple statement pipeline")
-   return docs
-   
-def nlpPipeline(textDoc:str) -> list[stanza.Document]:
-   """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
-   logger.debug("Running single statement pipeline")
-   doc = nlp.process(textDoc)
-   logger.debug("Finished running single statement pipeline")
-   return doc
-
 def cacheMatcher(jsonData:list, constitutive:bool) -> list:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
@@ -222,7 +209,14 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
    for i, doc in enumerate(docs):
       print("\nStatement", str(i) + ": " + jsonData[i]['name'])
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'])
+      
+      '''
+      print(classifier(doc[0]))
+      if len(doc) > 1:
+         for sentence in doc[1:]:
+            print(classifier(sentence))
 
+      '''
       if constitutive:
          output = matchingHandlerConstitutive(doc[0], semanticAnnotations)
          if len(doc) > 1:
@@ -239,9 +233,23 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
       jsonData[i]["autoTx"] = output
-
+      
    logger.info("Finished running matcher\n\n")
    return jsonData
+
+def nlpPipelineMulti(textDocs:list) -> list[stanza.Document]:
+   """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
+   logger.debug("Running multiple statement pipeline")
+   docs = nlp.bulk_process(textDocs)
+   logger.debug("Finished running multiple statement pipeline")
+   return docs
    
+def nlpPipeline(textDoc:str) -> list[stanza.Document]:
+   """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
+   logger.debug("Running single statement pipeline")
+   doc = nlp.process(textDoc)
+   logger.debug("Finished running single statement pipeline")
+   return doc
+
 # Run the main function
 main()
