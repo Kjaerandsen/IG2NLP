@@ -91,15 +91,17 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             '''
 
          case "acl":
+            # TODO: Reconsider in the future if this is accurate enough
+            # There are currently false positives, but they should be mitigated by better
+            # Cex component detection
+
             # (E,p) Constituted Entity Property detection 2
             if words[word.head].symbol == "E":
                word.setSymbol("E,p")
             # (P,p) Constituting Properties property detection 3
-            # TODO: Reconsider in the future if this is accurate enough
-            # There are currently false positives, but they should be mitigated by better
-            # Cex component detection
             elif words[word.head].symbol == "P" and words[i-1].symbol == "P":
                word.setSymbol("P,p")
+
             elif words[word.head].symbol == "":
                # Check if within a component
                for j in range(word.head, -1, -1):

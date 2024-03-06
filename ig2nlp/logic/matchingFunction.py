@@ -401,6 +401,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
                                constitutive:bool=False) -> int:
    """Handler for execution constraint (Cex) components detected using the obl dependency"""
    # Check for connections to the obl both before and after
+   iBak = i
    scopeStart = i
    scopeEnd = i
 
@@ -427,17 +428,30 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
             break
 
    if scopeEnd - scopeStart >= minimumCexLength:
-      # If the first word is "to" and the statement is constitutive
-      # handle it as a Constituting Properties (P) component
-      if constitutive and words[scopeStart].text.lower() == "to":
-         scopeStart += 1
-         if scopeEnd-scopeStart > 1:
-            words[scopeStart].setSymbol("P",1)
-            words[scopeEnd].setSymbol("P",2)
-            words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
-         else:
-            words[scopeStart].setSymbol("P")
-         return scopeEnd
+      # If the statement is constitutive
+      if constitutive:
+         # If the obl is connected to a Constituting Entity Property (E,p) component
+         # extend the component to contain the "new component"
+         rootHead = words[words[iBak].head]
+         if rootHead.symbol == "E,p":
+            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, "E,p")
+         
+         # If the obl is connected to a Constituting Properties Property (P,p) component
+         # extend the component to contain the "new component"
+         elif rootHead.symbol == "P,p":
+            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, "P,p")
+         
+         # If the first word is "to" handle it as a Constituting Properties (P) component
+         elif words[scopeStart].text.lower() == "to":
+            scopeStart += 1
+            if scopeEnd-scopeStart >= 1:
+               words[scopeStart].setSymbol("P",1)
+               words[scopeEnd].setSymbol("P",2)
+               words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
+            else:
+               words[scopeStart].setSymbol("P")
+            return scopeEnd
+         
 
       # Check for Date NER in the component
       componentWords = words[scopeStart:scopeEnd+1]
@@ -492,6 +506,32 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
       if scopeEnd - scopeStart > 2:
          words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
    
+   return scopeEnd
+
+def oblConstitutivePropertyHandler(words:list[Word], iBak, scopeEnd, symbol) -> int:
+   rootHead = words[words[iBak].head]
+   if rootHead.position == 0:
+      scopeStart = words[iBak].head
+      # If the head is the start of the component find the end, remove its annotation,
+      # encapsulate, return
+   elif rootHead.position == 1:
+      for j in range(rootHead.position+1, scopeStart):
+         if words[j].position == 2:
+            words[j].setSymbol()
+            words[scopeEnd].setSymbol(symbol)
+            return scopeEnd
+   # If the head is the end of the component remove the symbol, encapsulate, return
+   else: 
+      rootHead.setSymbol()
+      words[scopeEnd].setSymbol(symbol)
+      return scopeEnd
+
+   if scopeEnd-scopeStart >= 1:
+      words[scopeStart].setSymbol(symbol,1)
+      words[scopeEnd].setSymbol(symbol,2)
+      words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
+   else:
+      words[scopeStart].setSymbol(symbol)
    return scopeEnd
 
 def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
