@@ -166,8 +166,8 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
    return words
 
 def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
-                wordLen:int, words2:list[Word], semantic:bool, constitutive:bool=False,
-                parseFirst:bool=False) -> bool:
+                     wordLen:int, words2:list[Word], semantic:bool, 
+                     constitutive:bool=False, parseFirst:bool=False) -> bool:
    """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
    firstVal = i
    
@@ -194,6 +194,8 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
       else:
          logger.debug("Last val in handleCondition was not punct: " + words[lastIndex].text)
          return False
+      
+   print(words[firstVal].text, words[lastIndex].text)
 
    date = False
    law = False
@@ -267,7 +269,10 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
       words2 += contents
 
       return True
-   elif words[firstVal].deprel == "mark":
+   #else:
+   elif words[firstVal].deprel == "mark" or words[firstVal].text == ",":
+      if words[firstVal].text == ",":
+         firstVal+=1
       #print("First val was not id 0 and deprel was mark", words[lastIndex])
       # Do the same as above, but also with the words before this advcl
       contents = []
@@ -364,11 +369,14 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
       return True
    else:
+      logger.debug("Unhandled advcl: " + words[firstVal].text + " | " + words[firstVal].deprel + 
+                  " | " + words[firstVal-1].text + " | " + words[firstVal-1].deprel  )
+      logger.debug(WordsToSentence(words[firstVal:lastIndex]))
       return False
 
 def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
               words2:list[Word], firstVal:int, 
-              semantic:bool, constitutive:bool=False):
+              semantic:bool, constitutive:bool=False) -> None:
    """Handler function for the Or else (O) component"""
 
    # Include everything but the last punct if it exists   

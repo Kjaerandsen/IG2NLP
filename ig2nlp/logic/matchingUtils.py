@@ -187,7 +187,7 @@ def includeConj(words:list[Word], i:int, wordLen:int) -> int:
    return scopeEnd
 
 def LogicalOperatorHelper(word:Word, wordLen:int, scopeEnd:int, 
-                    ccLocs:list[int], j:int):
+                    ccLocs:list[int], j:int) -> tuple[int, int]:
    """Adds cc deprels to ccLocs and escapes the sequence if
       an unsupported deprel is detected"""
    supported = ["punct","det","advmod","amod"]
@@ -454,7 +454,7 @@ def attributeSemantic(words:list[Word]) -> list[Word]:
 
    return words
 
-def logicalOperatorImbalanced(words:list[Word]):
+def logicalOperatorImbalanced(words:list[Word]) -> None:
    wordLen = len(words)
    for i in range(1, wordLen):
       # If a logical operator is the start and or end of a component 
@@ -472,7 +472,7 @@ def logicalOperatorImbalanced(words:list[Word]):
          # Remove the old annotation of the logical operator
          words[i].setSymbol()
 
-def handleScopingIssues(words:list[Word]):
+def handleScopingIssues(words:list[Word]) -> None:
    """Handler to fix scoping issues causing parsing errors"""
    wordLen = len(words)
    within = False
@@ -518,3 +518,35 @@ def handleScopingIssues(words:list[Word]):
             if words[i].symbol == words[start].symbol:
                within = False
       i += 1
+
+def findComponentEnd(words:list[Word], id:int, symbol:str) -> int:
+   """Function for a positive lookahead to find the end index of a component"""
+   for i in range(id+1,len(words)):
+      word = words[i]
+      if word.symbol == symbol:
+         if word.position == 2:
+            return id
+         else:
+            logger.warning("findComponentEnd invalid object scope")
+            return -1
+      elif word.symbol != "":
+         logger.warning("findComponentEnd invalid object scope")
+         return -1
+   logger.warning("findComponentEnd could not find the end")
+   return -1
+
+def findComponentStart(words:list[Word], id:int, symbol:str) -> int:
+   """Function for a positive lookbehind to find the start index of a component"""
+   for i in range(id-1,-1,-1):
+      word = words[i]
+      if word.symbol == symbol:
+         if word.position == 1:
+            return id
+         else:
+            logger.warning("findComponentStart invalid object scope")
+            return -1
+      elif word.symbol != "":
+         logger.warning("findComponentStart invalid object scope")
+         return -1
+   logger.warning("findComponentStart could not find the start")
+   return -1

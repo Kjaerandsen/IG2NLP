@@ -158,7 +158,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             # Old implementation used
             # i = words[i].head
             i = m.oblHandler(words, i, wordLen, semantic, True)
-            
+
          # (P) Constituting Properties detection
          case "obl:agent":
             # TODO: Look into other use cases for obl:agent
