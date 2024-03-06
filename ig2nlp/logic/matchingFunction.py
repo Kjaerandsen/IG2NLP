@@ -442,12 +442,32 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
 
       # Add the words as a Cex
       #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
-      words[scopeStart].setSymbol("Cex", 1)
-      if semantic:
-         if date:
-            words[scopeStart].addSemantic("ctx:tmp")
-         if law:
-            words[scopeStart].addSemantic("act:law")
+      if i-1 >= 0 and words[scopeStart].text == "by" and words[scopeStart-1].symbol == "Cex":
+         scopeStart -= 1
+         # If previous word is the end of the component         
+         if words[scopeStart].position == 2:
+            # remove symbol from the previous word
+            words[scopeStart].setSymbol()
+            # Look for the component start and update the scopeStart
+            j = scopeStart-1
+            while j >= 0:
+               if words[j].symbol == "Cex":
+                  scopeStart = j
+                  break
+               j-=1       
+         # handle semantic annotations
+         if semantic:
+            if date and not "ctx:tmp" in words[scopeStart].semanticAnnotation:
+               words[scopeStart].addSemantic("ctx:tmp")
+            if law and not "act:law" in words[scopeStart].semanticAnnotation:
+               words[scopeStart].addSemantic("act:law")
+      else:
+         words[scopeStart].setSymbol("Cex", 1)
+         if semantic:
+            if date:
+               words[scopeStart].addSemantic("ctx:tmp")
+            if law:
+               words[scopeStart].addSemantic("act:law")
       words[scopeEnd].setSymbol("Cex", 2)
       if scopeEnd - scopeStart > 2:
          words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
