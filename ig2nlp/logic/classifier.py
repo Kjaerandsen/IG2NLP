@@ -28,8 +28,7 @@ def classifier(words:list[Word]) -> str:
    return "None        "
 
 def coverage(words:list[Word]) -> float:
-   """Gives a percentage of component coverage of a statement. Also counts punctuation as words 
-   which may cause slight inaccuracies."""
+   """Gives a percentage of component coverage of a statement."""
    wordLen = len(words)
    count = 0
    inComponent = False
@@ -49,6 +48,8 @@ def coverage(words:list[Word]) -> float:
             else:
                count += 1
                logger.warning("Found invalid nesting of components in coverage")
+         elif word.text == ".":
+            count += 1
       # If within a component
       else:
          # If the current word is a component end, with the same component type and nesting
