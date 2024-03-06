@@ -98,8 +98,21 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             # TODO: Reconsider in the future if this is accurate enough
             # There are currently false positives, but they should be mitigated by better
             # Cex component detection
-            if words[word.head].symbol == "P" and words[i-1].symbol == "P":
+            elif words[word.head].symbol == "P" and words[i-1].symbol == "P":
                word.setSymbol("P,p")
+            elif words[word.head].symbol == "":
+               # Check if within a component
+               j = word.head
+               while j >= 0:
+                  word2 = words[j]
+                  if word2.symbol != "":
+                     if word2.position == 1:
+                        if word2.symbol == "E":
+                           word.setSymbol("E,p")
+                        elif word2.symbol == "P":
+                           word.setSymbol("P,p")
+                     break
+                  j-=1
 
          # Constituting Properties handling (P), (P,p)
          case "nmod":
@@ -219,6 +232,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
 
 def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for constituted entity (E) components detected using the nsubj dependency"""
+   iBak = i
    if words[i].pos != "PRON":
       # Look for nmod connected to the word i
       other = False
@@ -270,6 +284,21 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
       #print("ADVCL")
       words[i+1].setSymbol("E,p")
 
+   # TODO: consider turning this into a property instead (E,p)
+   prevWord = words[iBak-1]
+   startWord = words[iBak]
+   if prevWord.deprel == "amod" and prevWord.symbol == "":
+      if startWord.symbol == "E":
+         prevWord.setSymbol("E", 1)
+         if startWord.position == 1:
+            startWord.setSymbol()
+         elif startWord.position == 0:
+            startWord.setSymbol("E",2)
+         else:
+            logger.warning(
+         "constitutedEntityHandler found invalid scoping of Entity in amod dependency handling")
+            prevWord.setSymbol()
+            
    return i
 
 def modalHandler(words:list[Word], i:int) -> int:
