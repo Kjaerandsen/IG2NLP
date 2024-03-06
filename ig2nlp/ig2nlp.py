@@ -1,13 +1,14 @@
 import json
 import stanza
-from stanza.models.common.doc import Sentence
+import argparse
+#from stanza.models.common.doc import Sentence
+#from copy import deepcopy
+
 from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
 from logic.matchingFunctionShared import parseAndCompare
 from utility.utility import *
-import argparse
 from logic.classifier import *
-from copy import deepcopy
 
 semanticAnnotations = False
 
@@ -227,7 +228,7 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
          #output = const
          if len(doc) > 1:
             for sentence in doc[1:]:
-               output += " " + parseAndCompare(sentence, semanticAnnotations)
+               #output += " " + parseAndCompare(sentence, semanticAnnotations)
                #sentenceBak = copy.deepcopy(sentence)
                output += " " + matchingHandlerConstitutive(sentence, 
                                                            semanticAnnotations)
