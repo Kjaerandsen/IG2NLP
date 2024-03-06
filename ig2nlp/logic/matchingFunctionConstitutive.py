@@ -102,8 +102,7 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                word.setSymbol("P,p")
             elif words[word.head].symbol == "":
                # Check if within a component
-               j = word.head
-               while j >= 0:
+               for j in range(word.head, -1, -1):
                   word2 = words[j]
                   if word2.symbol != "":
                      if word2.position == 1:
@@ -112,7 +111,6 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                         elif word2.symbol == "P":
                            word.setSymbol("P,p")
                      break
-                  j-=1
 
          # Constituting Properties handling (P), (P,p)
          case "nmod":

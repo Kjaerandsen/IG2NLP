@@ -403,6 +403,7 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
    scopeStart = i
    scopeEnd = i
 
+   # Find the scope of the component by checking for head related words
    for j in range(wordLen):
       if (ifHeadRelation(words, j, i) 
             and words[j].deprel != "punct"):
@@ -411,13 +412,11 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
          elif j < scopeStart:
             scopeStart = j
    
+   # Look for preceeding acl to include if not annotated with another symbol
+   j = scopeStart
+   
+
    if scopeEnd - scopeStart >= minimumCexLength:
-      #TODO: Reconsider the two lines below in the future
-      # (removal of case, det in the component start, i.e. "of the")
-      #if words[scopeStart].deprel == "case" and words[scopeStart+1].deprel == "det":
-      #   scopeStart += 2
-      
-      
       # Check for Date NER in the component
       componentWords = words[scopeStart:scopeEnd+1]
 
@@ -440,8 +439,8 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
                      str(len(componentWords)))
       '''
 
-      # Add the words as a Cex
-      #print("Setting CEX", WordsToSentence(words[scopeStart:scopeEnd+1]))
+      # Annotate the words as a Execution Constraint (Cex) component
+      # If the current Cex starts with "by" compound it with the previous Cex if adjacent.
       if i-1 >= 0 and words[scopeStart].text == "by" and words[scopeStart-1].symbol == "Cex":
          scopeStart -= 1
          # If previous word is the end of the component         
@@ -449,18 +448,17 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
             # remove symbol from the previous word
             words[scopeStart].setSymbol()
             # Look for the component start and update the scopeStart
-            j = scopeStart-1
-            while j >= 0:
+            for j in range(scopeStart-1, -1, -1):
                if words[j].symbol == "Cex":
                   scopeStart = j
-                  break
-               j-=1       
+                  break    
          # handle semantic annotations
          if semantic:
             if date and not "ctx:tmp" in words[scopeStart].semanticAnnotation:
                words[scopeStart].addSemantic("ctx:tmp")
             if law and not "act:law" in words[scopeStart].semanticAnnotation:
                words[scopeStart].addSemantic("act:law")
+      # Else just annotate the component and potential semantic annotations
       else:
          words[scopeStart].setSymbol("Cex", 1)
          if semantic:
