@@ -59,6 +59,7 @@ print('Now printing dependencies\n')
 
 pd.set_option('display.max_rows', None)
 
+lastWord = 0
 for sentence in doc.sentences:
    df = pd.DataFrame(columns=["Word", "POS", "Head id", "Head word", "Dependency", "Lemma", "Feats"])
    sentence.words = compoundWordsHandler(sentence.words)
@@ -72,9 +73,10 @@ for sentence in doc.sentences:
       depData["words"].append({"text":word.text, "tag": word.pos})
       if word.head != 0:
          depData["arcs"].append({
-            "start": min(word.id-1, word.head-1), 
-            "end": max(word.id-1, word.head-1), 
+            "start": min(word.id-1 + lastWord, word.head-1 + lastWord), 
+            "end": max(word.id-1 + lastWord, word.head-1 + lastWord), 
             "label": word.deprel, "dir": "left" if word.head > word.id else "right"})
+   lastWord += len(sentence.words)      
    print("\nWords: ")   
    print(df)
    df = pd.DataFrame(columns=["Token", "POS", "Head id", "Dependency", "NER"])

@@ -78,6 +78,9 @@ with open(filename, "r") as input:
       depData = {"words":[],
          "arcs":[]}
 
+      # For multi-sentence docs a counter is kept of the last id of the previous sentence
+      # to make the connections accurate for new sentences, as they all originate from 0.
+      lastWord = 0
    # Based on the example found at: 
    # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
       for sentence in doc.sentences:
@@ -87,10 +90,10 @@ with open(filename, "r") as input:
             depData["words"].append({"text":word.text, "tag": word.pos})
             if word.head != -1:
                depData["arcs"].append({
-                  "start": min(word.id-1, word.head), 
-                  "end": max(word.id-1, word.head), 
+                  "start": min(word.id-1+lastWord, word.head+lastWord), 
+                  "end": max(word.id-1+lastWord, word.head+lastWord), 
                   "label": word.deprel, "dir": "left" if word.head > word.id-1 else "right"})
-
+         lastWord += len(sentence.words)
       html = displacy.render(depData, style="dep",
                   manual=True, page=True, minify=True)
       
