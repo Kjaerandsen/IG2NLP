@@ -149,11 +149,11 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
          
          # (Cex) Execution constraint detection
          case "obl":
-            i = m.executionConstraintHandler(words, i, wordLen, semantic)
+            i = m.executionConstraintHandler(words, i, wordLen, semantic, True)
          case "obl:tmod":
             # Old implementation used
             # i = words[i].head
-            i = m.executionConstraintHandler(words, i, wordLen, semantic)
+            i = m.executionConstraintHandler(words, i, wordLen, semantic, True)
          case "obl:agent":
             # TODO: Look into other use cases for obl:agent
             #print("obl:agent", word)

@@ -397,7 +397,8 @@ def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
    if words[wordLen-1].deprel == "punct":
       words2.append(words[wordLen-1])
 
-def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bool) -> int:
+def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bool, 
+                               constitutive:bool=False) -> int:
    """Handler for execution constraint (Cex) components detected using the obl dependency"""
    # Check for connections to the obl both before and after
    scopeStart = i
@@ -426,6 +427,18 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
             break
 
    if scopeEnd - scopeStart >= minimumCexLength:
+      # If the first word is "to" and the statement is constitutive
+      # handle it as a Constituting Properties (P) component
+      if constitutive and words[scopeStart].text.lower() == "to":
+         scopeStart += 1
+         if scopeEnd-scopeStart > 1:
+            words[scopeStart].setSymbol("P",1)
+            words[scopeEnd].setSymbol("P",2)
+            words = findInternalLogicalOperators(words, scopeStart, scopeEnd)
+         else:
+            words[scopeStart].setSymbol("P")
+         return scopeEnd
+
       # Check for Date NER in the component
       componentWords = words[scopeStart:scopeEnd+1]
 
