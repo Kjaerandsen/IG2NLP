@@ -150,12 +150,16 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
                      word.setSymbol("Cex")
          
          # (Cex) Execution constraint detection
+         # (E,p) Constituted Entity Property detection 
+         # (P,p) Constituting Properties Property detection
          case "obl":
-            i = m.executionConstraintHandler(words, i, wordLen, semantic, True)
+            i = m.oblHandler(words, i, wordLen, semantic, True)
          case "obl:tmod":
             # Old implementation used
             # i = words[i].head
-            i = m.executionConstraintHandler(words, i, wordLen, semantic, True)
+            i = m.oblHandler(words, i, wordLen, semantic, True)
+            
+         # (P) Constituting Properties detection
          case "obl:agent":
             # TODO: Look into other use cases for obl:agent
             #print("obl:agent", word)

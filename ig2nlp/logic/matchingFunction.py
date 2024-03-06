@@ -128,11 +128,11 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
          
          # (Cex) Execution constraint detection
          case "obl":
-            i = executionConstraintHandler(words, i, wordLen, semantic)
+            i = oblHandler(words, i, wordLen, semantic)
          case "obl:tmod":
             # Old implementation used
             # i = words[i].head
-            i = executionConstraintHandler(words, i, wordLen, semantic)
+            i = oblHandler(words, i, wordLen, semantic)
 
          # Default, for matches based on more than just a single deprel
          case _:
@@ -397,7 +397,7 @@ def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
    if words[wordLen-1].deprel == "punct":
       words2.append(words[wordLen-1])
 
-def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bool, 
+def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool, 
                                constitutive:bool=False) -> int:
    """Handler for execution constraint (Cex) components detected using the obl dependency"""
    # Check for connections to the obl both before and after
@@ -431,15 +431,20 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
       # If the statement is constitutive
       if constitutive:
          # If the obl is connected to a Constituting Entity Property (E,p) component
+         # or a Constituting Properties Property (P,p) component
          # extend the component to contain the "new component"
          rootHead = words[words[iBak].head]
-         if rootHead.symbol == "E,p":
-            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, "E,p")
+         if rootHead.symbol in ["E,p","P,p"]:
+            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, rootHead.symbol)
          
-         # If the obl is connected to a Constituting Properties Property (P,p) component
-         # extend the component to contain the "new component"
-         elif rootHead.symbol == "P,p":
-            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, "P,p")
+         # If the previous word is an acl deprel to a previous property
+         elif (words[scopeStart-1].deprel == "acl" and words[scopeStart-2].symbol in ["P,p", "E,p"]):
+            words[scopeEnd].setSymbol(words[scopeStart-2].symbol,2)
+            if words[scopeStart-2].position == 0:
+               words[scopeStart-2].setSymbol(words[scopeStart-2].symbol,1)
+            else:
+               words[scopeStart-2].setSymbol()
+            return scopeEnd
          
          # If the first word is "to" handle it as a Constituting Properties (P) component
          elif words[scopeStart].text.lower() == "to":
@@ -508,8 +513,8 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
    
    return scopeEnd
 
-def oblConstitutivePropertyHandler(words:list[Word], iBak, scopeEnd, symbol) -> int:
-   rootHead = words[words[iBak].head]
+def oblConstitutivePropertyHandler(words:list[Word], iBak:int, scopeEnd:int, symbol:str) -> int:
+   rootHead:Word = words[words[iBak].head]
    if rootHead.position == 0:
       scopeStart = words[iBak].head
       # If the head is the start of the component find the end, remove its annotation,
@@ -518,7 +523,7 @@ def oblConstitutivePropertyHandler(words:list[Word], iBak, scopeEnd, symbol) -> 
       for j in range(rootHead.position+1, scopeStart):
          if words[j].position == 2:
             words[j].setSymbol()
-            words[scopeEnd].setSymbol(symbol)
+            words[scopeEnd].setSymbol(symbol,2)
             return scopeEnd
    # If the head is the end of the component remove the symbol, encapsulate, return
    else: 
