@@ -15,9 +15,11 @@ semanticAnnotations = False
 def main() -> None:
    parser = argparse.ArgumentParser()
    parser.add_argument("id", 
-      help="Id from the input to run through the parser, -1 goes through all statements")
+      help="Id from the input to run through the parser, -1 goes through all statements",
+      default=-1, nargs='?', type=int)
    parser.add_argument("-i", "--input", 
-      help="input file, defaults to json extension, i.e. input is treated as input.json")
+      help="input file, defaults to json extension, i.e. input is treated as input.json",
+      default="input")
    parser.add_argument("-s", "--single", 
       help="single mode, run one at a time instead of batching the nlp pipeline.", 
       action="store_true")
@@ -29,27 +31,22 @@ def main() -> None:
       action="store_true")
    parser.add_argument("-b", "--batch", 
       help="Batch size for the nlp pipeline. Lower values require less memory,"+
-      " recommended values between 10 and 30, 0 batches everything. Default 30.")
+      " recommended values between 10 and 30, 0 batches everything. Default 30.",
+      default=30, type=int)
    parser.add_argument("-o","--output", 
       help="output file, defaults to json extension, i.e. output is treated as output.json")
    args = parser.parse_args()
 
-   i = int(args.id)
+   i = args.id
 
-   if not args.input:
-      filename = "../data/input.json"
-   else:
-      filename:str = "../data/"+args.input+".json"
+   filename:str = "../data/"+args.input+".json"
 
    if args.output:
       outfilename:str = "../data/"+args.output+".json"
    else:
-      outfilename = filename
+      outfilename:str = filename
 
-   if args.batch:
-      batchSize = int(args.batch)
-   else:
-      batchSize = 30
+   batchSize = int(args.batch)
 
    # The testData.json is a json file containing an array of objects 
    # with a name, baseText and processedText.
