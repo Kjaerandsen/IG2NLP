@@ -413,8 +413,17 @@ def executionConstraintHandler(words:list[Word], i:int, wordLen:int, semantic:bo
             scopeStart = j
    
    # Look for preceeding acl to include if not annotated with another symbol
-   j = scopeStart
-   
+   print(words[scopeStart-1].deprel, words[scopeStart-1].text, words[scopeStart-1].head, scopeStart)
+   if (words[scopeStart-1].deprel == "acl" and words[scopeStart-1].symbol==""):
+      scopeStart -= 1
+      for j in range(scopeStart, -1, -1):
+         if words[j].deprel == "case" and words[j].head == words[scopeStart].head:
+            scopeStart = j
+            break
+         if words[j].symbol != "":
+            logger.debug("In Cex acl lookbehind found different symbol")
+            scopeStart += 1
+            break
 
    if scopeEnd - scopeStart >= minimumCexLength:
       # Check for Date NER in the component
