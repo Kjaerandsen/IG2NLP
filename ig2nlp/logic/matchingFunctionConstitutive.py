@@ -53,6 +53,8 @@ def matchingFunctionConstitutive(words:list[Word], semantic:bool) -> list[Word]:
             if m.conditionHandler(words, wordsBak, i, wordLen, words2, 
                              semantic, True):
                return words2
+            else:
+               i = m.conditionHandler2(words, i, wordLen)
             
          # (P) Constituting Properties / (E,p) Constituted Entity detection
          case "obj":

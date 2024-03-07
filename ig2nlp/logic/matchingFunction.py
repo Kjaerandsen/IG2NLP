@@ -52,7 +52,9 @@ def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
          case "advcl":
             if conditionHandler(words, wordsBak, i, wordLen, words2, semantic):
                return words2
-            
+            else:
+               i = conditionHandler2(words, i, wordLen)
+         
          # (Bdir) Object detection
          case "obj":
             i = bdirHandler(words, i, wordLen)
@@ -170,13 +172,38 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
                      constitutive:bool=False, parseFirst:bool=False) -> bool:
    """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
    firstVal = i
-   
+
+   # TODO: Reconsider the commented out section in favor of the one below
+   # The solution below is only effective in cases where there are overlapping activation conditions
+   # It may be better to compound these instead.
+   """
    # Go through the statement until the word is connected to the advcl directly or indirectly
    for j in range(i):
       # If connected to the advcl then set firstVal to the id and break the loop
       if ifHeadRelation(words, j, i):
          firstVal = j
          break
+   """
+         
+   # Update to check if there are any overlapping annotations
+   # Go through the statement until the word is connected to the advcl directly or indirectly
+   inComp = False
+   nullified = True
+   for j in range(i):
+      # If connected to the advcl then set firstVal to the id and break the loop
+      if ifHeadRelation(words, j, i):
+         if inComp and words[j].position == 2:
+            inComp = False
+         elif words[j].symbol == "Cac":
+            inComp = True
+            nullified = True
+            firstVal = -1
+         elif nullified:
+            firstVal = j
+            nullified = False
+   
+   if firstVal == -1:
+      firstVal = i
 
    # Go through again from the activation condition++
    # Until the word is no longer connected to the advcl
@@ -369,9 +396,46 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
       return True
    else:
+      """
+      words[firstVal].setSymbol("Cac",1)
+      if words[lastIndex].text in [",","."]:
+         lastIndex -= 1
+      words[lastIndex].setSymbol("Cac",2)
+      words2 += words[:lastIndex+1]
+      if lastIndex - firstVal > 2:
+         words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
+
+      if wordLen > lastIndex+1:
+         lastPunct = False
+         lastVal = wordLen
+         if wordsBak[wordLen-1].deprel == "punct":
+            lastPunct = True
+            lastVal = wordLen-1
+            wordLen -= 1
+         
+         words2.append(wordsBak[lastIndex+1])
+         if constitutive:
+            contents = mc.matchingFunctionConstitutive(
+               reusePartEoS(wordsBak[lastIndex+2:lastVal], lastIndex+1), semantic
+            )   
+         else:
+            contents = matchingFunction(
+               reusePartEoS(wordsBak[lastIndex+2:lastVal], lastIndex+1), semantic
+            )   
+
+         words2 += contents
+         if lastPunct:
+            words2.append(wordsBak[lastVal])
+         
+         print(words2)
+      else:
+         words2 += words[lastIndex+1:]
+      """
+      """
       logger.debug("Unhandled advcl: " + words[firstVal].text + " | " + words[firstVal].deprel + 
                   " | " + words[firstVal-1].text + " | " + words[firstVal-1].deprel  )
       logger.debug(WordsToSentence(words[firstVal:lastIndex]))
+      """
       return False
 
 def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
@@ -423,7 +487,7 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
             scopeStart = j
    
    # Look for preceeding acl to include if not annotated with another symbol
-   print(words[scopeStart-1].deprel, words[scopeStart-1].text, words[scopeStart-1].head, scopeStart)
+   #print(words[scopeStart-1].deprel, words[scopeStart-1].text, words[scopeStart-1].head, scopeStart)
    if (words[scopeStart-1].deprel == "acl" and words[scopeStart-1].symbol==""):
       scopeStart -= 1
       for j in range(scopeStart, -1, -1):
@@ -781,3 +845,40 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
             words[words[firstIndex].head].setSymbol("", 0)
          words[i].setSymbol("Bdir", 2)
    return i if i > iBak else iBak
+
+def conditionHandler2(words:list[Word], i:int, wordLen:int) -> int:
+   """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
+   #print("Running conditionHandler 2")
+   firstVal = i
+   
+   # Go through the statement until the word is connected to the advcl directly or indirectly
+   for j in range(i):
+      # If connected to the advcl then set firstVal to the id and break the loop
+      if ifHeadRelation(words, j, i):
+         firstVal = j
+         break
+
+   # Go through again from the activation condition++
+   # Until the word is no longer connected to the advcl
+      
+   # Set the lastVal to the current id -1   
+   lastIndex = i+1 if i+1 < wordLen else i
+   for j in range(lastIndex,wordLen):
+      if not ifHeadRelation(words, j, i):
+         lastIndex = j-1
+         break
+   
+   if words[firstVal].deprel == "punct":
+      firstVal += 1
+
+   #print(words[lastIndex].text, words[lastIndex].deprel)
+   if words[lastIndex].deprel == "punct":
+      lastIndex -= 1
+   #print(words[lastIndex].text, words[lastIndex].deprel)
+      
+   #print(words[firstVal].text, words[lastIndex].text)
+
+   words[firstVal].setSymbol("Cac", 1)
+   words[lastIndex].setSymbol("Cac", 2)
+
+   return lastIndex
