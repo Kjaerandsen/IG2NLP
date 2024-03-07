@@ -1,7 +1,7 @@
 from utility.utility import *
 import numpy as np
 
-def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int) -> int:
+def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:bool=False) -> int:
    """Finds the scope of components with logical operators and handles the logical operators"""
    scopeStart = i  
    scopeEnd = i

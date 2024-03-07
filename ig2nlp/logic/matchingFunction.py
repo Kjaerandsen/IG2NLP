@@ -680,16 +680,30 @@ def deonticHandler(words:list[Word], i:int) -> int:
          words[i-1].setSymbol("D",1)
          words[i].setSymbol("D",2)
       else:
-         # If the head is a word after the deontic
+         # If the head is a word after the deontic encapsualte the words in-between
+            """
          if (words[i].head - i) > 1:
             words[i].setSymbol("D",1)
             # Encapsulate everything before the head (head is Aim (I))
             i = words[i].head-1
+            if words[i].text in [".",","]:
+               i-=1
             words[i].setSymbol("D",2)
          else:
+            """
             words[i].setSymbol("D")
    else:
       logger.debug("Deontic, no verb")
+   
+   #print(words[i+1].text, words[i].text)
+   if words[i+1].text.lower() == "not":
+      #print("True")
+      if words[i].position == 0:
+         words[i].position = 1
+      else:
+         words[i].setSymbol()
+      i+=1
+      words[i].setSymbol("D", 2)
 
    #print(WordsToSentence(words[i:i+1]))
    return i
@@ -702,7 +716,7 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
    # Look for logical operators
    iBak = i
    words[i].setSymbol("I")
-   i = smallLogicalOperator(words, i, "I", wordLen)
+   i = smallLogicalOperator(words, i, "I", wordLen, True)
    if words[i].position == 0:
       # Look for xcomp dependencies
       k = 0
@@ -732,10 +746,13 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
                   words[i].setSymbol("I",1)
                   words[k].setSymbol("I",2)
                   i = k
+      # TODO: Test with cop dependency instead of the "be" dictionary based approach
       if iBak-1 > 0 and words[iBak-1].text.lower() == "be":
          words[iBak-1].setSymbol("I",1)
          if words[iBak].position == 0: words[iBak].position = 2
          else: words[iBak].setSymbol()
+
+      #i = smallLogicalOperator()
 
    return i
 

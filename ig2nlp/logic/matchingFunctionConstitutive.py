@@ -483,7 +483,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
    words[i].setSymbol("F")
    iBak = i
    # Look for logical operators
-   i = smallLogicalOperator(words, i, "F", wordLen)
+   i = smallLogicalOperator(words, i, "F", wordLen, True)
    if words[i].position != 0:
       # Check for preceeding auxiliary or cop dependency
       if iBak-1 >= 0:
