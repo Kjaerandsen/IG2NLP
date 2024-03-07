@@ -222,7 +222,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
          logger.debug("Last val in handleCondition was not punct: " + words[lastIndex].text)
          return False
       
-   print(words[firstVal].text, words[lastIndex].text)
+   #print(words[firstVal].text, words[lastIndex].text)
 
    date = False
    law = False
@@ -698,6 +698,7 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
    #if words[i].pos != "VERB":
    #   print("Aim is not VERB:", words[i].pos, words[i])
    # Look for logical operators
+   iBak = i
    words[i].setSymbol("I")
    i = smallLogicalOperator(words, i, "I", wordLen)
    if words[i].position == 0:
@@ -729,6 +730,11 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
                   words[i].setSymbol("I",1)
                   words[k].setSymbol("I",2)
                   i = k
+      if iBak-1 > 0 and words[iBak-1].text.lower() == "be":
+         words[iBak-1].setSymbol("I",1)
+         if words[iBak].position == 0: words[iBak].position = 2
+         else: words[iBak].setSymbol()
+
    return i
 
 def bindHandler(words:list[Word], i:int, wordLen:int) -> int:
