@@ -671,7 +671,8 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
 
 def deonticHandler(words:list[Word], i:int) -> int:
    """Handler for deontic (D) components detected using the aux dependency"""
-   if words[words[i].head].pos == "VERB":
+   #print("Deontic Handler: ", words[i].text, words[i].deprel, words[i].pos, words[i].xpos)
+   if words[words[i].head].pos == "VERB" or words[i].xpos == "MD":
       #print("Deontic: ", words[i].xpos) 
       #Might be worth looking into deontics that do not have xpos of MD
       # Combine two adjacent deontics if present.
@@ -690,6 +691,7 @@ def deonticHandler(words:list[Word], i:int) -> int:
    else:
       logger.debug("Deontic, no verb")
 
+   #print(WordsToSentence(words[i:i+1]))
    return i
 
 def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
