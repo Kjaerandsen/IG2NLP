@@ -100,23 +100,22 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    jsonLen = len(jsonData)
    logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
 
-   if jsonLen != 1:
-      logger.info("Loading nlp pipeline")
-      global nlp
-      nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
-                     processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
-                     package={
-                           "tokenize": "combined",
-                           "mwt": "combined",
-                           "pos": "combined_electra-large",
-                           "depparse": "combined_electra-large",
-                           "lemma": "combined_charlm",
-                           "ner": "ontonotes-ww-multi_charlm"
-                     },
-                     download_method=env['downloadMethod'],
-                     logging_level=env['logLevel']
-                     )
-      logger.info("Finished loading the nlp pipeline")
+   logger.info("Loading nlp pipeline")
+   global nlp
+   nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
+                  processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
+                  package={
+                        "tokenize": "combined",
+                        "mwt": "combined",
+                        "pos": "combined_electra-large",
+                        "depparse": "combined_electra-large",
+                        "lemma": "combined_charlm",
+                        "ner": "ontonotes-ww-multi_charlm"
+                  },
+                  download_method=env['downloadMethod'],
+                  logging_level=env['logLevel']
+                  )
+   logger.info("Finished loading the nlp pipeline")
 
    # Delete the environment variables dictionary
    del env
