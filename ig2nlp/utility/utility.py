@@ -164,7 +164,32 @@ class Word:
       """
 
       return output
-
+   
+class wordList(list[Word]):
+   """Custom word list implementation with helper functions for traversing the dependency parse tree
+   relations between words of the Word class type"""
+   def getHead(self:list[Word], i:int) -> Word:
+      return self[self[i].head]
+   
+   def getHeadId(self:list[Word], i:int) -> int:
+      return self[self[i].head].head
+   
+   def getHeadDep(self:list[Word], i:int) -> int:
+      return self[self[i].head].deprel
+   
+   def getHeadAnnotation(self:list[Word], i:int) -> tuple[str, int]:
+      word = self[self[i].head]
+      return word.symbol, word.position
+   
+   def getHeadSymbol(self:list[Word], i:int) -> str:
+      return self[self[i].head].symbol
+   
+   def getHeadPosition(self:list[Word], i:int) -> str:
+      return self[self[i].head].position
+   
+   def getHeadPos(self:list[Word], i:int) -> str:
+      return self[self[i].head].pos
+   
 def wordFromDict(input:dict) -> Word:
    """Create a Word class instance from a dict (for JSON serialization)"""
 
