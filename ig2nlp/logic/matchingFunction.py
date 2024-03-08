@@ -760,7 +760,26 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
          if words[iBak].position == 0: words[iBak].position = 2
          else: words[iBak].setSymbol()
 
-      #i = smallLogicalOperator()
+   # Look for logical operators for inclusion
+   lastConj = i
+   for j in range(i+1,wordLen):
+      if ifHeadRelation(words, j, i):
+         if words[j].deprel == "conj":
+            lastConj = j
+            # advmod, amod
+         if not words[j].deprel in ["det","cc","conj"]:
+            break
+   
+   if lastConj != i:
+      j = lastConj
+      if words[i].position == 2:
+         words[i].setSymbol()
+         words[j].setSymbol("I",2)
+      else:
+         words[i].position = 1
+         words[j].setSymbol("I",2)
+
+      i = j
 
    return i
 
