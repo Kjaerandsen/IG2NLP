@@ -634,6 +634,14 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                   words[i].setSymbol("A",1)
                   words[i+1].setSymbol("A",2)
                   i+=1
+            # Special case for nmod:poss dependencies followed by the nsubj dependency
+            # Only applies when NER is used and detects either an organization or a person 
+            # as the nsubj
+            # TODO: Reconsider this when more testing data is available
+            if words[j].deprel == "nmod:poss" and j+1 == i and  words[i].ner[2:] in ["ORG","PERSON"]:
+               words[j].setSymbol("A,p")
+               i = smallLogicalOperator(words, i, "A", wordLen)
+               return i
       if not other:
          i = smallLogicalOperator(words, i, "A", wordLen)
          if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
