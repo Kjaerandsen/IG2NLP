@@ -99,7 +99,7 @@ class Word:
    # Function for combining two subsequent words into one
    # Direction is a bool, True is left to right, False is right to left
    # The direction defines which start and end position to keep, and the text concatenation order
-   def combineWords(self, otherWord:"Word", direction:bool):
+   def combineWords(self, otherWord:"Word", direction:bool) -> None:
       """Takes another word and a direction, combines the contents of the two words. 
       direction True for right into left, False for left into right"""
 
@@ -112,7 +112,7 @@ class Word:
          self.text = otherWord.text + " " * self.spaces + self.text
          self.spaces = otherWord.spaces
 
-   def addSemantic(self, annotation:str):
+   def addSemantic(self, annotation:str) -> None:
       """Takes a semantic annotation and 
       appends it to the list of semantic annotations in the Word"""
 
@@ -150,13 +150,20 @@ class Word:
 
       return output
 
-   def __str__(self):
-      return("Word: "+ self.text + "\n pos: "+ self.pos + " | " + self.xpos  
+   def __str__(self) -> str:
+      output = ("Word: " + self.text + " | pos: " + self.pos +" | "+self.xpos +
+      " | deprel: " + self.deprel + " | symbol: " + self.symbol + " | " + str(self.position))
+
+      """
+      "Word: "+ self.text + "\n pos: "+ self.pos + " | " + self.xpos  
             + " | deprel: "+ str(self.deprel) + " | id: " + str(self.id)
             + " | head: " + str(self.head) 
             + "\nLemma: " + self.lemma + " | Symbol: " + self.symbol + " "
             + str(self.position) + " " + str(self.nested) + " | NER:" + self.ner 
-            + "\nFeats: " + self.feats + "\n")
+            + "\nFeats: " + self.feats + "\n"
+      """
+
+      return output
 
 def wordFromDict(input:dict) -> Word:
    """Create a Word class instance from a dict (for JSON serialization)"""
@@ -669,7 +676,7 @@ def loadEnvironmentVariables() -> dict:
 
    return env
 
-def createLogger():
+def createLogger() -> None:
    """Creates a custom logger instance shared with all programs importing this file"""
 
    global logger
