@@ -53,7 +53,7 @@ def main() -> None:
             jsonData[i:i+1], args.single, batchSize)[0]
 
 
-def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int):
+def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
    global flaskURL
@@ -127,7 +127,7 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int):
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished writing to file.")
       i+=1
 
-def nlpPipelineMulti(textDocs:list) -> list:
+def nlpPipelineMulti(textDocs:list) -> list[stanza.Document]:
    """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
    logger.debug("Running multiple statement pipeline")
    docs = nlp.bulk_process(textDocs)
@@ -135,7 +135,7 @@ def nlpPipelineMulti(textDocs:list) -> list:
    return docs
 
    
-def nlpPipeline(textDoc:str):
+def nlpPipeline(textDoc:str) -> stanza.Document:
    """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
    logger.debug("Running single statement pipeline")
    doc = nlp.process(textDoc)
