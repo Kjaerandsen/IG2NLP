@@ -1,7 +1,7 @@
 from utility.utility import *
 import numpy as np
 
-def smallLogicalOperator(words:wordList, i:int, symbol:str, wordLen:int, root:bool=False) -> int:
+def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:bool=False) -> int:
    """Finds the scope of components with logical operators and handles the logical operators"""
    scopeStart = i  
    scopeEnd = i
@@ -46,7 +46,7 @@ def smallLogicalOperator(words:wordList, i:int, symbol:str, wordLen:int, root:bo
                words[j].text = ""
             # If the word is a punct connected to the conj, then it should be replaced by a
                   # logical operator
-            elif words.getHeadDep(j) == "conj":
+            elif getHeadDep(words, j) == "conj":
                punctLocs.append(j)
 
       # Remove dets
@@ -161,7 +161,7 @@ def smallLogicalOperator(words:wordList, i:int, symbol:str, wordLen:int, root:bo
       words[i].setSymbol(symbol)
       return i
    
-def includeConj(words:wordList, i:int, wordLen:int) -> int:
+def includeConj(words:list[Word], i:int, wordLen:int) -> int:
    """Function for including logical operators in symbols without handling (annotating) them"""
    symbol = words[i].symbol
    scopeEnd = i
@@ -209,7 +209,7 @@ def LogicalOperatorHelper(word:Word, wordLen:int, scopeEnd:int,
    
    return scopeEnd, j
 
-def validateNested(words:wordList, constitutive:bool) -> bool:
+def validateNested(words:list[Word], constitutive:bool) -> bool:
    """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
       be regarded as nested."""
    Activity = False
@@ -234,7 +234,7 @@ def validateNested(words:wordList, constitutive:bool) -> bool:
    
    return False
 
-def ifHeadRelation(words:wordList, wordId:int, headId:int) -> bool:
+def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection"""
    word = words[wordId]
    # array of visited id's to prevent infinite recursion
@@ -259,7 +259,7 @@ def ifHeadRelation(words:wordList, wordId:int, headId:int) -> bool:
 # List of allowed head connections for the function below
 allowedRootHeads = ["conj","cc","det","amod","advmod"]
 
-def ifHeadRelationRoot(words:wordList, wordId:int, headId:int) -> bool:
+def ifHeadRelationRoot(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection, 
    specifically for components detected by the root deprel (Constituted Function (F) and Aim (I))"""
    word = words[wordId]
@@ -284,7 +284,7 @@ def ifHeadRelationRoot(words:wordList, wordId:int, headId:int) -> bool:
       return True
    return False
 
-def corefReplace(words:wordList, semanticAnnotations:bool) -> wordList:
+def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
    """Handles supplementing pronouns with their respective Attribute (A) component contents using
       coreference resolution data"""
    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
@@ -374,7 +374,7 @@ def corefReplace(words:wordList, semanticAnnotations:bool) -> wordList:
    
    return words
 
-def findInternalLogicalOperators(words:wordList, start:int, end:int) -> wordList:
+def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[Word]:
    """Detects logical operator words, formats them, and replaces preceeding commas with the same
       logical operator"""
    #print("Finding logical operators\n", start, end)
@@ -443,7 +443,7 @@ def findInternalLogicalOperators(words:wordList, start:int, end:int) -> wordList
 
    return words
 
-def attributeSemantic(words:wordList) -> wordList:
+def attributeSemantic(words:list[Word]) -> list[Word]:
    """Adds Number=x semantic annotation to attribute components in a list of words"""
    for word in words:
       if word.symbol == "A":
@@ -454,7 +454,7 @@ def attributeSemantic(words:wordList) -> wordList:
 
    return words
 
-def logicalOperatorImbalanced(words:wordList) -> None:
+def logicalOperatorImbalanced(words:list[Word]) -> None:
    wordLen = len(words)
    for i in range(1, wordLen):
       # If a logical operator is the start and or end of a component 
@@ -472,7 +472,7 @@ def logicalOperatorImbalanced(words:wordList) -> None:
          # Remove the old annotation of the logical operator
          words[i].setSymbol()
 
-def handleScopingIssues(words:wordList) -> None:
+def handleScopingIssues(words:list[Word]) -> None:
    """Handler to fix scoping issues causing parsing errors"""
    wordLen = len(words)
    within = False
@@ -519,7 +519,7 @@ def handleScopingIssues(words:wordList) -> None:
                within = False
       i += 1
 
-def findComponentEnd(words:wordList, id:int, symbol:str) -> int:
+def findComponentEnd(words:list[Word], id:int, symbol:str) -> int:
    """Function for a positive lookahead to find the end index of a component"""
    for i in range(id+1,len(words)):
       word = words[i]
@@ -535,7 +535,7 @@ def findComponentEnd(words:wordList, id:int, symbol:str) -> int:
    logger.warning("findComponentEnd could not find the end")
    return -1
 
-def findComponentStart(words:wordList, id:int, symbol:str) -> int:
+def findComponentStart(words:list[Word], id:int, symbol:str) -> int:
    """Function for a positive lookbehind to find the start index of a component"""
    for i in range(id-1,-1,-1):
       word = words[i]

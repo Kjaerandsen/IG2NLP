@@ -11,7 +11,7 @@ minimumCexLength = 1
 numberAnnotation = False
 coref = True
 
-def matchingHandler(words:wordList, semantic:bool) -> wordList:
+def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
    """takes a list of words, performs annotations using the matching function and returns 
    a formatted string of annotated text"""
    words = compoundWordsHandler(words)
@@ -25,13 +25,12 @@ def matchingHandler(words:wordList, semantic:bool) -> wordList:
    print("Regulative coverage: ", coverage(words))
    return WordsToSentence(words)
 
-def matchingFunction(words:wordList, semantic:bool) -> wordList:
+def matchingFunction(words:list[Word], semantic:bool) -> list[Word]:
    """takes a list of words with dependency parse and pos-tag data.
       Returns a list of words with IG Script notation symbols."""
-   words = wordList(words)
    wordLen = len(words)
    wordsBak = copy.deepcopy(words)
-   words2 = wordList()
+   words2 = []
 
    # Look for conditions only first, if enabled remove the advcl case from the matching below
    #for i, word in enumerate(words):
@@ -46,7 +45,7 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
       word = words[i]
       deprel = word.deprel
 
-      #print(words.getHead(i), words[i].deprel, words[i].text)
+      #print(getHead(words, i), words[i].deprel, words[i].text)
 
       match deprel:
          # (Cac, Cex) Condition detection 
@@ -91,7 +90,7 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
             # TODO: Reconsider in the future if this is accurate enough
             # There are currently false positives, but they should be mitigated by better
             # Cex component detection
-            if i-1 >= 0 and words.getHeadSymbol(i) == "Bdir" and words[i-1].symbol == "Bdir":
+            if i-1 >= 0 and getHeadSymbol(words, i) == "Bdir" and words[i-1].symbol == "Bdir":
                word.setSymbol("Bdir,p")
 
          # Direct object handling (Bdir), (Bdir,p)
@@ -103,7 +102,7 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
 
          # (Bdir,p) Direct object property detection 2
          case "nmod:poss":
-            if words.getHeadDep(i) == "obj" and word.head == i+1:
+            if getHeadDep(words, i) == "obj" and word.head == i+1:
                # Check if there is a previous amod connection and add both
                if i-1 >= 0 and words[i-1].deprel == "amod" and words[i-1].head == i:
                   words[i-1].setSymbol("Bdir,p", 1)
@@ -123,7 +122,7 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
          # Might be too generic of a rule.
          # TODO: Revisit and test
          case "advmod":
-            if words.getHeadSymbol(i) == "I":
+            if getHeadSymbol(words, i) == "I":
                #print("\nadvmod connected to Aim(I): ", word)
                if i+1 < wordLen:
                   if words[i+1].deprel == "punct":
@@ -150,11 +149,11 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
                i = attributeHandler(words, i, wordLen)
 
                # TODO: look into the line below
-               if words.getHeadDep(i) == "ccomp":
+               if getHeadDep(words, i) == "ccomp":
                   logger.debug("NSUBJ CCOMP OBJ")
 
             # (D) Deontic detection
-            elif words.getHeadDep(i) == "root" and "aux" in deprel:
+            elif getHeadDep(words, i) == "root" and "aux" in deprel:
                i = deonticHandler(words, i)
 
             elif (deprel != "punct" and deprel != "conj" and deprel != "cc"
@@ -168,8 +167,8 @@ def matchingFunction(words:wordList, semantic:bool) -> wordList:
 
    return words
 
-def conditionHandler(words:wordList, wordsBak:wordList, i:int, 
-                     wordLen:int, words2:wordList, semantic:bool, 
+def conditionHandler(words:list[Word], wordsBak:list[Word], i:int, 
+                     wordLen:int, words2:list[Word], semantic:bool, 
                      constitutive:bool=False, parseFirst:bool=False) -> bool:
    """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
    firstVal = i
@@ -439,8 +438,8 @@ def conditionHandler(words:wordList, wordsBak:wordList, i:int,
       """
       return False
 
-def orElseHandler(words: wordList, wordsBak:wordList, wordLen:int,
-              words2:wordList, firstVal:int, 
+def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
+              words2:list[Word], firstVal:int, 
               semantic:bool, constitutive:bool=False) -> None:
    """Handler function for the Or else (O) component"""
 
@@ -470,7 +469,7 @@ def orElseHandler(words: wordList, wordsBak:wordList, wordLen:int,
    if words[wordLen-1].deprel == "punct":
       words2.append(words[wordLen-1])
 
-def oblHandler(words:wordList, i:int, wordLen:int, semantic:bool, 
+def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool, 
                                constitutive:bool=False) -> int:
    """Handler for execution constraint (Cex) components detected using the obl dependency"""
    # Check for connections to the obl both before and after
@@ -506,7 +505,7 @@ def oblHandler(words:wordList, i:int, wordLen:int, semantic:bool,
          # If the obl is connected to a Constituting Entity Property (E,p) component
          # or a Constituting Properties Property (P,p) component
          # extend the component to contain the "new component"
-         rootHead = words.getHead(iBak)
+         rootHead = getHead(words, iBak)
          if rootHead.symbol in ["E,p","P,p"]:
             return oblConstitutivePropertyHandler(words, iBak, scopeEnd, rootHead.symbol)
          
@@ -586,8 +585,8 @@ def oblHandler(words:wordList, i:int, wordLen:int, semantic:bool,
    
    return scopeEnd
 
-def oblConstitutivePropertyHandler(words:wordList, iBak:int, scopeEnd:int, symbol:str) -> int:
-   rootHead:Word = words.getHead(iBak)
+def oblConstitutivePropertyHandler(words:list[Word], iBak:int, scopeEnd:int, symbol:str) -> int:
+   rootHead:Word = getHead(words, iBak)
    if rootHead.position == 0:
       scopeStart = words[iBak].head
       # If the head is the start of the component find the end, remove its annotation,
@@ -612,9 +611,9 @@ def oblConstitutivePropertyHandler(words:wordList, iBak:int, scopeEnd:int, symbo
       words[scopeStart].setSymbol(symbol)
    return scopeEnd
 
-def attributeHandler(words:wordList, i:int, wordLen:int) -> int:
+def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for attribute (A) components detected using the nsubj dependency"""
-   #print("Running attributeHandler, ", words[i].text, words[i].deprel, words.getHeadDep(iBak))
+   #print("Running attributeHandler, ", words[i].text, words[i].deprel, getHeadDep(words, iBak))
    if words[i].pos != "PRON":
       # Look for nmod connected to the word i
 
@@ -639,7 +638,7 @@ def attributeHandler(words:wordList, i:int, wordLen:int) -> int:
             # Only applies when NER is used and detects either an organization or a person 
             # as the nsubj
             # TODO: Reconsider this when more testing data is available
-            if words[j].deprel == "nmod:poss" and j+1 == i and  words[i].ner[2:] in ["ORG","PERSON"]:
+            if words[j].deprel == "nmod:poss" and j+1 == i and words[i].ner[2:] in ["ORG","PERSON"]:
                words[j].setSymbol("A,p")
                i = smallLogicalOperator(words, i, "A", wordLen)
                return i
@@ -657,7 +656,7 @@ def attributeHandler(words:wordList, i:int, wordLen:int) -> int:
    # If the nsubj is a pronoun connected to root then handle it as an attribute
    # This may need to be reverted in the future if coreference resolution is used
    # in that case, the coreference resolution will be used to add the appropriate attribute
-   elif words.getHeadDep(i) == "root":
+   elif getHeadDep(words, i) == "root":
       i = smallLogicalOperator(words, i, "A", wordLen)
       if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
          if words[i].position == 2:
@@ -671,17 +670,17 @@ def attributeHandler(words:wordList, i:int, wordLen:int) -> int:
 
    # (A,p) detection mechanism, might be too specific. 
    # Is overwritten by Aim (I) component in several cases
-   if i+1 < wordLen and words[i+1].deprel == "advcl" and words.getHeadDep(i+1) == "root":
+   if i+1 < wordLen and words[i+1].deprel == "advcl" and getHeadDep(words, i+1) == "root":
       #print("ADVCL")
       words[i+1].setSymbol("A,p")
 
    #print(WordsToSentence(words))
    return i
 
-def deonticHandler(words:wordList, i:int) -> int:
+def deonticHandler(words:list[Word], i:int) -> int:
    """Handler for deontic (D) components detected using the aux dependency"""
    #print("Deontic Handler: ", words[i].text, words[i].deprel, words[i].pos, words[i].xpos)
-   if words.getHeadPos(i) == "VERB" or words[i].xpos == "MD":
+   if getHeadPos(words, i) == "VERB" or words[i].xpos == "MD":
       #print("Deontic: ", words[i].xpos) 
       #Might be worth looking into deontics that do not have xpos of MD
       # Combine two adjacent deontics if present.
@@ -717,7 +716,7 @@ def deonticHandler(words:wordList, i:int) -> int:
    #print(WordsToSentence(words[i:i+1]))
    return i
 
-def rootHandler(words:wordList, i:int, wordLen:int) -> int:
+def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for Aim (I) components detected using the root dependency"""
    # Potentially unmatch all occurences where the aim is not a verb
    #if words[i].pos != "VERB":
@@ -784,7 +783,7 @@ def rootHandler(words:wordList, i:int, wordLen:int) -> int:
 
    return i
 
-def bindHandler(words:wordList, i:int, wordLen:int) -> int:
+def bindHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for indirect object (Bind) components detected using the iobj dependency"""
    iBak = i
    i = smallLogicalOperator(words, i, "Bind", wordLen)
@@ -802,7 +801,7 @@ def bindHandler(words:wordList, i:int, wordLen:int) -> int:
 
    return i
 
-def bdirHandler(words:wordList, i:int, wordLen:int) -> int:
+def bdirHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for Direct object (Bdir) components detected using the obj dependency"""
    iBak = i
    i = smallLogicalOperator(words, i, "Bdir", wordLen)
@@ -843,26 +842,26 @@ def bdirHandler(words:wordList, i:int, wordLen:int) -> int:
 
    return i
 
-def amodPropertyHandler(words:wordList, i:int, wordLen:int) -> int:
+def amodPropertyHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for properties detected using the amod dependency. Currently used for 
       Direct object (Bdir), Indirect object (Bind) and Attribute (A) properties (,p)"""
    # If the word is directly connected to an obj (Bdir)
-   if words.getHeadDep(i) == "obj":
+   if getHeadDep(words, i) == "obj":
       i = smallLogicalOperator(words, i, "Bdir,p", wordLen)
       #words[i].setSymbol("Bdir,p")
    # Else if the word is directly connected to an iobj (Bind)
-   elif words.getHeadDep(i) == "iobj":
+   elif getHeadDep(words, i) == "iobj":
       i = smallLogicalOperator(words, i, "Bind,p", wordLen)
       #words[i].setSymbol("Bind,p")
    # Else if the word is connected to a nsubj connected directly to root (Attribute)
-   elif (words.getHeadDep(i) == "nsubj" 
-         and (words[words.getHeadId(i)].deprel == "root" or 
-         words[words.getHeadId(i)].symbol == "A")):
+   elif (getHeadDep(words, i) == "nsubj" 
+         and (words[getHeadId(words, i)].deprel == "root" or 
+         words[getHeadId(words, i)].symbol == "A")):
       i = smallLogicalOperator(words, i, "A,p", wordLen)
       #words[i].setSymbol("A,p")
    return i
 
-def nmodDependencyHandler(words:wordList, i:int, wordLen:int) -> int:
+def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for nmod dependency, currently used for Direct object (Bdir) components 
    and its properties"""
    iBak = i
@@ -871,7 +870,7 @@ def nmodDependencyHandler(words:wordList, i:int, wordLen:int) -> int:
    # overlaps with execution constraints.
    # TODO: Look into nmod inclusion further
    #print("Starting nmoddependencyHandler")
-   if words.getHeadSymbol(i) == "Bdir" and words.getHeadPosition(i) in [0,2]:
+   if getHeadSymbol(words, i) == "Bdir" and getHeadPosition(words, i) in [0,2]:
       #print("Within if")
       #logger.debug("NMOD connected to BDIR")
       # positive lookahead
@@ -892,14 +891,14 @@ def nmodDependencyHandler(words:wordList, i:int, wordLen:int) -> int:
          i = lastIndex
       else:
          # Set the first word after the direct object component as the start of the component
-         if words.getHeadPosition(firstIndex) == 0:
-            words.getHead(firstIndex).setSymbol("Bdir", 1)
+         if getHeadPosition(words, firstIndex) == 0:
+            getHead(words, firstIndex).setSymbol("Bdir", 1)
          else:
-            words.getHead(firstIndex).setSymbol("", 0)
+            getHead(words, firstIndex).setSymbol("", 0)
          words[i].setSymbol("Bdir", 2)
    return i if i > iBak else iBak
 
-def conditionHandler2(words:wordList, i:int, wordLen:int) -> int:
+def conditionHandler2(words:list[Word], i:int, wordLen:int) -> int:
    """Handler function for the matching and encapsulation of conditions (Cac, Cex)"""
    #print("Running conditionHandler 2")
    firstVal = i

@@ -268,6 +268,11 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
                words[i].setSymbol("E",1)
                words[i+1].setSymbol("E",2)
                i+=1
+      
+      """
+      if words[iBak].symbol == "":
+         words[iBak].setSymbol("E")
+      """
 
    # If the nsubj is a pronoun connected to root then handle it as an attribute
    # This may need to be reverted in the future if coreference resolution is used
