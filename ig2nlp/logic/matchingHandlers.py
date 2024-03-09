@@ -149,6 +149,43 @@ def oblConstitutivePropertyHandler(words:list[Word], iBak:int, scopeEnd:int, sym
       words[scopeStart].setSymbol(symbol)
    return scopeEnd
 
+def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int) -> int:
+   """Handler for obl:agent dependency, currently only used for Constitutive statements: 
+   Constitutive function (F) and Constituting properties (P) components"""
+   # TODO: Look into other use cases for obl:agent
+   #print("obl:agent", word)
+   head = words[word.head]
+   if head.symbol != "" and head.symbol != "F":
+      if head.position == 0:
+         head.position = 1
+      else:
+         # TODO: might need to check for other annotations within
+         head.position = 1
+         for j in range(head.position+1, i-1):
+            if words[j].symbol != "":
+               words[j].setSymbol()
+      word.setSymbol(head.symbol, 2)
+      i = includeConj(words, i, wordLen)
+      #print(WordsToSentence)
+      #print(word)
+   elif head.symbol == "F":
+      if head.position == 1:
+         for j in range(head.position+1, i-1):
+            if words[j].position == 2:
+               start = j+1
+               break
+      else: start = word.head+1
+      words[start].setSymbol("P",1)
+      word.setSymbol("P",2)
+      i = includeConj(words, i, wordLen)
+   else:
+      head.setSymbol("P",1)
+      word.setSymbol("P",2)
+      i = includeConj(words, i, wordLen)
+   #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
+   #      words[word.head].pos)
+   return i
+
 def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    """Handler for attribute (A) components detected using the nsubj dependency"""
    #print("Running attributeHandler, ", words[i].text, words[i].deprel, getHeadDep(words, iBak))
@@ -191,7 +228,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
                words[i].setSymbol("A",1)
                words[i+1].setSymbol("A",2)
                i+=1
-               
+
    # If the nsubj is a pronoun connected to root then handle it as an attribute
    # This may need to be reverted in the future if coreference resolution is used
    # in that case, the coreference resolution will be used to add the appropriate attribute
@@ -914,3 +951,4 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
    #print(WordsToSentence(words))
    #print(words[i])
    return i
+

@@ -98,32 +98,12 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
             # (Bdir,p, Bind,p, A,p)   
             if not constitutive:
                i = amodPropertyHandler(words, i, wordLen)
-               # If the relation is a ccomp then handle it as a direct object
-               # This does nothing in testing
-               '''
-               elif (words[word.head].deprel == "nsubj" 
-                  and words[words[word.head].head].deprel == "ccomp"):
-                  #print("\n\nAMOD NSUBJ OBJ\n\n")
-                  word.setSymbol(word,"bdir", 1)
-                  words[i+1].setSymbol(words[i+1],"bdir", 2)
-                  i += 1
-               '''
             
             # Else if the word has an amod dependency type, check if the head is a symbol
             # that supports properties, if so, the word is a property of that symbol
             # (P,p, E,p)   
             else:
                i = amodPropertyHandlerConstitutive(words, i, wordLen)
-               # If the relation is a ccomp then handle it as a direct object
-               # This does nothing in testing
-               '''
-               elif (words[word.head].deprel == "nsubj" 
-                  and words[words[word.head].head].deprel == "ccomp"):
-                  #print("\n\nAMOD NSUBJ OBJ\n\n")
-                  word.setSymbol(word,"bdir", 1)
-                  words[i+1].setSymbol(words[i+1],"bdir", 2)
-                  i += 1
-               '''
 
          case "acl":
             if not constitutive:
@@ -238,40 +218,10 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
          # (P) Constituting Properties detection
          case "obl:agent":
             if constitutive:
-               # TODO: Look into other use cases for obl:agent
-               #print("obl:agent", word)
-               head = words[word.head]
-               if head.symbol != "" and head.symbol != "F":
-                  if head.position == 0:
-                     head.position = 1
-                  else:
-                     # TODO: might need to check for other annotations within
-                     head.position = 1
-                     for j in range(head.position+1, i-1):
-                        if words[j].symbol != "":
-                           words[j].setSymbol()
-                  word.setSymbol(head.symbol, 2)
-                  i = includeConj(words, i, wordLen)
-                  #print(WordsToSentence)
-                  #print(word)
-               elif head.symbol == "F":
-                  if head.position == 1:
-                     for j in range(head.position+1, i-1):
-                        if words[j].position == 2:
-                           start = j+1
-                           break
-                  else: start = word.head+1
-                  words[start].setSymbol("P",1)
-                  word.setSymbol("P",2)
-                  i = includeConj(words, i, wordLen)
-               else:
-                  head.setSymbol("P",1)
-                  word.setSymbol("P",2)
-                  i = includeConj(words, i, wordLen)
-               #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
-               #      words[word.head].pos)
+               i = oblAgentHandler(words, word, i, wordLen)
 
          case "cop":
+            # (F) Constitutive function and (P) Constituting properties detection
             if constitutive:
                #print("cop",word.symbol,word.pos,word.text, word.xpos, word.pos)
                if word.pos == "AUX":
@@ -532,41 +482,7 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
 
       return True
    else:
-      """
-      words[firstVal].setSymbol("Cac",1)
-      if words[lastIndex].text in [",","."]:
-         lastIndex -= 1
-      words[lastIndex].setSymbol("Cac",2)
-      words2 += words[:lastIndex+1]
-      if lastIndex - firstVal > 2:
-         words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
 
-      if wordLen > lastIndex+1:
-         lastPunct = False
-         lastVal = wordLen
-         if wordsBak[wordLen-1].deprel == "punct":
-            lastPunct = True
-            lastVal = wordLen-1
-            wordLen -= 1
-         
-         words2.append(wordsBak[lastIndex+1])
-         contents = mc.matchingFunction(
-            reusePartEoS(wordsBak[lastIndex+2:lastVal], lastIndex+1), semantic, constitutive
-         )   
-
-         words2 += contents
-         if lastPunct:
-            words2.append(wordsBak[lastVal])
-         
-         print(words2)
-      else:
-         words2 += words[lastIndex+1:]
-      """
-      """
-      logger.debug("Unhandled advcl: " + words[firstVal].text + " | " + words[firstVal].deprel + 
-                  " | " + words[firstVal-1].text + " | " + words[firstVal-1].deprel  )
-      logger.debug(WordsToSentence(words[firstVal:lastIndex]))
-      """
       return False
 
 def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
