@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from spacy import displacy
 
-from utility.utility import compoundWordsHandler, env
+from utility import env, compoundWordsHandler
 
 # Take the system arguments
 args = sys.argv

@@ -1,4 +1,4 @@
-from utility.utility import *
+from utility import *
 import pytest
 
 def createTestWord(name) -> Word:

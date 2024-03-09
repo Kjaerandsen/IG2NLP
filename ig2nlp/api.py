@@ -10,7 +10,7 @@ from http import HTTPStatus
 # The -p parameter sets the port of the webserver, if changed the environment variable
 # "IG2FLASKURL" should also be changed accordingly.
 
-def initialize():
+def initialize() -> None:
    global nlp
    nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
       processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
@@ -31,7 +31,7 @@ initialize()
 app = Flask(__name__)
 
 @app.route('/')
-def handleRequest():
+def handleRequest() -> Response:
    args = request.args
 
    if len(args) == 0:

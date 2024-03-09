@@ -7,7 +7,7 @@ import argparse
 from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
 from logic.matchingFunctionShared import parseAndCompare
-from utility.utility import *
+from utility import *
 from logic.classifier import *
 
 semanticAnnotations = False

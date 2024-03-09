@@ -1,6 +1,6 @@
 import time
 import copy
-from utility.utility import *
+from utility import *
 from logic.matchingUtils import *
 import logic.matchingFunctionConstitutive as mc
 from logic.classifier import *

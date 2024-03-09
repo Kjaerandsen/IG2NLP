@@ -2,7 +2,7 @@ import json
 import stanza
 import pandas as pd
 
-from utility.utility import compoundWordsHandler, env
+from utility import env, compoundWordsHandler
 
 filename = "../data/input.json"
 

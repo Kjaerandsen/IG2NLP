@@ -1,6 +1,6 @@
 import json
 import stanza
-from utility.utility import *
+from utility import *
 import argparse
 
 semanticAnnotations = False

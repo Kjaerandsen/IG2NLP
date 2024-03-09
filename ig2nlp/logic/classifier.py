@@ -1,5 +1,5 @@
 from enum import Enum
-from utility.utility import *
+from utility import *
 
 class docType(Enum):
    REGULATIVE = 0

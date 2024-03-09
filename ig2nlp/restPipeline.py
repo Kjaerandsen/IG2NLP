@@ -1,5 +1,5 @@
 import stanza
-from utility.utility import env, convertWordFormat
+from utility.config import env, convertWordFormat
 import json
 from flask import Flask, request, Response
 
@@ -8,7 +8,7 @@ from flask import Flask, request, Response
 # The -p parameter sets the port of the webserver, if changed the environment variable
 # "IG2FLASKURL" should also be changed accordingly.
 
-def initialize():
+def initialize() -> None:
    global nlp
    nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
       processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
@@ -45,7 +45,7 @@ def handleSingle():
    if reqLen == 1:
       docs = [nlp(textDocs[0])]
    elif reqLen == 0:
-      return 'Invalid input', status.
+      return 'Invalid input', 500
    else:
       docs = nlp.bulk_process(textDocs)
 

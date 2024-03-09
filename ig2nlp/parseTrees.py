@@ -3,7 +3,7 @@ import stanza
 from spacy import displacy
 import argparse
 
-from utility.utility import compoundWordsHandler, convertWordFormat, env
+from utility import compoundWordsHandler, convertWordFormat, env
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", 

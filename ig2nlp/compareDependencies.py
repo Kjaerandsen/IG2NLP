@@ -1,6 +1,6 @@
 import json
 import stanza
-from utility.utility import env
+from utility import env
 
 filename = "../data/input.json"
 

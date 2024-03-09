@@ -1,7 +1,7 @@
 import time
 import copy
 import logic.matchingFunction as m
-from utility.utility import *
+from utility import *
 from logic.matchingUtils import *
 from logic.matchingUtilsConstitutive import *
 from logic.classifier import *

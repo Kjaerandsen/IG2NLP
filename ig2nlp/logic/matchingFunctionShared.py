@@ -1,8 +1,8 @@
-from copy import deepcopy
-from utility.utility import *
+from utility import *
 import logic.matchingFunctionConstitutive as mc
 import logic.matchingFunction as mr
 from logic.classifier import *
+import copy
 
 numberAnnotation = False
 coref = True

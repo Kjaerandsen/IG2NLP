@@ -1,10 +1,7 @@
-from os import getenv
-from dotenv import load_dotenv
-import stanza
-import copy
 from stanza.models.common.doc import Token
 from stanza.models.common.doc import Word as StanzaWord
-import logging
+from utility.config import *
+import copy
 
 # Word for handling words,
 # takes the variables from the nlp pipeline output, and additional variables for handling components
@@ -652,85 +649,3 @@ def reusePartMoS(words:list[Word], firstVal:int, lastVal:int) -> list[Word]:
       logger.warning("utility: reusePartMoS found multiple root dependencies")
 
    return words
-
-def loadEnvironmentVariables() -> dict:
-   """Function that loads all environment variables from a ".env" file or 
-   the environment variables"""
-
-   load_dotenv(dotenv_path="../data/.env")
-   # Dict for return values
-   global env
-   env = {}
-
-   # Take the environment variable, default to false
-   # If the variable is "True", then True
-   env['useREST'] = getenv("IG2USEREST", 'False') == 'True'
-   # Take the environment variable, default to None
-   env['useGPU'] = getenv("IG2USEGPU", None)
-   if env['useGPU'] == "False":
-      env['useGPU'] = False
-   elif env['useGPU'] == "True":
-      env['useGPU'] = True
-
-   env['downloadMethod'] = getenv("IG2DLMETHOD", stanza.DownloadMethod.DOWNLOAD_RESOURCES)
-   if env['downloadMethod'] == "reuse":
-      env['downloadMethod'] = stanza.DownloadMethod.REUSE_RESOURCES
-   elif env['downloadMethod'] == "none":
-      env['downloadMethod'] = stanza.DownloadMethod.NONE
-
-   env['logLevel'] = getenv("IG2STANZALOGLEVEL")
-
-   env['displacyPort'] = int(getenv("IG2DISPLACYPORT", 5001))
-
-   env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
-
-   logLevels = {"INFO":logging.INFO,
-               "DEBUG":logging.DEBUG,
-               "WARN":logging.WARNING,
-               "ERROR":logging.ERROR,
-               "CRITICAL":logging.CRITICAL,
-               }
-
-   env["logLevelFile"] = getenv("IG2LOGLEVELFILE")
-   if env["logLevelFile"] in logLevels.keys():
-      env["logLevelFile"] = logLevels[env["logLevelFile"]]
-   else:
-      env["logLevelFile"] = logging.DEBUG
-
-   env["logLevelConsole"] = getenv("IG2LOGLEVELCONSOLE")
-   if env["logLevelConsole"] in logLevels.keys():
-      env["logLevelConsole"] = logLevels[env["logLevelConsole"]]
-   else:
-      env["logLevelConsole"] = logging.DEBUG
-
-   return env
-
-def createLogger() -> None:
-   """Creates a custom logger instance shared with all programs importing this file"""
-
-   global logger
-
-   logger = logging.getLogger(__name__)
-
-   # Accept all logs
-   logger.setLevel(logging.DEBUG)
-
-   # Handlers for console and file output with separate logging levels
-   fileHandler = logging.FileHandler("..\data\logs\log.log")
-   consoleHandler = logging.StreamHandler()
-   fileHandler.setLevel(env["logLevelFile"])
-   consoleHandler.setLevel(env["logLevelConsole"])
-
-   # Custom formatting for console and file output
-   formatterFile = logging.Formatter('%(asctime)s %(levelname)s: %(message)s',
-                              '%d/%m/%Y %I:%M:%S %p')
-   formatterConsole = logging.Formatter('%(levelname)s: %(message)s')
-   consoleHandler.setFormatter(formatterConsole)
-   fileHandler.setFormatter(formatterFile)
-
-   # Add the custom handlers to the logger
-   logger.addHandler(fileHandler)
-   logger.addHandler(consoleHandler)
-
-loadEnvironmentVariables()
-createLogger()

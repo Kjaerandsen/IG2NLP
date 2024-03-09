@@ -1,4 +1,4 @@
-from utility.utility import *
+from utility import *
 import numpy as np
 
 def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:bool=False) -> int:
