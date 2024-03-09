@@ -209,31 +209,6 @@ def LogicalOperatorHelper(word:Word, wordLen:int, scopeEnd:int,
    
    return scopeEnd, j
 
-def validateNested(words:list[Word], constitutive:bool) -> bool:
-   """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
-      be regarded as nested."""
-   Activity = False
-   Entity = False
-
-   if constitutive:
-      entitySymbol = "E"
-      activitySymbol = "F"
-   else:
-      entitySymbol = "A"
-      activitySymbol = "I"
-
-   for word in words:
-      if word.symbol == entitySymbol:
-         Entity = True
-         if Activity:
-            return True
-      if word.symbol == activitySymbol:
-         Activity = True
-         if Entity:
-            return True
-   
-   return False
-
 def ifHeadRelation(words:list[Word], wordId:int, headId:int) -> bool:
    """Check if the word is connected to the headId through a head connection"""
    word = words[wordId]
@@ -284,7 +259,7 @@ def ifHeadRelationRoot(words:list[Word], wordId:int, headId:int) -> bool:
       return True
    return False
 
-def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
+def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=False) -> list[Word]:
    """Handles supplementing pronouns with their respective Attribute (A) component contents using
       coreference resolution data"""
    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
@@ -297,11 +272,16 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
 
    brackets = 0
 
+   compareSymbol = "A"
+   if constitutive:
+      compareSymbol = "E"
+      
+
    # Get all instances of a coref with the given id
    # if the length of the word is longer than another instance replace the coref string for that
    # coref with the new word
    while i < wordLen:
-      if words[i].symbol == "A":
+      if words[i].symbol == compareSymbol:
          if words[i].position != 2 and words[i].corefid != -1:
             if words[i].corefid in corefIds:
                corefIds[words[i].corefid] += 1
@@ -356,13 +336,18 @@ def corefReplace(words:list[Word], semanticAnnotations:bool) -> list[Word]:
       #print(key,val, wordLen)
       for id in locations[key]:
          if words[id].pos == "PRON" and key in corefStrings:
-            logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
+            if constitutive:
+               logger.info("Replacing Constituted Entity (E) pronoun with "+ 
+                     "coreference resolution data: " 
                      + words[id].text + " -> " + corefStrings[key])
+            else:
+               logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
+                        + words[id].text + " -> " + corefStrings[key])
             
             words = addWord(words, id, words[id].text)
             words[id+1].text = "["+corefStrings[key]+"]"
             words[id+1].spaces = 1
-            words[id+1].setSymbol("A")
+            words[id+1].setSymbol(compareSymbol)
             if val > 1 and semanticAnnotations:
                words[id+1].addSemantic("Entity="+corefStrings[key])
       if val > 1 and semanticAnnotations:
@@ -440,17 +425,6 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
             words[j].text = "(" + words[j].text
          elif j-1 >= start and words[j-1].text == "[OR]":
             words[j].text += ")"
-
-   return words
-
-def attributeSemantic(words:list[Word]) -> list[Word]:
-   """Adds Number=x semantic annotation to attribute components in a list of words"""
-   for word in words:
-      if word.symbol == "A":
-         if "Number=Sing" in word.feats:
-            word.addSemantic("Number=Sing")
-         if "Number=Plur" in word.feats:
-            word.addSemantic("Number=Plur")
 
    return words
 
@@ -550,3 +524,44 @@ def findComponentStart(words:list[Word], id:int, symbol:str) -> int:
          return -1
    logger.warning("findComponentStart could not find the start")
    return -1
+
+def validateNested(words:list[Word], constitutive:bool) -> bool:
+   """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
+      be regarded as nested."""
+   Activity = False
+   Entity = False
+
+   if constitutive:
+      entitySymbol = "E"
+      activitySymbol = "F"
+   else:
+      entitySymbol = "A"
+      activitySymbol = "I"
+
+   for word in words:
+      if word.symbol == entitySymbol:
+         Entity = True
+         if Activity:
+            return True
+      if word.symbol == activitySymbol:
+         Activity = True
+         if Entity:
+            return True
+   
+   return False
+
+def entitySemantic(words:list[Word], constitutive:bool=False) -> list[Word]:
+   """Adds Number=x semantic annotation to Attribute (A) or 
+   constituted entity (E) components in a list of words"""
+   symbolComp = "A"
+   if constitutive:
+      symbolComp = "E"
+
+   for word in words:
+      if word.symbol == symbolComp:
+         if "Number=Sing" in word.feats:
+            word.addSemantic("Number=Sing")
+         if "Number=Plur" in word.feats:
+            word.addSemantic("Number=Plur")
+
+   return words

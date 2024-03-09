@@ -17,7 +17,7 @@ def matchingHandler(words:list[Word], semantic:bool) -> list[Word]:
    words = compoundWordsHandler(words)
    words = matchingFunction(words, semantic)
    if coref: words = corefReplace(words, semantic)
-   if semantic and numberAnnotation: words = attributeSemantic(words)
+   if semantic and numberAnnotation: words = entitySemantic(words)
    # Handle cases where a logical operator is included in a component without a matching word
    logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)

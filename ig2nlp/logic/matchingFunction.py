@@ -1,6 +1,5 @@
 import copy
 from utility import *
-from logic.matchingUtilsConstitutive import *
 from logic.classifier import *
 from logic.matchingHandlers import *
 
@@ -13,12 +12,8 @@ def matchingHandler(words:list[Word], semantic:bool, constitutive:bool=False) ->
    a formatted string of annotated text"""
    words = compoundWordsHandler(words)
    words = matchingFunction(words, semantic, constitutive)
-   if not constitutive:
-      if coref: words = corefReplace(words, semantic)
-      if semantic and numberAnnotation: words = attributeSemantic(words)
-   else:
-      if coref: words = corefReplaceConstitutive(words, semantic)
-      if semantic and numberAnnotation: words = attributeSemantic(words)
+   if coref: words = corefReplace(words, semantic, constitutive)
+   if semantic and numberAnnotation: words = entitySemantic(words, constitutive)
    # Handle cases where a logical operator is included in a component without a matching word
    logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)

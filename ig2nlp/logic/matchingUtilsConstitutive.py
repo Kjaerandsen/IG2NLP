@@ -1,22 +1,5 @@
 from utility import *
 
-def validateNestedConstitutive(words:list[Word]) -> bool:
-   """Sets a requirement of both an Aim (I) and an Attribute (A) detected for a component to
-      be regarded as nested."""
-   Aim = False
-   Attribute = False
-
-   for word in words:
-      if word.symbol == "E":
-         Attribute = True
-         if Aim:
-            return True
-      if word.symbol == "F":
-         Aim = True
-         if Attribute:
-            return True
-   return False
-
 def corefReplaceConstitutive(words:list[Word], semanticAnnotations:bool) -> list[Word]:
    """Handles supplementing pronouns with their respective Attribute (A) component contents using
       coreference resolution data"""
