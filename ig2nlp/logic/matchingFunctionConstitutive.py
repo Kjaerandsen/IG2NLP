@@ -1,6 +1,6 @@
 import time
 import copy
-import logic.matchingFunction as m
+import logic.matchingFunctionRegulative as m
 from utility import *
 from logic.matchingUtils import *
 from logic.matchingUtilsConstitutive import *

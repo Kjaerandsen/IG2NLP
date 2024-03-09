@@ -5,7 +5,6 @@ import argparse
 #from copy import deepcopy
 
 from logic.matchingFunction import matchingHandler
-from logic.matchingFunctionConstitutive import matchingHandlerConstitutive
 from logic.matchingFunctionShared import parseAndCompare
 from utility import *
 from logic.classifier import *
@@ -155,16 +154,10 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
          #for word in words[0]:
             #print(word.text)
 
-      if constitutive:
-         output = matchingHandlerConstitutive(words[0], semanticAnnotations)
-         if len(words) > 1:
-            for sentence in words[1:]:
-               output += " " + matchingHandlerConstitutive(sentence, semanticAnnotations)
-      else:
-         output = matchingHandler(words[0], semanticAnnotations)
-         if len(words) > 1:
-            for sentence in words[1:]:
-               output += " " + matchingHandler(sentence, semanticAnnotations)
+      output = matchingHandler(words[0], semanticAnnotations, constitutive)
+      if len(words) > 1:
+         for sentence in words[1:]:
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
 
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
@@ -216,27 +209,19 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
             print(classifier(sentence))
 
       '''
-      if constitutive:
-         #docBak = copy.deepcopy(doc[0])
-         output = matchingHandlerConstitutive(doc[0], semanticAnnotations)
-         #outputComp = matchingHandler(docBak, semanticAnnotations)
-         #reg, const = parseAndCompare(doc[0], semanticAnnotations)
-         #output = const
-         if len(doc) > 1:
-            for sentence in doc[1:]:
-               #output += " " + parseAndCompare(sentence, semanticAnnotations)
-               #sentenceBak = copy.deepcopy(sentence)
-               output += " " + matchingHandlerConstitutive(sentence, 
-                                                           semanticAnnotations)
-               #outputComp += " " + matchingHandler(sentenceBak, semanticAnnotations)
-         #print(output)
-         #print(outputComp)
-
-      else:
-         output = matchingHandler(doc[0], semanticAnnotations)
-         if len(doc) > 1:
-            for sentence in doc[1:]:
-               output += " " + matchingHandler(sentence, semanticAnnotations)
+      #docBak = copy.deepcopy(doc[0])
+      output = matchingHandler(doc[0], semanticAnnotations, constitutive)
+      #outputComp = matchingHandler(docBak, semanticAnnotations)
+      #reg, const = parseAndCompare(doc[0], semanticAnnotations)
+      #output = const
+      if len(doc) > 1:
+         for sentence in doc[1:]:
+            #output += " " + parseAndCompare(sentence, semanticAnnotations)
+            #sentenceBak = copy.deepcopy(sentence)
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
+            #outputComp += " " + matchingHandler(sentenceBak, semanticAnnotations)
+      #print(output)
+      #print(outputComp)
 
       print(jsonData[i]['baseTx'])
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
