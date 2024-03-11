@@ -170,7 +170,7 @@ def getHeadId(words:list[Word], i:int) -> int:
    """Returns the head id of the head of the given word"""
    return words[words[i].head].head
 
-def getHeadDep(words:list[Word], i:int) -> int:
+def getHeadDep(words:list[Word], i:int) -> str:
    """Returns the deprel of the head of the given word"""
    return words[words[i].head].deprel
 
