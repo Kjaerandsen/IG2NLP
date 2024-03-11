@@ -1,6 +1,5 @@
 from utility import *
 from logic.matchingUtils import *
-from logic.matchingUtilsConstitutive import *
 
 # Global variables for implementation specifics
 CombineObjandSingleWordProperty = True

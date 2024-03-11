@@ -1,13 +1,13 @@
 from utility import *
-import logic.matchingFunctionConstitutive as mc
-import logic.matchingFunction as mr
+from logic.matchingFunction import *
 from logic.classifier import *
 import copy
 
 numberAnnotation = False
 coref = True
 
-def parseAndCompare(words:list[Word], semantic:bool) -> tuple[list[Word],list[Word]]:
+def parseAndCompare(words:list[Word], semantic:bool, 
+                    constitutive:bool) -> tuple[list[Word],list[Word]]:
 
    words = compoundWordsHandler(words)
    words2 = copy.deepcopy(words)
@@ -18,25 +18,25 @@ def parseAndCompare(words:list[Word], semantic:bool) -> tuple[list[Word],list[Wo
    classification = classifier(words3)
    '''
 
-   words = mr.matchingFunction(words, semantic)
+   words = matchingFunction(words, semantic, constitutive)
    #print(WordsToSentence(words))
    #print(WordsToSentence(words2))
-   words2 = mc.matchingFunctionConstitutive(words2, semantic)
+   words2 = matchingFunction(words2, semantic, constitutive)
    
 
-   if coref: words = mr.corefReplace(words, semantic)
-   if semantic and numberAnnotation: words = mr.attributeSemantic(words)
+   if coref: words = corefReplace(words, semantic, constitutive)
+   if semantic and numberAnnotation: words = entitySemantic(words, constitutive)
    # Handle cases where a logical operator is included in a component without a matching word
-   mr.logicalOperatorImbalanced(words)
+   logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
-   mr.handleScopingIssues(words)
+   handleScopingIssues(words)
 
-   if coref: words2 = mc.corefReplaceConstitutive(words2, semantic)
-   if semantic and numberAnnotation: words2 = mr.attributeSemantic(words2)
+   if coref: words2 = corefReplace(words2, semantic, constitutive)
+   if semantic and numberAnnotation: words2 = entitySemantic(words2, constitutive)
    # Handle cases where a logical operator is included in a component without a matching wor
-   mr.logicalOperatorImbalanced(words2)
+   logicalOperatorImbalanced(words2)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
-   mr.handleScopingIssues(words2)
+   handleScopingIssues(words2)
 
    '''
    regulCov = coverage(words)
