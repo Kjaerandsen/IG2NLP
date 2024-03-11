@@ -628,6 +628,17 @@ def modalHandler(words:list[Word], i:int) -> int:
 
       words[i].setSymbol("M")
 
+   print(words[i+1])
+   if words[i+1].text.lower() == "not":
+      #print("True")
+      if words[i].position == 0:
+         words[i].position = 1
+      else:
+         words[i].setSymbol()
+      i+=1
+      words[i].setSymbol("M", 2)
+   print(words[i])
+
    return i
 
 
@@ -833,7 +844,7 @@ def rootHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
          words[iBak-1].setSymbol("F",1)
 
       # Check for preceeding negation "not"
-      if words[iBak-1].text.lower() == "not":
+      if words[iBak-1].text.lower() == "not" and words[iBak-1].symbol in ["","F"]:
          # If preceeding Constitutive Function (F)
          if iBak-2 >= 0 and words[iBak-2].symbol == "F":
             if words[iBak-2].position == 0:
