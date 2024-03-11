@@ -381,6 +381,12 @@ def compoundWords(words:list[Word]) -> list[Word]:
                i, wordLen = removeWord(words, i+1, wordLen, 1)
                i-=1
 
+      if (words[i].deprel == "compound" and words[i+1].deprel == "amod" and 
+         words[i+2].deprel == "compound"):
+         i, wordLen = removeWord(words, i+1, wordLen, 1)
+         i-=1
+
+
       # If the word is a compound word
       elif words[i].deprel == "compound" and words[i].head == i+1: 
          i, wordLen = removeWord(words, i, wordLen)
