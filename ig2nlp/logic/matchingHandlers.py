@@ -511,7 +511,128 @@ def conditionHandler2(words:list[Word], i:int, wordLen:int) -> int:
    return lastIndex
 
 def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
-   """Handler for constituted entity (E) components detected using the nsubj dependency"""
+   iBak = i
+
+   # If the nsubj is a pronoun
+   if words[i].pos == "PRON":
+      if words[words[i].head].deprel == "root":
+         i = smallLogicalOperator(words, i, "E", wordLen)
+         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
+            if words[i].position == 2:
+               words[i].setSymbol()
+               words[i+1].setSymbol("E",2)
+               i+=1
+            else:
+               words[i].setSymbol("E",1)
+               words[i+1].setSymbol("E",2)
+               i+=1
+
+      # (E,p) detection mechanism, might be too specific. 
+      # Is overwritten by Aim (I) component in several cases
+      if i+1 < wordLen and words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
+         #print("ADVCL")
+         words[i+1].setSymbol("E,p")
+
+      # TODO: consider turning this into a property instead (E,p)
+      prevWord = words[iBak-1]
+      startWord = words[iBak]
+      if prevWord.deprel == "amod" and prevWord.symbol == "":
+         if startWord.symbol == "E":
+            prevWord.setSymbol("E", 1)
+            if startWord.position == 1:
+               startWord.setSymbol()
+            elif startWord.position == 0:
+               startWord.setSymbol("E",2)
+            else:
+               logger.warning(
+            "constitutedEntityHandler found invalid scoping of Entity in amod dependency handling")
+               prevWord.setSymbol()
+   # Else
+   else:
+      # Positive lookahead for potential deprels to include
+      lastVal = i
+      propertyStart = -1
+      for j in range(i+1, wordLen):
+         deprel = words[j].deprel
+         if (deprel in ["case","nmod","amod","advmod","cc","conj","nmod","det",
+                        "nmod:tmod","nummod","nsubj","obl","dep","punct","appos"] 
+             and ifHeadRelation(words, j, i)):
+            # Look for property boundaries (E,p) using nmod:tmod and nummod dependencies
+            if propertyStart == -1:
+               if deprel == "nmod:tmod":
+                  if words[j-1].head >= j:
+                     propertyStart = j-1
+                  else:
+                     propertyStart = j
+               elif deprel == "nummod" and getHeadDep(words, j) == "nmod":
+                  if words[j-1].head >= j:
+                     propertyStart = j-1
+                  else:
+                     propertyStart = j
+
+            lastVal = j
+         else: break
+
+      # If the component contains multiple words
+      if lastVal > i:
+         # If a property boundary is detected
+         if propertyStart != -1:
+            # If the Entity contains multiple words encapsualte them
+            if (propertyStart-1) > i:
+               words[i].setSymbol("E",1)
+               words[propertyStart-1].setSymbol("E",2)
+               if (propertyStart-1 - i) > 1:
+                  words = findInternalLogicalOperators(words,i,propertyStart-1)
+            else:
+               words[i].setSymbol("E")
+
+            # If the property contains multiple words encapsualte them
+            if lastVal > propertyStart:
+               words[propertyStart].setSymbol("E,p",1)
+               words[lastVal].setSymbol("E,p",2)
+               if (lastVal-1 - propertyStart) > 1:
+                  words = findInternalLogicalOperators(words,propertyStart,lastVal)
+            else:
+               words[propertyStart].setSymbol("E,p")
+
+         else:
+            words[i].setSymbol("E",1)
+            words[lastVal].setSymbol("E",2)
+            if (lastVal - i) > 1:
+               words = findInternalLogicalOperators(words,i,lastVal)
+
+      else:
+         words[i].setSymbol("E")
+      
+      # Positive lookbehind for properties (amod, advmod)
+      if words[iBak-1].deprel in ["amod","advmod"]:
+         words[iBak-1].setSymbol("E,p")
+
+      # Include preceeding properties in the component
+      backTracker = iBak
+      while words[backTracker-1].symbol == "E,p":
+         if words[backTracker-2].deprel != "cc":
+            words[backTracker-1].setSymbol()
+            backTracker -= 1
+         else:
+            break
+      
+      if backTracker != iBak:
+         if words[iBak].position == 0:
+            words[iBak].position = 2
+         else:
+            words[iBak].setSymbol()
+
+         words[backTracker].setSymbol("E", 1)
+
+      i = lastVal
+
+   return i
+
+
+"""
+def constitutedEntityHandler2(words:list[Word], i:int, wordLen:int) -> int:
+   #Handler for constituted entity (E) components detected using the nsubj dependency
    iBak = i
    if words[i].pos != "PRON":
       # Look for nmod connected to the word i
@@ -543,10 +664,8 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
                words[i+1].setSymbol("E",2)
                i+=1
       
-      """
-      if words[iBak].symbol == "":
-         words[iBak].setSymbol("E")
-      """
+      #if words[iBak].symbol == "":
+      #   words[iBak].setSymbol("E")
 
    # If the nsubj is a pronoun connected to root then handle it as an attribute
    # This may need to be reverted in the future if coreference resolution is used
@@ -585,6 +704,7 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
             prevWord.setSymbol()
             
    return i
+"""
 
 def modalHandler(words:list[Word], i:int) -> int:
    """Handler for modal (M) components detected using the aux dependency"""
