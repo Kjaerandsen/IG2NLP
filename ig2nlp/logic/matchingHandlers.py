@@ -23,6 +23,7 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
          elif j < scopeStart:
             scopeStart = j
    
+   #print(scopeStart, words[scopeStart], scopeStart-1, words[scopeStart-1])
    # Look for preceeding acl to include if not annotated with another symbol
    #print(words[scopeStart-1].deprel, words[scopeStart-1].text, words[scopeStart-1].head, scopeStart)
    if (words[scopeStart-1].deprel == "acl" and words[scopeStart-1].symbol==""):
@@ -33,8 +34,10 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
             break
          if words[j].symbol != "":
             logger.debug("In Cex acl lookbehind found different symbol")
-            scopeStart += 1
+            if constitutive: scopeStart += 1
             break
+   
+   #print(scopeStart, words[scopeStart], scopeStart-1, words[scopeStart-1])
 
    if scopeEnd - scopeStart >= minimumCexLength:
       # If the statement is constitutive
@@ -183,73 +186,6 @@ def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int) -> int:
       i = includeConj(words, i, wordLen)
    #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
    #      words[word.head].pos)
-   return i
-
-def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
-   """Handler for attribute (A) components detected using the nsubj dependency"""
-   #print("Running attributeHandler, ", words[i].text, words[i].deprel, getHeadDep(words, iBak))
-   if words[i].pos != "PRON":
-      # Look for nmod connected to the word i
-
-      #i = smallLogicalOperator(words, i, "A", wordLen)
-      other = False
-      for j in range(wordLen):
-         if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
-            #print("A with xpos: ", words[j], words[j].xpos)
-            #print("Nmod head relation to a: ", words[j], words[i])
-            j = smallLogicalOperator(words, j, "A", wordLen)
-            other = True
-            if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
-               if words[i].position == 2:
-                  words[i].setSymbol()
-                  words[i+1].setSymbol("A",2)
-                  i+=1
-               else:
-                  words[i].setSymbol("A",1)
-                  words[i+1].setSymbol("A",2)
-                  i+=1
-            # Special case for nmod:poss dependencies followed by the nsubj dependency
-            # Only applies when NER is used and detects either an organization or a person 
-            # as the nsubj
-            # TODO: Reconsider this when more testing data is available
-            if words[j].deprel == "nmod:poss" and j+1 == i and words[i].ner[2:] in ["ORG","PERSON"]:
-               words[j].setSymbol("A,p")
-               i = smallLogicalOperator(words, i, "A", wordLen)
-               return i
-      if not other:
-         i = smallLogicalOperator(words, i, "A", wordLen)
-         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
-            if words[i].position == 2:
-               words[i].setSymbol()
-               words[i+1].setSymbol("A",2)
-               i+=1
-            else:
-               words[i].setSymbol("A",1)
-               words[i+1].setSymbol("A",2)
-               i+=1
-
-   # If the nsubj is a pronoun connected to root then handle it as an attribute
-   # This may need to be reverted in the future if coreference resolution is used
-   # in that case, the coreference resolution will be used to add the appropriate attribute
-   elif getHeadDep(words, i) == "root":
-      i = smallLogicalOperator(words, i, "A", wordLen)
-      if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
-         if words[i].position == 2:
-            words[i].setSymbol()
-            words[i+1].setSymbol("A",2)
-            i+=1
-         else:
-            words[i].setSymbol("A",1)
-            words[i+1].setSymbol("A",2)
-            i+=1
-
-   # (A,p) detection mechanism, might be too specific. 
-   # Is overwritten by Aim (I) component in several cases
-   if i+1 < wordLen and words[i+1].deprel == "advcl" and getHeadDep(words, i+1) == "root":
-      #print("ADVCL")
-      words[i+1].setSymbol("A,p")
-
-   #print(WordsToSentence(words))
    return i
 
 def deonticHandler(words:list[Word], i:int) -> int:
@@ -511,6 +447,7 @@ def conditionHandler2(words:list[Word], i:int, wordLen:int) -> int:
    return lastIndex
 
 def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
+   #Handler for constituted entity (E) components detected using the nsubj dependency
    iBak = i
 
    # If the nsubj is a pronoun
@@ -629,6 +566,197 @@ def constitutedEntityHandler(words:list[Word], i:int, wordLen:int) -> int:
 
    return i
 
+def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
+   """Handler for attribute (A) components detected using the nsubj dependency"""
+   iBak = i
+
+   # If the nsubj is a pronoun
+   if words[i].pos == "PRON":
+      if words[words[i].head].deprel == "root":
+         i = smallLogicalOperator(words, i, "A", wordLen)
+         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
+            if words[i].position == 2:
+               words[i].setSymbol()
+               words[i+1].setSymbol("A",2)
+               i+=1
+            else:
+               words[i].setSymbol("A",1)
+               words[i+1].setSymbol("A",2)
+               i+=1
+
+      # (A,p) detection mechanism, might be too specific. 
+      # Is overwritten by Aim (I) component in several cases
+      if i+1 < wordLen and words[i+1].deprel == "advcl" and words[words[i+1].head].deprel == "root":
+         #print("ADVCL")
+         words[i+1].setSymbol("A,p")
+
+      # TODO: consider turning this into a property instead (E,p)
+      prevWord = words[iBak-1]
+      startWord = words[iBak]
+      if prevWord.deprel == "amod" and prevWord.symbol == "":
+         if startWord.symbol == "A":
+            prevWord.setSymbol("A", 1)
+            if startWord.position == 1:
+               startWord.setSymbol()
+            elif startWord.position == 0:
+               startWord.setSymbol("A",2)
+            else:
+               logger.warning(
+            "constitutedEntityHandler found invalid scoping of Entity in amod dependency handling")
+               prevWord.setSymbol()
+   # Else
+   else:
+      # Positive lookahead for potential deprels to include
+      lastVal = i
+      propertyStart = -1
+      for j in range(i+1, wordLen):
+         deprel = words[j].deprel
+         if (deprel in ["case","nmod","amod","advmod","cc","conj","nmod","det",
+                        "nmod:tmod","nummod","nsubj","obl","dep","punct","appos"] 
+             and ifHeadRelation(words, j, i)):
+            
+            #if words[j].deprel == "det":
+            #   words[j].spaces = 0
+            #   words[j].text = ""
+            # Look for property boundaries (E,p) using nmod:tmod and nummod dependencies
+            # TODO: test "to" as well
+            if deprel == "case" and words[j].text.lower() in ["by","of"]:
+               if words[j+1].deprel == "det":
+                  propertyStart = j+2
+               else:
+                  propertyStart = j+1
+
+            lastVal = j
+         else: break
+
+      #print("A: ", words[i].text, words[propertyStart].text, words[lastVal].text)
+
+      # If the component contains multiple words
+      if lastVal > i:
+         # If a property boundary is detected
+         if propertyStart != -1:
+            # If the attribute contains multiple words encapsualte them
+            if lastVal > propertyStart:
+               words[propertyStart].setSymbol("A",1)
+               words[lastVal].setSymbol("A",2)
+               for k in range(propertyStart, lastVal):
+                  if words[k].deprel == "det":
+                     words[k].spaces = 0
+                     words[k].text = ""
+               if (lastVal-1 - propertyStart) > 1:
+                  words = findInternalLogicalOperators(words,propertyStart,lastVal)
+            else:
+               words[propertyStart].setSymbol("A")
+
+         else:
+            words[i].setSymbol("A",1)
+            words[lastVal].setSymbol("A",2)
+            for k in range(i, lastVal):
+               if words[k].deprel == "det":
+                  words[k].spaces = 0
+                  words[k].text = ""
+            if (lastVal - i) > 1:
+               words = findInternalLogicalOperators(words,i,lastVal)
+
+
+      else:
+         # Check for obl:agent related to acl
+         if words[i+1].deprel == "acl" and i == words[i+1].head:
+            for j in range(i+2,wordLen):
+               # If obl agent is found then mark it as an attribute and return
+               if words[j].head == i+1 and words[j].deprel == "obl:agent":
+                  # TODO: consider removing the I and Bdir annotations from here
+                  # or encapsulating the subsentence as an activation condition
+                  words[j].setSymbol("A")
+                  words[i+1].setSymbol("I")
+                  words[i].setSymbol("Bdir")
+                  #print("Returning:", j)
+                  return j
+
+         # Else just handle the component
+         if words[i-1].deprel == "nmod:poss" and words[i-1].head == i:
+            if words[i].pos != "PROPN":
+               words[i-1].setSymbol("A")
+            else:
+               words[i-1].setSymbol("A,p")
+               words[i].setSymbol("A")
+         else:
+            words[i].setSymbol("A")
+
+      i = lastVal
+
+   #print("Returning:", i)
+   return i
+
+"""
+def attributeHandler2(words:list[Word], i:int, wordLen:int) -> int:
+   #Handler for attribute (A) components detected using the nsubj dependency
+   #print("Running attributeHandler, ", words[i].text, words[i].deprel, getHeadDep(words, iBak))
+   if words[i].pos != "PRON":
+      # Look for nmod connected to the word i
+
+      #i = smallLogicalOperator(words, i, "A", wordLen)
+      other = False
+      for j in range(wordLen):
+         if "nmod" in words[j].deprel and ifHeadRelation(words, j, i):
+            #print("A with xpos: ", words[j], words[j].xpos)
+            #print("Nmod head relation to a: ", words[j], words[i])
+            j = smallLogicalOperator(words, j, "A", wordLen)
+            other = True
+            if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
+               if words[i].position == 2:
+                  words[i].setSymbol()
+                  words[i+1].setSymbol("A",2)
+                  i+=1
+               else:
+                  words[i].setSymbol("A",1)
+                  words[i+1].setSymbol("A",2)
+                  i+=1
+            # Special case for nmod:poss dependencies followed by the nsubj dependency
+            # Only applies when NER is used and detects either an organization or a person 
+            # as the nsubj
+            # TODO: Reconsider this when more testing data is available
+            if words[j].deprel == "nmod:poss" and j+1 == i and words[i].ner[2:] in ["ORG","PERSON"]:
+               words[j].setSymbol("A,p")
+               i = smallLogicalOperator(words, i, "A", wordLen)
+               return i
+      if not other:
+         i = smallLogicalOperator(words, i, "A", wordLen)
+         if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
+            if words[i].position == 2:
+               words[i].setSymbol()
+               words[i+1].setSymbol("A",2)
+               i+=1
+            else:
+               words[i].setSymbol("A",1)
+               words[i+1].setSymbol("A",2)
+               i+=1
+
+   # If the nsubj is a pronoun connected to root then handle it as an attribute
+   # This may need to be reverted in the future if coreference resolution is used
+   # in that case, the coreference resolution will be used to add the appropriate attribute
+   elif getHeadDep(words, i) == "root":
+      i = smallLogicalOperator(words, i, "A", wordLen)
+      if i+1 < wordLen and words[i+1].deprel == "appos" and words[i+1].head == i:
+         if words[i].position == 2:
+            words[i].setSymbol()
+            words[i+1].setSymbol("A",2)
+            i+=1
+         else:
+            words[i].setSymbol("A",1)
+            words[i+1].setSymbol("A",2)
+            i+=1
+
+   # (A,p) detection mechanism, might be too specific. 
+   # Is overwritten by Aim (I) component in several cases
+   if i+1 < wordLen and words[i+1].deprel == "advcl" and getHeadDep(words, i+1) == "root":
+      #print("ADVCL")
+      words[i+1].setSymbol("A,p")
+
+   #print(WordsToSentence(words))
+   print("Returning: ", i)
+   return i
+"""
 
 """
 def constitutedEntityHandler2(words:list[Word], i:int, wordLen:int) -> int:
