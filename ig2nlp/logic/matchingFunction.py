@@ -11,6 +11,7 @@ def matchingHandler(words:list[Word], semantic:bool, constitutive:bool=False) ->
    """takes a list of words, performs annotations using the matching function and returns 
    a formatted string of annotated text"""
    words = compoundWordsHandler(words)
+   words = logicalOperatorHandler(words)
    words = matchingFunction(words, semantic, constitutive)
    if coref: words = corefReplace(words, semantic, constitutive)
    if semantic and numberAnnotation: words = entitySemantic(words, constitutive)

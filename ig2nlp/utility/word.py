@@ -352,7 +352,7 @@ def addToCustomWords(
 
 # Middleware function for compounding words (multi-word expressions) into single words
 # Converts the word datatype to the custom class and runs the compoundWords function twice
-def compoundWordsHandler(words:list) -> list[Word]:
+def compoundWordsHandler(words:list[Word]) -> list[Word]:
    """Middleware function for processing words of the Word class,
    combines compound words in the list to single words"""
 
@@ -360,6 +360,30 @@ def compoundWordsHandler(words:list) -> list[Word]:
    # For compound (punct or cc) conj x relations, where one or more of the same cc are present
    words = compoundWordsConj(words)
 
+   return words
+
+def logicalOperatorHandler(words:list[Word]) -> list[Word]:
+   """Logical operator middleware, replaces puncts with logical operators where relevant, removes 
+   excess puncts prepending logical operators."""
+   wordLen = len(words)
+   for i in range(wordLen):
+      if words[i].deprel == "punct" and words[i].text == ",":
+         # If punct prepending cc (comma), remove it
+         if i+1 < wordLen:
+            if words[i+1].deprel == "cc" and words[i+1].text.lower() in ["or","and"]:
+               if words[i+2].text.lower() != "else":
+                  words[i].text = ""
+                  words[i].spaces = 0
+            # If prepending conj find the corresponding logical operator to replace the punct with
+            elif words[i+1].deprel == "conj":
+               # Positive lookahead for the corresponding logical operator to use
+               for j in range(i+1, wordLen):
+                  if words[j].deprel == "cc":
+                     words[i].text = words[j].text
+                     words[i].deprel = "cc"
+                     words[i].spaces = 1
+                     break
+   
    return words
 
 # Takes the words from the nlp pipeline and combines combine words to a single word

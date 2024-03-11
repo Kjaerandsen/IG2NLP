@@ -3,7 +3,7 @@ import stanza
 from spacy import displacy
 import argparse
 
-from utility import compoundWordsHandler, convertWordFormat, env
+from utility import compoundWordsHandler, logicalOperatorHandler, convertWordFormat, env
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", 
@@ -84,7 +84,8 @@ with open(filename, "r") as input:
    # Based on the example found at: 
    # https://stanfordnlp.github.io/stanza/depparse.html#accessing-syntactic-dependency-information
       for sentence in doc.sentences:
-         sentence.words = compoundWordsHandler(convertWordFormat(sentence.words))
+         sentence.words = logicalOperatorHandler(
+            compoundWordsHandler(convertWordFormat(sentence.words)))
          for word in sentence.words:
             # Generating the data structure for displacy visualization
             depData["words"].append({"text":word.text, "tag": word.pos})
