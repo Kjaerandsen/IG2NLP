@@ -119,9 +119,34 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
                # TODO: Reconsider in the future if this is accurate enough
                # There are currently false positives, but they should be mitigated by better
                # Cex component detection
-               if i-1 >= 0 and getHeadSymbol(words, i) == "Bdir" and words[i-1].symbol == "Bdir":
-                  word.setSymbol("Bdir,p")
+                  
+               elif i-1 >= 0 and getHeadSymbol(words, i) == "Bdir":
+                  if words[i-1].symbol == "Bdir":
+                     word.setSymbol("Bdir,p")
+                  
+                  """
+                  else:
+                     headId = words[i].head
+                     if getHeadPosition(words,i) in [0,2]: 
+                        start = headId+1
+                     else:
+                        start = findComponentEnd(words, headId, "Bdir")+1
+                     end = start
+                     for j in range(i+1,wordLen):
+                        if not ifHeadRelation(words, j, start):
+                           end = j-1
 
+                     if end - start > 2:
+                        for j in range(start+1,end-1):
+                           words[j].setSymbol()
+                        
+                     if end != start:
+                        words[start].setSymbol("Bdir,p",1)
+                        words[end].setSymbol("Bdir,p",2)
+                     else:
+                        words[start].setSymbol("Bdir,p")
+                     i=end
+                  """
             else:
                # TODO: Reconsider in the future if this is accurate enough
                # There are currently false positives, but they should be mitigated by better

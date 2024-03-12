@@ -68,7 +68,12 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
             else:
                words[scopeStart].setSymbol("P")
             return scopeEnd
-         
+      else:
+         # If the obl is connected to a regulative property (A,p, Bind,p, Bdir,p)
+         rootHead = getHead(words, iBak)
+         if (rootHead.symbol in ["A,p","Bdir,p","Bind,p"] and rootHead.position == 0 and
+             words[words[i].head+1].text != ","):
+            return oblConstitutivePropertyHandler(words, iBak, scopeEnd, rootHead.symbol)
 
       # Check for Date NER in the component
       componentWords = words[scopeStart:scopeEnd+1]
@@ -188,7 +193,20 @@ def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int, constitutiv
       #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
       #      words[word.head].pos)
    else:
-      if words[i].pos == "PROPN":
+      head = getHead(words, i)
+      if head.symbol in ["A,p","Bdir,p","Bind,p"] and head.position == 0:
+         lastVal = i
+         for j in range(i+1, wordLen):
+            deprel = words[j].deprel
+            if (deprel in ["case","nmod","amod","advmod","cc","conj","nmod","det",
+                           "nmod:tmod","nummod","nsubj","obl","dep","punct","appos"] 
+               and ifHeadRelation(words, j, i)):
+               lastVal = j
+            else: break
+         head.position = 1
+         words[lastVal].setSymbol(head.symbol, 2)
+         return lastVal
+      elif words[i].pos == "PROPN":
          i = attributeHandler(words, i, wordLen)
       #TODO: look into covering more cases of the obl:agent dependency in regulative statements
       #print("obl:agent", words[i].text)
