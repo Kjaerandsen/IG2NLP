@@ -1176,7 +1176,7 @@ def constitutingPropertiesHandler(words:list[Word], i:int, wordLen:int) -> int:
    return i
 
 def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> int:
-   """Handler for nmod dependency, currently used for Constituting Properties (P) components 
+   """Handler for nmod dependency, used for Constituting Properties (P) components 
    and its properties (,p)"""
    #words[i].setSymbol()
    # Too broad coverage in this case, detected instances which should be included in the main
@@ -1218,7 +1218,8 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
    return i
 
 def csubjHandler(words:list[Word], i:int, wordLen:int, constitutive:bool) -> int:
-   print("Running CSUBJ HANDLER")
+   """Handler for the csubj dependency, used for Aim (I) and Constitutive Functino (F) components.
+   In constitutive statements Modal (M) components are handled additionally."""
    head = getHead(words, i)
    if not constitutive:
       # Find "I" bounds:
