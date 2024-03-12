@@ -431,11 +431,27 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
             print(words[j].text)
             if words[j].text == ",":
                return i if i > iBak else iBak
+         # Look for logical operators to include
+         end = i
+         j = i+1
+         while j < wordLen:
+            if ifHeadRelation(words, j, i):
+               if not words[j].deprel in ["amod","advmod","det","cc","conj"]:
+                  break
+               if words[j].deprel == "conj":
+                  end = j
+               j += 1
+            else:
+               break
+         if end > i: i = end
          if getHeadPosition(words, firstIndex) == 0:
             getHead(words, firstIndex).setSymbol("Bdir", 1)
          else:
             getHead(words, firstIndex).setSymbol("", 0)
          words[i].setSymbol("Bdir", 2)
+         # Handle internal operators
+         if i - words[firstIndex].head > 2:
+            words = findInternalLogicalOperators(words,firstIndex,i)
    return i if i > iBak else iBak
 
 def conditionHandler2(words:list[Word], i:int, wordLen:int) -> int:
