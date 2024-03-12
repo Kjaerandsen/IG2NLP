@@ -597,7 +597,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
          #print("ADVCL")
          words[i+1].setSymbol("A,p")
 
-      # TODO: consider turning this into a property instead (E,p)
+      # TODO: consider turning this into a property instead (A,p)
       prevWord = words[iBak-1]
       startWord = words[iBak]
       if prevWord.deprel == "amod" and prevWord.symbol == "":
@@ -615,7 +615,7 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
    else:
       # Positive lookahead for potential deprels to include
       lastVal = i
-      propertyStart = -1
+      componentStart = -1
       for j in range(i+1, wordLen):
          deprel = words[j].deprel
          if (deprel in ["case","nmod","amod","advmod","cc","conj","nmod","det",
@@ -629,31 +629,34 @@ def attributeHandler(words:list[Word], i:int, wordLen:int) -> int:
             # TODO: test "to" as well
             if deprel == "case" and words[j].text.lower() in ["by","of"]:
                if words[j+1].deprel == "det":
-                  propertyStart = j+2
+                  componentStart = j+2
                else:
-                  propertyStart = j+1
+                  componentStart = j+1
 
             lastVal = j
          else: break
 
-      #print("A: ", words[i].text, words[propertyStart].text, words[lastVal].text)
+      #print("A: ", words[i].text, words[componentStart].text, words[lastVal].text)
 
       # If the component contains multiple words
       if lastVal > i:
          # If a property boundary is detected
-         if propertyStart != -1:
+         if componentStart != -1:
             # If the attribute contains multiple words encapsualte them
-            if lastVal > propertyStart:
-               words[propertyStart].setSymbol("A",1)
+            if lastVal > componentStart:
+               words[componentStart].setSymbol("A",1)
                words[lastVal].setSymbol("A",2)
-               for k in range(propertyStart, lastVal):
+               for k in range(componentStart, lastVal):
                   if words[k].deprel == "det":
                      words[k].spaces = 0
                      words[k].text = ""
-               if (lastVal-1 - propertyStart) > 1:
-                  words = findInternalLogicalOperators(words,propertyStart,lastVal)
+               if (lastVal-1 - componentStart) > 1:
+                  words = findInternalLogicalOperators(words,componentStart,lastVal)
             else:
-               words[propertyStart].setSymbol("A")
+               if componentStart+1 < wordLen:
+                  if (words[componentStart+1].deprel == "root" 
+                     or words[words[componentStart+1].head].deprel == "root"):
+                     words[componentStart].setSymbol("A")
 
          else:
             words[i].setSymbol("A",1)
