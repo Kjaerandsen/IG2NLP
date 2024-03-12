@@ -88,6 +88,9 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
             else:
                i = rootHandlerConstitutive(words, i, wordLen)
 
+         case "csubj":
+            i = csubjHandler(words, i, wordLen, constitutive)
+
          case "amod":
             # Else if the word has an amod dependency type, check if the head is a symbol
             # that supports properties, if so, the word is a property of that symbol
@@ -213,8 +216,7 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
 
          # (P) Constituting Properties detection
          case "obl:agent":
-            if constitutive:
-               i = oblAgentHandler(words, word, i, wordLen)
+            i = oblAgentHandler(words, word, i, wordLen, constitutive)
 
          case "cop":
             # (F) Constitutive function and (P) Constituting properties detection

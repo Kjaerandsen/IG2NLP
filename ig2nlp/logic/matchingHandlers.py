@@ -151,41 +151,42 @@ def oblConstitutivePropertyHandler(words:list[Word], iBak:int, scopeEnd:int, sym
       words[scopeStart].setSymbol(symbol)
    return scopeEnd
 
-def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int) -> int:
+def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int, constitutive:bool) -> int:
    """Handler for obl:agent dependency, currently only used for Constitutive statements: 
    Constitutive function (F) and Constituting properties (P) components"""
-   # TODO: Look into other use cases for obl:agent
-   #print("obl:agent", word)
-   head = words[word.head]
-   if head.symbol != "" and head.symbol != "F":
-      if head.position == 0:
-         head.position = 1
+   if constitutive:
+      # TODO: Look into other use cases for obl:agent
+      #print("obl:agent", word)
+      head = words[word.head]
+      if head.symbol != "" and head.symbol != "F":
+         if head.position == 0:
+            head.position = 1
+         else:
+            # TODO: might need to check for other annotations within
+            head.position = 1
+            for j in range(head.position+1, i-1):
+               if words[j].symbol != "":
+                  words[j].setSymbol()
+         word.setSymbol(head.symbol, 2)
+         i = includeConj(words, i, wordLen)
+         #print(WordsToSentence)
+         #print(word)
+      elif head.symbol == "F":
+         if head.position == 1:
+            for j in range(head.position+1, i-1):
+               if words[j].position == 2:
+                  start = j+1
+                  break
+         else: start = word.head+1
+         words[start].setSymbol("P",1)
+         word.setSymbol("P",2)
+         i = includeConj(words, i, wordLen)
       else:
-         # TODO: might need to check for other annotations within
-         head.position = 1
-         for j in range(head.position+1, i-1):
-            if words[j].symbol != "":
-               words[j].setSymbol()
-      word.setSymbol(head.symbol, 2)
-      i = includeConj(words, i, wordLen)
-      #print(WordsToSentence)
-      #print(word)
-   elif head.symbol == "F":
-      if head.position == 1:
-         for j in range(head.position+1, i-1):
-            if words[j].position == 2:
-               start = j+1
-               break
-      else: start = word.head+1
-      words[start].setSymbol("P",1)
-      word.setSymbol("P",2)
-      i = includeConj(words, i, wordLen)
-   else:
-      head.setSymbol("P",1)
-      word.setSymbol("P",2)
-      i = includeConj(words, i, wordLen)
-   #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
-   #      words[word.head].pos)
+         head.setSymbol("P",1)
+         word.setSymbol("P",2)
+         i = includeConj(words, i, wordLen)
+      #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
+      #      words[word.head].pos)
    return i
 
 def deonticHandler(words:list[Word], i:int) -> int:
@@ -1210,3 +1211,45 @@ def nmodDependencyHandlerConstitutive(words:list[Word], i:int, wordLen:int) -> i
    #print(words[i])
    return i
 
+def csubjHandler(words:list[Word], i:int, wordLen:int, constitutive:bool) -> int:
+   print("Running CSUBJ HANDLER")
+   head = getHead(words, i)
+   if not constitutive:
+      # Find "I" bounds:
+      if head.symbol == "I":
+         if head.position == 2:
+            start = -1
+            for j in range(words[i].head-1, -1, -1):
+               if words[j].symbol == "I":
+                  start = j
+                  break
+            if start != -1:
+               words[start].setSymbol()
+               head.setSymbol()
+         elif head.position == 0:
+            head.setSymbol()
+      i = rootHandler(words, i, wordLen)
+   else:
+      if head.deprel == "root":
+         # Find "F" bounds:
+         if head.symbol == "F":
+            if head.position == 2:
+               start = -1
+               for j in range(words[i].head-1, -1, -1):
+                  if words[j].symbol == "F":
+                     start = j
+                     break
+               if start != -1:
+                  # Check for preceeding expl to include
+                  if words[start-1].deprel == "expl":
+                     words[start-1].setSymbol("M",1)
+                     words[start].setSymbol()
+                     head.symbol = "M"
+                  else:
+                     words[start].symbol = "M"
+                     head.setSymbol("M",2)
+               elif head.position == 0:
+                  head.symbol = "M"
+      i = rootHandlerConstitutive(words, i, wordLen)
+   return i
+   
