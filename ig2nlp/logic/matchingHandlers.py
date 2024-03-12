@@ -427,6 +427,10 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
          i = lastIndex
       else:
          # Set the first word after the direct object component as the start of the component
+         for j in range(words[i].head+1,i):
+            print(words[j].text)
+            if words[j].text == ",":
+               return i if i > iBak else iBak
          if getHeadPosition(words, firstIndex) == 0:
             getHead(words, firstIndex).setSymbol("Bdir", 1)
          else:
