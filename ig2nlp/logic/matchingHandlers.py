@@ -187,6 +187,12 @@ def oblAgentHandler(words:list[Word], word:Word, i:int, wordLen:int, constitutiv
          i = includeConj(words, i, wordLen)
       #print("OBL AGENT ", word.text, words[word.head].text, words[word.head].symbol, 
       #      words[word.head].pos)
+   else:
+      if words[i].pos == "PROPN":
+         i = attributeHandler(words, i, wordLen)
+      #TODO: look into covering more cases of the obl:agent dependency in regulative statements
+      #print("obl:agent", words[i].text)
+      #words[i].text = "agent: "+words[i].text + " pos: " + words[i].pos
    return i
 
 def deonticHandler(words:list[Word], i:int) -> int:
