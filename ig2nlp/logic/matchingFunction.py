@@ -55,7 +55,13 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
             else:
                i = conditionHandler2(words, i, wordLen)
          
-         
+                  
+         case "ccomp":
+            if not constitutive:
+               if ccompHandler(words, wordsBak, i, wordLen, words2, semantic):
+                  return words2
+
+
          case "obj":
             # (Bdir) Object detection
             if not constitutive:
@@ -463,6 +469,170 @@ def conditionHandler(words:list[Word], wordsBak:list[Word], i:int,
          
          contents = matchingFunction(
             reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1), semantic, constitutive
+         )   
+
+         # Copy over the old placement information to the 
+         # newly generated words for proper formatting
+         for j in range(lastIndex+1, wordLen):
+            index = j-lastIndex-1
+            contents[index].id = words[j].id
+            contents[index].start = words[j].start
+            contents[index].end = words[j].end
+            contents[index].spaces = words[j].spaces
+
+         words2 += contents
+         if lastPunct:
+            words2.append(wordsBak[lastVal])
+
+      return True
+   else:
+
+      return False
+   
+def ccompHandler(words:list[Word], wordsBak:list[Word], i:int, 
+                     wordLen:int, words2:list[Word], semantic:bool) -> bool:
+   """Handler function for the matching and encapsulation of Direct Object (Bdir) components"""
+   firstVal = i
+   # Update to check if there are any overlapping annotations
+   # Go through the statement until the word is connected to the advcl directly or indirectly
+   inComp = False
+   nullified = True
+   for j in range(i):
+      # If connected to the advcl then set firstVal to the id and break the loop
+      if ifHeadRelation(words, j, i):
+         if inComp and words[j].position == 2:
+            inComp = False
+         #elif words[j].symbol == "Cac":
+         #   inComp = True
+         #   nullified = True
+         #   firstVal = -1
+         elif nullified:
+            firstVal = j
+            nullified = False
+   
+   if firstVal == -1:
+      firstVal = i
+
+   # Go through again from the activation condition++
+   # Until the word is no longer connected to the advcl
+      
+   # Set the lastVal to the current id -1   
+   lastIndex = i+1 if i+1 < wordLen else i
+   for j in range(lastIndex,wordLen):
+      if not ifHeadRelation(words, j, i):
+         lastIndex = j-1
+         break
+
+   if words[lastIndex].deprel != "punct":
+      if words[lastIndex+1].deprel == "punct":
+         lastIndex += 1
+      else:
+         logger.debug("Last val in handleCondition was not punct: " + words[lastIndex].text)
+         return False
+      
+   #print(words[firstVal].text, words[lastIndex].text)
+      
+   if firstVal == 0:
+      contents = []
+
+      condition = matchingFunction(
+         reusePartSoS(copy.deepcopy(wordsBak[:lastIndex]), lastIndex), semantic, False)
+
+      if validateNested(condition, False):
+         words2.append(Word(
+         "","","",0,0,"","","",0,0,0,"Bdir",True,1
+         ))
+         condition[0].spaces = 0
+         words2 += condition
+         words2.append(Word("","","",0,0,"","","",0,0,0,"Bdir",True,2))
+         words2.append(words[lastIndex])
+      else:
+         words2 += wordsBak[:lastIndex]
+         words2[0].setSymbol("Bdir",1)
+         words2[lastIndex-1].setSymbol("Bdir",2)
+         words2.append(words[lastIndex])
+         if lastIndex - firstVal > 2:
+            words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
+
+      contents = matchingFunction(
+            reusePartEoS(words[lastIndex+1:], lastIndex+1), semantic, False)
+
+      # Copy over the old placement information to the 
+      # newly generated words for proper formatting
+      for j in range(lastIndex+1, wordLen):
+         index = j-lastIndex-1
+         contents[index].id = words[j].id
+         contents[index].start = words[j].start
+         contents[index].end = words[j].end
+         contents[index].spaces = words[j].spaces
+
+      words2 += contents
+
+      return True
+   #else:
+   elif words[firstVal].deprel == "mark" or words[firstVal].text == ",":
+      firstVal+=1
+      if words[firstVal].text == ",":
+         firstVal+=1
+      #print(words[firstVal].text, words[firstVal].symbol, words[firstVal].position)
+      if words[firstVal].symbol in ["Cac","Cex"]:
+         # If one word component, go to the next word
+         if words[firstVal].position == 0:
+            firstVal +=1
+         else:
+            # Else find the end of the component and update the firstVal to the subsequent word
+            for j in range(firstVal+1,wordLen):
+               if words[j].symbol == words[firstVal].symbol:
+                  firstVal = j+1
+                  break
+         #print(words[firstVal].text, words[firstVal].symbol, words[firstVal].position)
+      # Ensure that the start is not a comma
+      if words[firstVal].text == ",":
+         firstVal+=1
+      #print(words[firstVal].text, words[firstVal].symbol, words[firstVal].position)
+
+      #print("First val was not id 0 and deprel was mark", words[lastIndex])
+      # Do the same as above, but also with the words before this advcl
+      contents = []
+
+      # Add the values before the condition
+      #if parseFirst:
+      #   words2 += matchingFunction(reusePartSoS(words[:firstVal], firstVal),
+      #                                      semantic, False)
+      #else:
+      words2 += words[:firstVal]
+      condition = matchingFunction(
+            reusePartMoS(copy.deepcopy(wordsBak[firstVal:lastIndex]), firstVal, lastIndex),
+            semantic, False)
+
+      j = 0
+
+      if validateNested(condition, False):
+         words2.append(Word(
+         "","","",0,0,"","","",0,0,1,"Bdir",True,1
+         ))
+         condition[0].spaces = 0
+         words2 += condition
+         words2.append(Word("","","",0,0,"","","",0,0,0,"Bdir",True,2))
+         words2.append(words[lastIndex])
+      else:
+         words2 += wordsBak[firstVal:lastIndex]
+         words2[firstVal].setSymbol("Bdir",1)
+         words2[lastIndex-1].setSymbol("Bdir",2)
+         words2.append(words[lastIndex])
+         if lastIndex - firstVal > 2:
+            words2 = findInternalLogicalOperators(words2, firstVal, lastIndex)
+      
+      if wordLen > lastIndex+1:
+         lastPunct = False
+         lastVal = wordLen
+         if wordsBak[wordLen-1].deprel == "punct":
+            lastPunct = True
+            lastVal = wordLen-1
+            wordLen -= 1
+         
+         contents = matchingFunction(
+            reusePartEoS(wordsBak[lastIndex+1:lastVal], lastIndex+1), semantic, False
          )   
 
          # Copy over the old placement information to the 
