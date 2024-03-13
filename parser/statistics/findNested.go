@@ -45,7 +45,7 @@ func RunStatistics(inputFile string, outputFile string) {
 		var stats Statistics
 
 		// Remove Suffixes from the manually annotated text
-		text = data[i].Manual
+		text = data[i].ManuTx
 		text = removeSuffixes(text)
 
 		/*
@@ -68,7 +68,7 @@ func RunStatistics(inputFile string, outputFile string) {
 		*/
 
 		// Retrieve the statistics
-		stats = findSymbols(data[i].Stanza)
+		stats = findSymbols(data[i].AutoTx)
 		data[i].StanzaParsed = stats
 	}
 
@@ -608,17 +608,19 @@ func removeSuffixesSymbol(text string, regEx *regexp.Regexp, symbol string) stri
 	if loc != nil {
 		//fmt.Println(text[loc[0]:loc[1]], text[loc[1]:loc[1]+1], "\n\n")
 
-		if text[loc[1]:loc[1]+1] == "{" ||
-			text[loc[1]:loc[1]+1] == "(" ||
-			text[loc[1]:loc[1]+1] == "[" {
+		if (loc[1] + 1) < len(text) {
+			if text[loc[1]:loc[1]+1] == "{" ||
+				text[loc[1]:loc[1]+1] == "(" ||
+				text[loc[1]:loc[1]+1] == "[" {
 
-			//fmt.Println("Updating text", symbol, text[loc[0]:loc[1]+1])
+				//fmt.Println("Updating text", symbol, text[loc[0]:loc[1]+1])
 
-			//fmt.Println(text, "\n\n")
+				//fmt.Println(text, "\n\n")
 
-			text = text[:loc[0]] + symbol + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
+				text = text[:loc[0]] + symbol + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
 
-			//fmt.Println(text)
+				//fmt.Println(text)
+			}
 		}
 
 		text = text[:loc[1]] + removeSuffixesSymbol(text[loc[1]:], regEx, symbol)
