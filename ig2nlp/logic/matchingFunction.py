@@ -256,6 +256,10 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
                if word.pos == "AUX":
                   i = constitutiveFunctionAuxHandler(words, wordLen, i)
 
+         case "acl:relcl":
+            if not constitutive:
+               i = aclRelclHandler(words, i, wordLen)
+
          # Default, for matches based on more than just a single deprel
          case _:
             # Print out more complex dependencies for future handling

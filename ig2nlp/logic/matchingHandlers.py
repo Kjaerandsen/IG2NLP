@@ -68,12 +68,30 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
             else:
                words[scopeStart].setSymbol("P")
             return scopeEnd
+         
+      # If the statement is regulative
       else:
          # If the obl is connected to a regulative property (A,p, Bind,p, Bdir,p)
          rootHead = getHead(words, iBak)
          if (rootHead.symbol in ["A,p","Bdir,p","Bind,p"] and rootHead.position == 0 and
              words[words[i].head+1].text != ","):
             return oblConstitutivePropertyHandler(words, iBak, scopeEnd, rootHead.symbol)
+
+      """
+      # Check the head for xcomp relation, if so encapsulate everything
+      if getHeadDep(words, i) == "xcomp":
+         headId = words[i].head
+         # Find preceeding mark
+         
+         if words[headId+1].deprel == "mark":
+            # Remove old annotations
+            for j in range(headId+1,i):
+               words[j].setSymbol()
+            words[headId+1].setSymbol("Cex",1)
+            words[i].setSymbol("Cex",2)
+            return i
+         # TODO: Find any further words to include
+      """
 
       # Check for Date NER in the component
       componentWords = words[scopeStart:scopeEnd+1]
@@ -1155,3 +1173,26 @@ def csubjHandler(words:list[Word], i:int, wordLen:int, constitutive:bool) -> int
       i = rootHandlerConstitutive(words, i, wordLen)
    return i
    
+def aclRelclHandler(words:list[Word], i:int, wordLen:int) -> int:
+   """Handles acl:relcl dependencies, used to handle properties (,p) 
+   of Direct Object (Bdir) and Indirect Object (Bind) components."""
+   HeadSymbol = getHeadSymbol(words, i)
+   if HeadSymbol in ["Bdir","Bind"]:
+      start = words[i].head+1
+      if words[start].text == ",": start +=1
+
+      end = i
+      for j in range(i+1,wordLen):
+         if not ifHeadRelation(words, j, i):
+            end = j-1
+
+      for j in range(start+1, end-1):
+         words[j].setSymbol()
+      
+      words[start].setSymbol(HeadSymbol+",p",1)
+      words[end].setSymbol(HeadSymbol+",p",2)
+
+      return end
+   else:
+      print("ACLRELCL NOT HANdLED")
+   return i
