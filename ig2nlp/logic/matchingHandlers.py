@@ -81,7 +81,6 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
          if (rootHead.deprel == "acl"
              and words[words[i].head+1].text != ","
              and rootHead.symbol in ["Bdir","Bind","Bdir,p","Bind,p"]):
-            print(WordsToSentence(words))
             # Encapsulate the content in-between
             words[scopeEnd].setSymbol(rootHead.symbol,2)
             # Remove annotations in-between
@@ -93,7 +92,6 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
                rootHead.position = 1
             elif rootHead.position == 2:
                rootHead.setSymbol()
-            print(WordsToSentence(words))
             return scopeEnd
             
       """
@@ -443,8 +441,49 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
    # overlaps with execution constraints.
    # TODO: Look into nmod inclusion further
    #print("Starting nmoddependencyHandler")
+
+   # TODO: consider removing the edgeCase detection, may be overfitted
    if getHeadSymbol(words, i) == "Bdir" and getHeadPosition(words, i) in [0,2]:
       #print("Within if")
+
+      edgeCase = False
+      start = i
+      # Positive lookbehind for mark and ","
+      for j in range(i-1,-1,-1):
+         #print(words[i].deprel, words[i].symbol)
+         if ifHeadRelation(words, j, i):
+            if words[j].deprel not in ["advmod","amod","det","mark","case","punct"]:
+               edgeCase = False
+               break
+            elif words[j].symbol != "":
+               edgeCase = False
+               break
+            elif words[j].deprel == "punct":
+               edgeCase = True
+               start = j+1
+               break
+         else:
+            edgeCase = False
+            break
+      
+      #print(edgeCase, words[j].deprel, words[j].text)
+
+      if edgeCase:
+         words[start].setSymbol("Bdir,p", 1)
+         end = i
+         # Positive lookahead for inclusions
+         for j in range(i+1,wordLen):
+            if not ifHeadRelation(words, j, i):
+               end = j-1
+               break
+         
+         words[end].setSymbol("Bdir,p", 2)
+         
+         if end-start > 2:
+            findInternalLogicalOperators(words, start, end)
+
+         return end
+
       #logger.debug("NMOD connected to BDIR")
       # positive lookahead
       firstIndex = i
@@ -465,7 +504,7 @@ def nmodDependencyHandler(words:list[Word], i:int, wordLen:int) -> int:
       else:
          # Set the first word after the direct object component as the start of the component
          for j in range(words[i].head+1,i):
-            print(words[j].text)
+            #print(words[j].text)
             if words[j].text == ",":
                return i if i > iBak else iBak
          # Look for logical operators to include
