@@ -111,65 +111,7 @@ def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False)
                i = amodPropertyHandlerConstitutive(words, i, wordLen)
 
          case "acl":
-            if not constitutive:
-               # (A,p) Attribute property detection 2
-               if words[word.head].symbol == "A":
-                  word.setSymbol("A,p")
-               # (Bdir,p) Direct object property detection 3
-               # TODO: Reconsider in the future if this is accurate enough
-               # There are currently false positives, but they should be mitigated by better
-               # Cex component detection
-                  
-               elif i-1 >= 0 and getHeadSymbol(words, i) == "Bdir":
-                  if words[i-1].symbol == "Bdir":
-                     word.setSymbol("Bdir,p")
-                  
-                  """
-                  else:
-                     headId = words[i].head
-                     if getHeadPosition(words,i) in [0,2]: 
-                        start = headId+1
-                     else:
-                        start = findComponentEnd(words, headId, "Bdir")+1
-                     end = start
-                     for j in range(i+1,wordLen):
-                        if not ifHeadRelation(words, j, start):
-                           end = j-1
-
-                     if end - start > 2:
-                        for j in range(start+1,end-1):
-                           words[j].setSymbol()
-                        
-                     if end != start:
-                        words[start].setSymbol("Bdir,p",1)
-                        words[end].setSymbol("Bdir,p",2)
-                     else:
-                        words[start].setSymbol("Bdir,p")
-                     i=end
-                  """
-            else:
-               # TODO: Reconsider in the future if this is accurate enough
-               # There are currently false positives, but they should be mitigated by better
-               # Cex component detection
-
-               # (E,p) Constituted Entity Property detection 2
-               if words[word.head].symbol == "E":
-                  word.setSymbol("E,p")
-               # (P,p) Constituting Properties property detection 3
-               elif words[word.head].symbol == "P" and words[i-1].symbol == "P":
-                  word.setSymbol("P,p")
-
-               elif words[word.head].symbol == "":
-                  # Check if within a component
-                  for j in range(word.head, -1, -1):
-                     word2 = words[j]
-                     if word2.symbol != "":
-                        if word2.position == 1:
-                           if word2.symbol == "E":
-                              word.setSymbol("E,p")
-                           elif word2.symbol == "P":
-                              word.setSymbol("P,p")
-                        break
+            aclHandler(words, i, wordLen, constitutive)
 
          case "nmod":
             # Direct object handling (Bdir), (Bdir,p)
