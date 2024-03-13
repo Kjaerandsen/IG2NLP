@@ -8,7 +8,7 @@ from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionShared import parseAndCompare
 from utility import *
 from logic.classifier import *
-from nlp.pipeline import *
+from nlp import *
 
 semanticAnnotations = False
 
