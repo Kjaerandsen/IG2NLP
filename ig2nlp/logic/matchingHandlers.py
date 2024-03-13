@@ -68,7 +68,8 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
             else:
                words[scopeStart].setSymbol("P")
             return scopeEnd
-         
+      
+         """If Regulative"""
       # If the statement is regulative
       else:
          # If the obl is connected to a regulative property (A,p, Bind,p, Bdir,p)
@@ -77,6 +78,24 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
              words[words[i].head+1].text != ","):
             return oblConstitutivePropertyHandler(words, iBak, scopeEnd, rootHead.symbol)
 
+         if (rootHead.deprel == "acl"
+             and words[words[i].head+1].text != ","
+             and rootHead.symbol in ["Bdir","Bind","Bdir,p","Bind,p"]):
+            print(WordsToSentence(words))
+            # Encapsulate the content in-between
+            words[scopeEnd].setSymbol(rootHead.symbol,2)
+            # Remove annotations in-between
+            for j in range(words[i].head+1, scopeEnd-1):
+               words[j].setSymbol()
+
+            # Check head position and update it accordingly
+            if rootHead.position == 0:
+               rootHead.position = 1
+            elif rootHead.position == 2:
+               rootHead.setSymbol()
+            print(WordsToSentence(words))
+            return scopeEnd
+            
       """
       # Check the head for xcomp relation, if so encapsulate everything
       if getHeadDep(words, i) == "xcomp":
