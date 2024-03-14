@@ -1,5 +1,6 @@
 from nlp.nlpUtility import *
 from utility import *
+from logic.matchingFunction import matchingHandler
 import stanza
 
 def initializePipeline(config:pipelineConfig, useGPU:bool, dlMethod, logLevel) -> stanza.Pipeline:
@@ -26,3 +27,34 @@ def nlpPipeline(pipeline:stanza.Pipeline, textDoc:str) -> list[stanza.Document]:
    doc = pipeline.process(textDoc)
    logger.debug("Finished running single statement pipeline")
    return doc
+
+def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str,str]|str:
+   doc = nlpPipeline(nlp, statement)
+   
+   words:list[Word]=[]
+   outputConst = ""
+   outputReg = ""
+
+   if "constitutive" in args:
+      output = ""
+      if args["constitutive"] == True:
+         constitutive = True
+      else:
+         constitutive = False
+      
+      for sentence in doc:
+         output += matchingHandler(convertWordFormat(sentence.words), False, constitutive) + " "
+      
+      if constitutive:
+         outputConst = output  
+      else: 
+         outputReg = output
+   else:
+      outputConst = ""
+      outputReg = ""
+
+      for sentence in doc.sentences:
+         words = convertWordFormat(sentence.words)
+         outputConst += matchingHandler(copy.deepcopy(words), False, True) + " "
+         outputReg += matchingHandler(words, False, False) + " "
+   return outputConst, outputReg
