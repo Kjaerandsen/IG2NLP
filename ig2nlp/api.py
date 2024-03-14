@@ -12,13 +12,27 @@ from logic import matchingFunction
 # the environment variable "IG2FLASKURL" should also be changed accordingly.
 
 def initialize() -> None:
+   
+   # Slow
+   """
    config = pipelineConfig(tokenize="combined",
                            mwt="combined",
                            pos="combined_electra-large",
                            depparse="combined_electra-large",
                            lemma="combined_charlm",
-                           ner="ontonotes-ww-multi_charlm",
-                           coref="ontonotes_electra-large")
+                           ner="ontonotes-ww-multi_charlm")
+   if env['coref']: config.coref = "ontonotes_electra-large"
+   """                        
+   # Fast
+   config = pipelineConfig(tokenize="combined",
+                           mwt="combined",
+                           pos="combined_nocharlm",
+                           depparse="combined_charlm",
+                           lemma="combined_nocharlm",
+                           ner="ontonotes-ww-multi_nocharlm")
+   if env['coref']: config.coref = "ontonotes_electra-large"
+   
+   
    global nlp
    nlp = initializePipeline(
       config, env['useGPU'], env['downloadMethod'], env['logLevel'])

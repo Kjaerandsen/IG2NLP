@@ -53,6 +53,12 @@ def loadEnvironmentVariables() -> dict:
    else:
       env["logLevelConsole"] = logging.DEBUG
 
+   env['coref'] = getenv("IG2USECOREF", False)
+   if env['coref'] == "False":
+      env['coref'] = False
+   elif env['coref'] == "True":
+      env['coref'] = True
+
    return env
 
 def createLogger() -> None:
