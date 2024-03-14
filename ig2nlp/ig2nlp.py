@@ -108,6 +108,8 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
                            lemma="combined_charlm",
                            ner="ontonotes-ww-multi_charlm",
                            coref="ontonotes_electra-large")
+   if env['coref']: config.coref = "ontonotes_electra-large"
+
    global nlp 
    nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
    logger.info("Finished loading the nlp pipeline")
