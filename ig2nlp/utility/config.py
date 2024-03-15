@@ -32,7 +32,7 @@ def loadEnvironmentVariables() -> dict:
 
    env['displacyPort'] = int(getenv("IG2DISPLACYPORT", 5001))
 
-   env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
+   env['flaskPort'] = getenv("IG2FLASKPORT", "5000")
 
    logLevels = {"INFO":logging.INFO,
                "DEBUG":logging.DEBUG,
