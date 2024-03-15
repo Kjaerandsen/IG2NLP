@@ -3,7 +3,8 @@ import json
 from flask import Flask, request, Response, jsonify
 from http import HTTPStatus
 from nlp import *
-from logic import matchingFunction
+import waitress
+import logging
 
 # Run this program with a development server using
 # the following command:
@@ -27,7 +28,7 @@ def initialize() -> None:
    config = pipelineConfig(tokenize="combined",
                            mwt="combined",
                            pos="combined_nocharlm",
-                           depparse="combined_charlm",
+                           depparse="combined_nocharlm",
                            lemma="combined_nocharlm",
                            ner="ontonotes-ww-multi_nocharlm")
    if env['coref']: config.coref = "ontonotes_electra-large"
@@ -39,6 +40,8 @@ def initialize() -> None:
    print("Finished initializing")
 
 initialize()
+wlogger = logging.getLogger('waitress')
+wlogger.setLevel(logging.WARNING)
 app = Flask(__name__)
 
 @app.post("/ig2nlp")
@@ -127,3 +130,6 @@ def createError(msg:str, type:int) -> Response:
    )
 
    return response
+
+if __name__ == "__main__":
+   waitress.serve(app, host="127.0.0.1", port=env['flaskPort'])
