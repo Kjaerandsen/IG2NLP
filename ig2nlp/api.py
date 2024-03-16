@@ -132,4 +132,4 @@ def createError(msg:str, type:int) -> Response:
    return response
 
 if __name__ == "__main__":
-   waitress.serve(app, host="127.0.0.1", port=env['flaskPort'])
+   waitress.serve(app, host="0.0.0.0", port=env['flaskPort'])
