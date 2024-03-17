@@ -89,7 +89,7 @@ with open(filename, "r") as input:
          for word in sentence.words:
             # Generating the data structure for displacy visualization
             depData["words"].append({"text":word.text, "tag": word.pos})
-            if word.head != -1:
+            if word.head not in [0,-1]:
                depData["arcs"].append({
                   "start": min(word.id-1+lastWord, word.head+lastWord), 
                   "end": max(word.id-1+lastWord, word.head+lastWord), 
