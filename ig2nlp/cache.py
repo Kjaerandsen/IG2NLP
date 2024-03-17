@@ -56,10 +56,7 @@ def main() -> None:
 def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
-   global flaskURL
    global env
-   
-   flaskURL = env['flaskURL']
 
    jsonLen = len(jsonData)
    logger.info("\nRunning cache with "+ str(jsonLen) + " items.")
