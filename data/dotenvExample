@@ -20,5 +20,10 @@ IG2STANZADLMETHOD=reuse
 IG2USEGPU=True
 # Port for displacy in dependencyParsing programs, Default: 5001
 IG2DISPLACYPORT=5001
-# URL for flask, Default: http://localhost:5000
-IG2FLASKURL=http://localhost:5000
+# PORT for flask api, Default: 5000
+IG2FLASKPORT=5000
+# Pipeline, defaults to accurate, corresponds with Stanza default pipelines
+# Candidate values: fast, default, accurate
+IG2PIPELINE=accurate
+# Coref, boolean, enables or disables coreference resolution, defaults to enabled
+IG2COREF=true

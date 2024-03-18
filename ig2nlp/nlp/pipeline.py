@@ -3,12 +3,17 @@ from utility import *
 from logic.matchingFunction import matchingHandler
 import stanza
 
-def initializePipeline(config:pipelineConfig, useGPU:bool, dlMethod, logLevel) -> stanza.Pipeline:
+def initializePipeline(useGPU:bool, useCoref:bool,
+                       dlMethod, logLevel, envPackage) -> stanza.Pipeline:
    """Initialize a Stanza nlp pipeline for future use"""
 
+   processors = PROCESSORS
+   if useCoref:
+      processors.append('coref')
+
    pipeline = stanza.Pipeline(lang='en', use_gpu=useGPU, 
-   processors=config.getProcessors(), 
-   package=config.getPackage(),
+   processors=processors, 
+   package=envPackage,
    download_method=dlMethod,
    logging_level=logLevel)
 

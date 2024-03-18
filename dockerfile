@@ -16,7 +16,6 @@ COPY ./ig2nlp ./ig2nlp
 WORKDIR /ig2nlp
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir waitress
 
 #Download all fast models
 #RUN wget https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.7.0.json -O /stanza_resources/resources.json
