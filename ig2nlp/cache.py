@@ -62,6 +62,7 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
    logger.info("\nRunning cache with "+ str(jsonLen) + " items.")
 
    logger.info("Loading nlp pipeline")
+   """
    config = pipelineConfig(tokenize="combined",
                            mwt="combined",
                            pos="combined_electra-large",
@@ -69,8 +70,22 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
                            lemma="combined_charlm",
                            ner="ontonotes-ww-multi_charlm",
                            coref="ontonotes_electra-large")
+   """
    global nlp 
-   nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+   #nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+   nlp = stanza.Pipeline(lang="en",
+                         package="default_accurate",
+                         processors=["tokenize",
+                                     "mwt",
+                                     "ner",
+                                     "pos",
+                                     "depparse",
+                                     "ner",
+                                     "coref",
+                                     "lemma"],
+                         use_gpu=False
+                        )
+
    logger.info("Finished loading the nlp pipeline")
 
    # Delete the environment variables dictionary
