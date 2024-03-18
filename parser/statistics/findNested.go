@@ -648,3 +648,114 @@ func getNestedComponents(text string) []JSONComponent {
 
 	return output
 }
+
+func getNestedComponentsGeneric(text string) ([]JSONComponent, string) {
+	var output []JSONComponent
+
+	// Remove suffixes from the input text
+	text = removeSuffixes(text)
+	//fmt.Println("No suffix text is: ", text)
+	// Get the nested components
+	var result []JSONComponent
+	for i := 0; i < len(NestedComponentNames); i++ {
+		// Get the updated text and JSON components
+		result, text = findNestedPartGeneric(text, NestedComponentNames[i])
+		fmt.Println("Updated text is: ", text)
+		// Append the JSON components to the output
+		output = append(output, result...)
+	}
+
+	return output, text
+}
+
+func findNestedPartGeneric(text string, component string) ([]JSONComponent, string) {
+	var output []JSONComponent
+	var outputText string
+	// Look for symbols which support nesting
+	// A,p Bdir Bdir,p Bind Bind,p Cac Cex E,p P P,p
+	// Full list is in Constants "NestedComponentNames"
+
+	position := strings.Index(text, component)
+
+	if position != -1 {
+		var currentSymbol JSONComponent
+		currentSymbol.Nested = true
+		currentSymbol.ComponentType = component
+
+		componentLength := len(component)
+		position += componentLength
+
+		outputText = text[:position]
+		text := text[position:]
+
+		//fmt.Println(text)
+
+		// Capture the semantic annotation if any
+		if text[0:1] == "[" {
+			//fmt.Println("Semantic")
+
+			end := strings.Index((text), "]")
+
+			if end != -1 {
+				currentSymbol.SemanticAnnotation = text[1:end]
+				outputText += text[:end+1]
+				text = text[end+1:]
+
+				// If no closing bracket is found return an empty output
+			} else {
+				log.Fatalf("Error no end bracket ']' found: " + text)
+				return output, text
+			}
+		}
+
+		// If the component is nested, get the contents and recurse
+		if text[0:1] == "{" {
+
+			fmt.Println("Found nested component: ", text)
+
+			brackets := 1
+
+			componentContents := ""
+
+			for i := 1; i < len(text); i++ {
+				if text[i] == byte('{') {
+					brackets++
+				} else if text[i] == byte('}') {
+					brackets--
+				}
+				if brackets == 0 {
+					componentContents = text[1:i]
+					componentContents = removeSymbols(componentContents)
+					if component != "O" {
+						outputText += text[:1] + componentContents + text[i:i+1]
+					} else {
+						outputText += text[:i+1]
+					}
+					text = text[i+1:]
+
+					//fmt.Println("Found end: ", componentContents)
+					currentSymbol.Content = componentContents
+					//fmt.Println("Rest: ", len(text))
+					output = append(output, currentSymbol)
+					//fmt.Println("Added nested component: ", text)
+					break
+				}
+			}
+
+			// Find any further nested components
+			result, text := findNestedPartGeneric(text, component)
+			output = append(output, result...)
+			//fmt.Println("\n\n RETURNING \n\n", output)
+			return output, outputText + text
+
+			// If the component is not a nested component, recurse to look for nested components
+		} else {
+			//fmt.Println("Not Nested", text)
+			result, text := findNestedPartGeneric(text, component)
+			return result, outputText + text
+		}
+	}
+
+	// If no detections just return the empty output
+	return output, text
+}
