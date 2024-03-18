@@ -53,11 +53,17 @@ def loadEnvironmentVariables() -> dict:
    else:
       env["logLevelConsole"] = logging.DEBUG
 
-   env['coref'] = getenv("IG2USECOREF", False)
+   env['coref'] = getenv("IG2COREF", False)
    if env['coref'] == "False":
       env['coref'] = False
    elif env['coref'] == "True":
       env['coref'] = True
+   
+   env['pipeline'] = getenv("IG2PIPELINE", "default_accurate")
+   if env['pipeline'] in ["fast","accurate"]:
+      env['pipeline'] = "default_"+env['pipeline']
+   elif env['pipeline'] != "default":
+      env['pipeline'] = "default_accurate"
 
    return env
 
