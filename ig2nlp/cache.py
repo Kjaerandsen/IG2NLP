@@ -73,6 +73,7 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
    """
    global nlp 
    #nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+   """
    nlp = stanza.Pipeline(lang="en",
                          package="default_accurate",
                          processors=["tokenize",
@@ -85,6 +86,9 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
                                      "lemma"],
                          use_gpu=False
                         )
+   """
+   nlp = initializePipeline(
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
 
    logger.info("Finished loading the nlp pipeline")
 

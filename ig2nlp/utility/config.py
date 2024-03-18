@@ -3,6 +3,16 @@ from dotenv import load_dotenv
 from stanza import DownloadMethod
 import logging
 
+PROCESSORS = [
+   "tokenize",
+   "mwt",
+   "ner",
+   "pos",
+   "depparse",
+   "ner",
+   "lemma"
+   ]
+
 def loadEnvironmentVariables() -> dict:
    """Function that loads all environment variables from a ".env" file or 
    the environment variables"""
@@ -53,7 +63,7 @@ def loadEnvironmentVariables() -> dict:
    else:
       env["logLevelConsole"] = logging.DEBUG
 
-   env['coref'] = getenv("IG2COREF", False)
+   env['coref'] = getenv("IG2COREF", True)
    if env['coref'] == "False":
       env['coref'] = False
    elif env['coref'] == "True":

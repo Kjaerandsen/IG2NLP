@@ -101,6 +101,7 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
 
    logger.info("Loading nlp pipeline")
+   """
    config = pipelineConfig(tokenize="combined",
                            mwt="combined",
                            pos="combined_electra-large",
@@ -109,9 +110,14 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
                            ner="ontonotes-ww-multi_charlm",
                            coref="ontonotes_electra-large")
    if env['coref']: config.coref = "ontonotes_electra-large"
+   """
 
    global nlp 
-   nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+   #nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+
+   nlp = initializePipeline(
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
+
    logger.info("Finished loading the nlp pipeline")
 
    # Delete the environment variables dictionary

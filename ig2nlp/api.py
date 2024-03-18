@@ -25,6 +25,7 @@ def initialize() -> None:
    if env['coref']: config.coref = "ontonotes_electra-large"
    """                        
    # Fast
+   """
    config = pipelineConfig(tokenize="combined",
                            mwt="combined",
                            pos="combined_nocharlm",
@@ -32,11 +33,11 @@ def initialize() -> None:
                            lemma="combined_nocharlm",
                            ner="ontonotes-ww-multi_nocharlm")
    if env['coref']: config.coref = "ontonotes_electra-large"
-   
+   """
    
    global nlp
    nlp = initializePipeline(
-      config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
    print("Finished initializing")
 
 initialize()
