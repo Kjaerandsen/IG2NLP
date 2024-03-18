@@ -28,7 +28,7 @@ func main() {
 			*inputFile+statistics.FILETYPE,
 			*outputFile+statistics.FILETYPE)
 	case 1:
-		statistics.RunStatistics(
+		statistics.GetComponents(
 			*inputFile+statistics.FILETYPE,
 			*outputFile+statistics.FILETYPE)
 	case 2:
@@ -37,10 +37,6 @@ func main() {
 			*outputFile)
 	case 3:
 		statistics.ReverseAnnotation(
-			*inputFile+statistics.FILETYPE,
-			*outputFile+statistics.FILETYPE)
-	case 4:
-		statistics.GetComponents(
 			*inputFile+statistics.FILETYPE,
 			*outputFile+statistics.FILETYPE)
 	}
