@@ -64,6 +64,8 @@ func componentHandler(inputStatement string, split bool) (StatisticsGeneric, boo
 	var nestedComponents []JSONComponent
 	var sentences []string
 
+	//TODO: Maybe reconsider the splitting functionality as the custom parsing does not rely on
+	// individual sentences
 	// If split, split the inputStatement into individual sentences using "."
 	// Then recurse with split set to false
 	if split {
