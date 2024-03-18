@@ -153,7 +153,9 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 	// Find the first component
 	position = strings.Index(text, component)
 
-	for position != -1 {
+	// While a position for the start of a component is found, and that position is not the end of
+	// the statement text
+	for position != -1 && len(text) > position+componentLength {
 
 		fmt.Println("Found component: ", position)
 
@@ -488,7 +490,8 @@ func findNestedPartGeneric(text string, component string) ([]JSONComponent, stri
 
 	position := strings.Index(text, component)
 
-	if position != -1 {
+	// If a start of a symbol is found, and the text is long enough to contain symbol contents
+	if position != -1 && len(text) > position+1 {
 		var currentSymbol JSONComponent
 		currentSymbol.Nested = true
 		currentSymbol.ComponentType = component
