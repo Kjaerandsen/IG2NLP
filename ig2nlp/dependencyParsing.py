@@ -4,6 +4,7 @@ import sys
 from spacy import displacy
 
 from utility import env, compoundWordsHandler
+from nlp import initializePipeline
 
 # Take the system arguments
 args = sys.argv
@@ -14,19 +15,8 @@ if len(args)<2:
         'dependencyParsing "Input string here"')
    sys.exit()
 
-nlp = stanza.Pipeline(lang='en', use_gpu=env['useGPU'], 
-   processors='tokenize,pos,lemma,constituency,depparse,ner,mwt,coref', 
-   package={
-      "tokenize": "combined",
-      "mwt": "combined",
-      "ner": ["ontonotes_charlm","conll03_charlm"],
-      "pos": "combined_electra-large",
-      "depparse": "combined_electra-large",
-      "lemma": "combined_charlm",
-      "ner": "ontonotes-ww-multi_charlm"
-   },
-   download_method=env['downloadMethod'],
-   logging_level=env['logLevel'])
+nlp = initializePipeline(
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
 
 displacyPort = env['displacyPort']
 

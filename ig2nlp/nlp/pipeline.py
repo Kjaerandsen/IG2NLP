@@ -63,3 +63,19 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
          outputConst += matchingHandler(copy.deepcopy(words), False, True) + " "
          outputReg += matchingHandler(words, False, False) + " "
    return outputConst, outputReg
+
+#nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
+"""
+nlp = stanza.Pipeline(lang="en",
+                        package="default_accurate",
+                        processors=["tokenize",
+                                    "mwt",
+                                    "ner",
+                                    "pos",
+                                    "depparse",
+                                    "ner",
+                                    "coref",
+                                    "lemma"],
+                        use_gpu=False
+                     )
+"""

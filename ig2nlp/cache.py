@@ -1,6 +1,6 @@
 import json
 from utility import *
-from nlp import *
+from nlp import initializePipeline, nlpPipeline, nlpPipelineMulti
 import argparse
 
 semanticAnnotations = False
@@ -62,31 +62,7 @@ def MatcherMiddleware(jsonData:list, singleMode:bool, batchSize:int) -> None:
    logger.info("\nRunning cache with "+ str(jsonLen) + " items.")
 
    logger.info("Loading nlp pipeline")
-   """
-   config = pipelineConfig(tokenize="combined",
-                           mwt="combined",
-                           pos="combined_electra-large",
-                           depparse="combined_electra-large",
-                           lemma="combined_charlm",
-                           ner="ontonotes-ww-multi_charlm",
-                           coref="ontonotes_electra-large")
-   """
    global nlp 
-   #nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
-   """
-   nlp = stanza.Pipeline(lang="en",
-                         package="default_accurate",
-                         processors=["tokenize",
-                                     "mwt",
-                                     "ner",
-                                     "pos",
-                                     "depparse",
-                                     "ner",
-                                     "coref",
-                                     "lemma"],
-                         use_gpu=False
-                        )
-   """
    nlp = initializePipeline(
       env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
 
