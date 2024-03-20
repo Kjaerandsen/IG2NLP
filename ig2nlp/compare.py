@@ -26,8 +26,8 @@ def main() -> None:
 
    outData:list[dict] = []
 
-   matches = np.zeros((17,5), dtype=int)
    for statement in jsonData:
+      matches = np.zeros((17,5), dtype=int)
       #print(statement["name"])
       #print(statement["manualParsed"])
       #print(statement["stanzaParsed"])
@@ -56,6 +56,9 @@ def main() -> None:
       #print(partialPool)
 
       statementData = dict()
+      
+      statementData["Count"]=matches.tolist()
+
       for dataPoint in ["name","baseTx","manuTx","autoTx"]:
          statementData[dataPoint] = statement[dataPoint]
       statementData["extraComponents"] = dict()
