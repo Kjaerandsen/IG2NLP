@@ -187,17 +187,24 @@ def compareComponentsPartial(manual:list, automa:list,
                      print(automa[l][k],manual[i][j])
                      output[l][1] += 1
                      print("COMPONENT: ", automa[l][k])
-                     # Add the components to the partialPool
+
+                     # Look for further inclusions on the new substring
+                     extraText = manual[i][j]["Content"].replace(automa[l][k]["Content"], "")
                      entry = {}
                      entry["ManualComponents"] = [manual[i][j]]
                      entry["StanzaComponents"] = [automa[l][k]]
-                     partialPool.append(entry)
 
                      # Remove the components from the list of components
                      automa[l] = automa[l][:k] + automa[l][k+1:]
                      manual[i] = manual[i][:j] + manual[i][j+1:]
-                     manualLen -= 1
-                     automaLen -= 1
+
+                     entry = extraInclusions(automa, output, extraText, entry, False)
+
+                     # Add the components to the partialPool
+                     partialPool.append(entry)
+
+                     manualLen = len(manual[i])
+                     automaLen = len(automa[l])
 
                      
                   elif manual[i][j]["Content"] in automa[l][k]["Content"]:
@@ -205,21 +212,75 @@ def compareComponentsPartial(manual:list, automa:list,
                      print("Match, substring")
                      output[l][1] += 1
                      print("COMPONENT: ", automa[l][k])
-                     # Add the components to the partialPool
+
+                     # Look for further inclusions on the new substring
+                     extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
                      entry = {}
                      entry["ManualComponents"] = [manual[i][j]]
                      entry["StanzaComponents"] = [automa[l][k]]
-                     partialPool.append(entry)
 
                      # Remove the components from the list of components
                      automa[l] = automa[l][:k] + automa[l][k+1:]
                      manual[i] = manual[i][:j] + manual[i][j+1:]
-                     manualLen -= 1
-                     automaLen -= 1
+
+                     entry = extraInclusions(manual, output, extraText, entry, True)
+
+                     # Add the components to the partialPool
+                     partialPool.append(entry)
+
+                     manualLen = len(manual[i])
+                     automaLen = len(automa[l])
+                     
                k+=1
             j+=1
 
    return output
+
+def extraInclusions(components:list, 
+                    output:np.array, extraText:str, entry:dict, isManual:bool) -> dict:
+   #Remove trailing or prepending space from extraText
+   if len(extraText) < 2:
+      print(extraText, " too short")
+      return entry
+   print(extraText, " handling")
+   if extraText[0] == " ":
+      extraText = extraText[1:]
+   elif extraText[len(extraText)-1] == " ":
+      extraText = extraText[:len(extraText)-2]
+
+   # Go through the component list and look for content matches
+   for i in range(17):
+         if components[i] == None:
+            continue
+         j = 0
+         compLen = len(components[i])
+         while j < compLen:
+            if components[i][j]["Content"] in extraText:
+               # Add the component to the entry dict
+               if isManual:
+                  entry["ManualComponents"].append(components[i][j])
+                  print("A")
+               else:
+                  entry["StanzaComponents"].append(components[i][j])
+                  print("B")
+
+               extraText = extraText.replace(components[i][j]["Content"], "")
+
+               # Remove the component from the component list
+               compLen -= 1
+               components[i] = components[i][:j] + components[i][j+1:]
+
+               
+               #Remove trailing or prepending space from extraText
+               if len(extraText) < 2:
+                  return entry
+               if extraText[0] == " ":
+                  extraText = extraText[1:]
+               elif extraText[len(extraText)-1] == " ":
+                  extraText = extraText[:len(extraText)-2]
+
+            j+=1
+   return entry
 
 def combineComponents(input) -> list:
    output = []
