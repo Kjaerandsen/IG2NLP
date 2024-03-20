@@ -54,6 +54,8 @@ def main() -> None:
       matches = countFPandFN(statement["manualParsed"]["components"],
                                         statement["stanzaParsed"]["components"],
                                         matches)
+      
+      matches = countTotal(matches)
       #print("3",statement["stanzaParsed"]["components"][14])
       #print(matches,"\n")
       #print(partialPool)
@@ -308,7 +310,7 @@ def combineComponents(input) -> list:
    return output
 
 def countFPandFN(manual:list, automa:list, 
-                            output:np.array) -> dict:
+                            output:np.array) -> np.array:
    """Counts extra components and adds manual to False Negative and automa to False Positive counts
    """
 
@@ -317,6 +319,14 @@ def countFPandFN(manual:list, automa:list,
          output[i][3] += len(manual[i])
       if automa[i] != None:
          output[i][2] += len(automa[i])
+   return output
+
+def countTotal(output:np.array) -> np.array:
+   """Sums all matches together to a total match count"""
+   for i in range(17):
+      for j in range(4):
+         output[i][4] += output[i][j]
+
    return output
 
 main()
