@@ -94,7 +94,6 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
 
-   global flaskURL
    global env
 
    jsonLen = len(jsonData)
