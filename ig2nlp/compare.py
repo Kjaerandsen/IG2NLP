@@ -47,9 +47,11 @@ def main() -> None:
                                         statement["stanzaParsed"]["components"],
                                         matches, partialPool)
       # Partial content matches
+      """
       matches = compareComponentsPartial(statement["manualParsed"]["components"],
                                         statement["stanzaParsed"]["components"],
                                         matches, partialPool)
+      """
       
       #print("3",statement["stanzaParsed"]["components"][14])
       #print(matches,"\n")
@@ -98,27 +100,31 @@ def compareComponentsDirect(manual:list, automa:list,
       k = 0
       while j < manualLen:
          while k < automaLen:
-            if manual[i] != None and automa[i] != None:
-               #print(type(manual[i]), type(automa[i]))
-               if manual[i][j]["Content"] == automa[i][k]["Content"]:
-                  if manual[i][j]["Nested"] == automa[i][k]["Nested"]:
-                     output[i][0] += 1
-                  else:
-                     output[i][1] += 1
-                     # Add the components to the partialPool
-                     entry = {}
-                     entry["ManualComponents"] = [manual[i][j]]
-                     entry["StanzaComponents"] = [automa[i][k]]
-                     partialPool.append(entry)
+            #print(manualLen, j, automaLen, k)
+            #print(type(manual[i]), type(automa[i]))
+            if manual[i][j]["Content"].lower() == automa[i][k]["Content"].lower():
+               if manual[i][j]["Nested"] == automa[i][k]["Nested"]:
+                  #print("\n\nDIRECT NESTED EQUAL", automa[i][k], manual[i][j],"\n\n")
+                  output[i][0] += 1
+               else:
+                  output[i][1] += 1
+                  #print("\n\nDIRECT NESTED UNEQUAL", automa[i][k], manual[i][j],"\n\n")
+                  # Add the components to the partialPool
+                  entry = {}
+                  entry["ManualComponents"] = [manual[i][j]]
+                  entry["StanzaComponents"] = [automa[i][k]]
+                  partialPool.append(entry)
 
-                  # Remove the components from the list of components
-                  automa[i] = automa[i][:k] + automa[i][k+1:]
-                  manual[i] = manual[i][:j] + manual[i][j+1:]
+               # Remove the components from the list of components
+               automa[i] = automa[i][:k] + automa[i][k+1:]
+               manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                  manualLen -= 1
-                  automaLen -= 1
-                  #Remove both
-                  #print("Match")
+               manualLen -= 1
+               automaLen -= 1
+               j -= 1
+               break
+               #Remove both
+               #print("Match")
             k+=1
          j+=1
    return output
@@ -140,24 +146,24 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
          automaLen = len(automa[l])
          while j < manualLen:
             while k < automaLen:
-               if manual[i] != None and automa[i] != None:
-                  #print(type(manual[i]), type(automa[l]))
-                  if manual[i][j]["Content"] == automa[l][k]["Content"]:
-                     output[l][1] += 1
-                     print("COMPONENT: ", automa[l][k])
-                     # Add the components to the partialPool
-                     entry = {}
-                     entry["ManualComponents"] = [manual[i][j]]
-                     entry["StanzaComponents"] = [automa[l][k]]
-                     partialPool.append(entry)
+               #print(type(manual[i]), type(automa[l]))
+               if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower():
+                  output[l][1] += 1
+                  #print("COMPONENT: ", automa[l][k])
+                  # Add the components to the partialPool
+                  entry = {}
+                  entry["ManualComponents"] = [manual[i][j]]
+                  entry["StanzaComponents"] = [automa[l][k]]
+                  partialPool.append(entry)
 
-                     # Remove the components from the list of components
-                     automa[l] = automa[l][:k] + automa[l][k+1:]
-                     manual[i] = manual[i][:j] + manual[i][j+1:]
-                     manualLen -= 1
-                     automaLen -= 1
-
-                     print("Match, partial")
+                  # Remove the components from the list of components
+                  automa[l] = automa[l][:k] + automa[l][k+1:]
+                  manual[i] = manual[i][:j] + manual[i][j+1:]
+                  manualLen -= 1
+                  automaLen -= 1
+                  j -= 1
+                  #print("Match, partial")
+                  break
                k+=1
             j+=1
 
@@ -180,7 +186,7 @@ def compareComponentsPartial(manual:list, automa:list,
          automaLen = len(automa[l])
          while j < manualLen:
             while k < automaLen:
-               if manual[i] != None and automa[i] != None:
+               if manual[i][j] != None and automa[l][k] != None:
                   #print(type(manual[i]), type(automa[l]))
                   if automa[l][k]["Content"] in manual[i][j]["Content"]:
                      print("Match, substring")
