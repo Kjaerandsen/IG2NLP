@@ -196,7 +196,7 @@ def compareComponentsPartial(manual:list, automa:list,
                if automa[l][k]["Content"] in manual[i][j]["Content"]:
                   #print("Match, substring")
                   #print(automa[l][k],manual[i][j])
-                  output[l][1] += 1
+                  output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
 
                   # Look for further inclusions on the new substring
@@ -209,7 +209,7 @@ def compareComponentsPartial(manual:list, automa:list,
                   automa[l] = automa[l][:k] + automa[l][k+1:]
                   manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                  entry = extraInclusions(automa, output, extraText, entry, False)
+                  entry, output = extraInclusions(automa, output, extraText, entry, False)
 
                   # Add the components to the partialPool
                   partialPool.append(entry)
@@ -223,7 +223,7 @@ def compareComponentsPartial(manual:list, automa:list,
                elif manual[i][j]["Content"] in automa[l][k]["Content"]:
                   #print(manual[i][j],automa[l][k])
                   #print("Match, substring")
-                  output[l][1] += 1
+                  output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
 
                   # Look for further inclusions on the new substring
@@ -236,7 +236,7 @@ def compareComponentsPartial(manual:list, automa:list,
                   automa[l] = automa[l][:k] + automa[l][k+1:]
                   manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                  entry = extraInclusions(manual, output, extraText, entry, True)
+                  entry, output = extraInclusions(manual, output, extraText, entry, True)
 
                   # Add the components to the partialPool
                   partialPool.append(entry)
@@ -252,8 +252,8 @@ def compareComponentsPartial(manual:list, automa:list,
 
    return output
 
-def extraInclusions(components:list, 
-                    output:np.array, extraText:str, entry:dict, isManual:bool) -> dict:
+def extraInclusions(components:list, output:np.array, extraText:str, 
+                    entry:dict, isManual:bool) -> tuple[dict, np.array]:
    """
       Finds extra partial content matches for the remainder of the text of a component in a partial
       match.
@@ -261,7 +261,7 @@ def extraInclusions(components:list,
    #Remove trailing or prepending space from extraText
    if len(extraText) < 2:
       print(extraText, " too short")
-      return entry
+      return entry, output
    print(extraText, " handling")
    if extraText[0] == " ":
       extraText = extraText[1:]
@@ -293,14 +293,14 @@ def extraInclusions(components:list,
                
                #Remove trailing or prepending space from extraText
                if len(extraText) < 2:
-                  return entry
+                  return entry, output
                if extraText[0] == " ":
                   extraText = extraText[1:]
                elif extraText[len(extraText)-1] == " ":
                   extraText = extraText[:len(extraText)-2]
                j-=1
             j+=1
-   return entry
+   return entry, output
 
 def combineComponents(input) -> list:
    output = []
