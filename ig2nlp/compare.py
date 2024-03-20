@@ -47,11 +47,9 @@ def main() -> None:
                                         statement["stanzaParsed"]["components"],
                                         matches, partialPool)
       # Partial content matches
-      """
       matches = compareComponentsPartial(statement["manualParsed"]["components"],
                                         statement["stanzaParsed"]["components"],
                                         matches, partialPool)
-      """
       
       #print("3",statement["stanzaParsed"]["components"][14])
       #print(matches,"\n")
@@ -186,56 +184,60 @@ def compareComponentsPartial(manual:list, automa:list,
          automaLen = len(automa[l])
          while j < manualLen:
             while k < automaLen:
-               if manual[i][j] != None and automa[l][k] != None:
-                  #print(type(manual[i]), type(automa[l]))
-                  if automa[l][k]["Content"] in manual[i][j]["Content"]:
-                     print("Match, substring")
-                     print(automa[l][k],manual[i][j])
-                     output[l][1] += 1
-                     print("COMPONENT: ", automa[l][k])
+               #print(type(manual[i]), type(automa[l]))
+               if automa[l][k]["Content"] in manual[i][j]["Content"]:
+                  #print("Match, substring")
+                  #print(automa[l][k],manual[i][j])
+                  output[l][1] += 1
+                  #print("COMPONENT: ", automa[l][k])
 
-                     # Look for further inclusions on the new substring
-                     extraText = manual[i][j]["Content"].replace(automa[l][k]["Content"], "")
-                     entry = {}
-                     entry["ManualComponents"] = [manual[i][j]]
-                     entry["StanzaComponents"] = [automa[l][k]]
+                  # Look for further inclusions on the new substring
+                  extraText = manual[i][j]["Content"].replace(automa[l][k]["Content"], "")
+                  entry = {}
+                  entry["ManualComponents"] = [manual[i][j]]
+                  entry["StanzaComponents"] = [automa[l][k]]
 
-                     # Remove the components from the list of components
-                     automa[l] = automa[l][:k] + automa[l][k+1:]
-                     manual[i] = manual[i][:j] + manual[i][j+1:]
+                  # Remove the components from the list of components
+                  automa[l] = automa[l][:k] + automa[l][k+1:]
+                  manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                     entry = extraInclusions(automa, output, extraText, entry, False)
+                  entry = extraInclusions(automa, output, extraText, entry, False)
 
-                     # Add the components to the partialPool
-                     partialPool.append(entry)
+                  # Add the components to the partialPool
+                  partialPool.append(entry)
 
-                     manualLen = len(manual[i])
-                     automaLen = len(automa[l])
+                  manualLen = len(manual[i])
+                  automaLen = len(automa[l])
+                  j-=1
+                  break
 
-                     
-                  elif manual[i][j]["Content"] in automa[l][k]["Content"]:
-                     print(manual[i][j],automa[l][k])
-                     print("Match, substring")
-                     output[l][1] += 1
-                     print("COMPONENT: ", automa[l][k])
+                  
+               elif manual[i][j]["Content"] in automa[l][k]["Content"]:
+                  #print(manual[i][j],automa[l][k])
+                  #print("Match, substring")
+                  output[l][1] += 1
+                  #print("COMPONENT: ", automa[l][k])
 
-                     # Look for further inclusions on the new substring
-                     extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
-                     entry = {}
-                     entry["ManualComponents"] = [manual[i][j]]
-                     entry["StanzaComponents"] = [automa[l][k]]
+                  # Look for further inclusions on the new substring
+                  extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
+                  entry = {}
+                  entry["ManualComponents"] = [manual[i][j]]
+                  entry["StanzaComponents"] = [automa[l][k]]
 
-                     # Remove the components from the list of components
-                     automa[l] = automa[l][:k] + automa[l][k+1:]
-                     manual[i] = manual[i][:j] + manual[i][j+1:]
+                  # Remove the components from the list of components
+                  automa[l] = automa[l][:k] + automa[l][k+1:]
+                  manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                     entry = extraInclusions(manual, output, extraText, entry, True)
+                  entry = extraInclusions(manual, output, extraText, entry, True)
 
-                     # Add the components to the partialPool
-                     partialPool.append(entry)
+                  # Add the components to the partialPool
+                  partialPool.append(entry)
 
-                     manualLen = len(manual[i])
-                     automaLen = len(automa[l])
+                  manualLen = len(manual[i])
+                  automaLen = len(automa[l])
+                  # Iterate
+                  j-=1
+                  break
                      
                k+=1
             j+=1
@@ -284,7 +286,7 @@ def extraInclusions(components:list,
                   extraText = extraText[1:]
                elif extraText[len(extraText)-1] == " ":
                   extraText = extraText[:len(extraText)-2]
-
+               j-=1
             j+=1
    return entry
 
