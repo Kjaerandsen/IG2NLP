@@ -51,6 +51,9 @@ def main() -> None:
                                         statement["stanzaParsed"]["components"],
                                         matches, partialPool)
       
+      matches = countFPandFN(statement["manualParsed"]["components"],
+                                        statement["stanzaParsed"]["components"],
+                                        matches)
       #print("3",statement["stanzaParsed"]["components"][14])
       #print(matches,"\n")
       #print(partialPool)
@@ -249,6 +252,10 @@ def compareComponentsPartial(manual:list, automa:list,
 
 def extraInclusions(components:list, 
                     output:np.array, extraText:str, entry:dict, isManual:bool) -> dict:
+   """
+      Finds extra partial content matches for the remainder of the text of a component in a partial
+      match.
+   """
    #Remove trailing or prepending space from extraText
    if len(extraText) < 2:
       print(extraText, " too short")
@@ -300,5 +307,16 @@ def combineComponents(input) -> list:
          [output.append(component) for component in components]
    return output
 
+def countFPandFN(manual:list, automa:list, 
+                            output:np.array) -> dict:
+   """Counts extra components and adds manual to False Negative and automa to False Positive counts
+   """
+
+   for i in range(17):
+      if manual[i] != None:
+         output[i][3] += len(manual[i])
+      if automa[i] != None:
+         output[i][2] += len(automa[i])
+   return output
 
 main()
