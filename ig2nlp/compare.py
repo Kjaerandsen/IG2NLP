@@ -1,6 +1,7 @@
 import json
 import argparse
 import numpy as np
+import pandas as pd
 
 def main() -> None:
 
@@ -17,15 +18,16 @@ def main() -> None:
       filename = "../data/"+args.input+".json"
 
    if not args.output:
-      outfilename = "../data/output.json"
+      outfilename = "../data/output"
    else:
-      outfilename = "../data/"+args.output+".json"
+      outfilename = "../data/"+args.output
 
    with open(filename, "r") as input:
       jsonData = json.load(input)
 
    outData:list[dict] = []
 
+   totalMatches = np.zeros((17,5), dtype=int)
    for statement in jsonData:
       matches = np.zeros((17,5), dtype=int)
       #print(statement["name"])
@@ -60,6 +62,8 @@ def main() -> None:
       #print(matches,"\n")
       #print(partialPool)
 
+      # Add this statements matches to the total
+      totalMatches += matches
       statementData = dict()
       
       statementData["Count"]=matches.tolist()
@@ -82,10 +86,47 @@ def main() -> None:
    print(type(outData[0]["partialPool"][0]))
    """
    print(matches,"\n")
+   """
+   outJSON = "{\n"
+   for statement in outData:
+      outJSON += "  {\n"
+      for item in ["name", "baseTx", "manuTx", "autoTx"]:
+         outJSON += '    "' + item + '": ' + json.dumps(statement[item]) + ",\n"
+      #outJSON = outJSON[:len(outJSON)-2] + outJSON[len(outJSON)-1:]
+      outJSON += '    "Count": '+ json.dumps(statement["Count"])
+      outJSON += "\n  },\n"
+   """
 
-
-   with open(outfilename, "w") as output:
+   with open(outfilename+".json", "w") as output:
       json.dump(outData, output, indent=2)
+   
+   # Create a dataframe (table) of the match statistics
+   df = pd.DataFrame(columns=["Symbol", "TP", "PP", "FP", "FN", "Total"])
+   """
+   compNames = ["Attribute Property", "Direct Object", "Direct Object Property", "Indirec Object",
+                "Indirect Object Property", "Activation Condition", "Execution Contraint",
+                "Constituted Entity Property", "Constituting Properties", 
+                "Constituting Properties Property", "Or Else", "Attribute", "Deontic", "Aim",
+                "Contituted Entity", "Modal", "Constitutive Function"]
+   """
+   compNames = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
+                "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
+   for i in range(17):
+      df = df._append({
+         "Symbol":compNames[i], 
+         "TP":int(totalMatches[i][0]),
+         "PP":int(totalMatches[i][1]), 
+         "FP":int(totalMatches[i][2]), 
+         "FN":int(totalMatches[i][3]), 
+         "Total":int(totalMatches[i][4])
+      },ignore_index=True)
+
+   df = df.sort_values(by=['Symbol'])
+
+   #print(df)
+   # Create totals
+   with open(outfilename+"Total.txt", "w") as output:
+      output.write(str(df))
 
 
 def compareComponentsDirect(manual:list, automa:list, 
