@@ -62,6 +62,6 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
 
    for sentence in doc.sentences:
       words = convertWordFormat(sentence.words)
-      outputConst += matchingHandler(copy.deepcopy(words), False, True)
-      outputReg += matchingHandler(words, False, False)
+      outputConst += matchingHandler(copy.deepcopy(words), False, True, args)
+      outputReg += matchingHandler(words, False, False, args)
    return outputConst, outputReg

@@ -7,9 +7,19 @@ minimumCexLength = 1
 numberAnnotation = False
 coref = True
 
-def matchingHandler(words:list[Word], semantic:bool, constitutive:bool=False) -> list[Word]:
+def matchingHandler(words:list[Word], semantic:bool, 
+                    constitutive:bool=False, args:dict={}) -> list[Word]:
    """takes a list of words, performs annotations using the matching function and returns 
    a formatted string of annotated text"""
+   # Handle the optional args
+   if "coref" in args:
+      print("Coref: ", args["coref"])
+      global coref
+      coref = args["coref"]
+   if "semanticQuantity" in args:
+      global numberAnnotation
+      numberAnnotation = args["semanticQuantity"]
+
    words = compoundWordsHandler(words)
    words = logicalOperatorHandler(words)
    words = matchingFunction(words, semantic, constitutive)
@@ -19,10 +29,12 @@ def matchingHandler(words:list[Word], semantic:bool, constitutive:bool=False) ->
    logicalOperatorImbalanced(words)
    # Handle scoping issues (unclosed parentheses, or nesting in not nested components)
    handleScopingIssues(words)
+   """
    if not constitutive:
       print("Regulative coverage: ", coverage(words))
    else:
       print("Constitutive coverage: ", coverage(words))
+   """
    return WordsToSentence(words)
 
 def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False) -> list[Word]:
