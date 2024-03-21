@@ -1,6 +1,6 @@
 version: '3'
-services: 
-  ig2nlp: 
+services:
+  ig2nlp:
     privileged: false
     build: .
     restart: always
@@ -10,7 +10,7 @@ services:
       - ~/stanza_resources:/stanza_resources
       - ./data:/data
     environment:
-      ENV STANZA_RESOURCES_DIR : "/stanza_resources"
-    ports: 
+      STANZA_RESOURCES_DIR : "/stanza_resources"
+    ports:
       - '5000:5000'
     stop_signal: SIGINT

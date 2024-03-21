@@ -13,6 +13,14 @@ I recommend using a virtual environment.
 
 Tested using Python 3.11, models and programs used do not support Python 3.12 as of the time of writing.
 
+## Docker api
+* Create the stanza_resources folder if not already present: `mkdir ~/stanza_resources`
+(make a "stanza_resources" folder in the home directory)
+
+* Start the container with: `docker compose up`
+
+* Alternatively build the container from the dockerfile and run it manually. A shared volume for stanza_resources is recommended to reuse the models.
+
 ## Python programs:
 
 ### ig2nlp.py
