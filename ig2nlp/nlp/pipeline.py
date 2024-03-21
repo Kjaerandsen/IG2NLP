@@ -40,6 +40,7 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
    outputConst = ""
    outputReg = ""
 
+   """
    if "constitutive" in args:
       output = ""
       if args["constitutive"] == True:
@@ -48,34 +49,19 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
          constitutive = False
       
       for sentence in doc:
-         output += matchingHandler(convertWordFormat(sentence.words), False, constitutive) + " "
+         output += matchingHandler(convertWordFormat(sentence.words), False, constitutive)
       
       if constitutive:
          outputConst = output  
       else: 
          outputReg = output
    else:
-      outputConst = ""
-      outputReg = ""
+   """
+   outputConst = ""
+   outputReg = ""
 
-      for sentence in doc.sentences:
-         words = convertWordFormat(sentence.words)
-         outputConst += matchingHandler(copy.deepcopy(words), False, True) + " "
-         outputReg += matchingHandler(words, False, False) + " "
+   for sentence in doc.sentences:
+      words = convertWordFormat(sentence.words)
+      outputConst += matchingHandler(copy.deepcopy(words), False, True)
+      outputReg += matchingHandler(words, False, False)
    return outputConst, outputReg
-
-#nlp = initializePipeline(config, env['useGPU'], env['downloadMethod'], env['logLevel'])
-"""
-nlp = stanza.Pipeline(lang="en",
-                        package="default_accurate",
-                        processors=["tokenize",
-                                    "mwt",
-                                    "ner",
-                                    "pos",
-                                    "depparse",
-                                    "ner",
-                                    "coref",
-                                    "lemma"],
-                        use_gpu=False
-                     )
-"""

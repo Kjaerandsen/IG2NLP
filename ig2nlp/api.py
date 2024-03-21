@@ -12,29 +12,7 @@ import logging
 # The -p parameter sets the port of the webserver, if changed 
 # the environment variable "IG2FLASKURL" should also be changed accordingly.
 
-def initialize() -> None:
-   
-   # Slow
-   """
-   config = pipelineConfig(tokenize="combined",
-                           mwt="combined",
-                           pos="combined_electra-large",
-                           depparse="combined_electra-large",
-                           lemma="combined_charlm",
-                           ner="ontonotes-ww-multi_charlm")
-   if env['coref']: config.coref = "ontonotes_electra-large"
-   """                        
-   # Fast
-   """
-   config = pipelineConfig(tokenize="combined",
-                           mwt="combined",
-                           pos="combined_nocharlm",
-                           depparse="combined_nocharlm",
-                           lemma="combined_nocharlm",
-                           ner="ontonotes-ww-multi_nocharlm")
-   if env['coref']: config.coref = "ontonotes_electra-large"
-   """
-   
+def initialize() -> None:   
    global nlp
    nlp = initializePipeline(
       env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
@@ -67,7 +45,7 @@ def handleRequest() -> Response:
          responseData.append({
                               "stmdId":statement["stmtId"],
                               "origStmt":statement["origStmt"],
-                              "encodedStmt":"Some modified data",
+                              #"encodedStmt":"Some modified data",
                               "apiVersion":statement["apiVersion"],
                               "matchingParams": 
                               statement["matchingParams"] if statement["matchingParams"] 
@@ -83,8 +61,16 @@ def handleRequest() -> Response:
         
    for i in range(len(responseData)):
       data = responseData[i]
+      # Check the parameters and include all valid parameters
+      params = {}
+      for key in ["coref","semanticEntity","semanticQuantity"]:
+         if key in data["matchingParams"]:
+            params[key] = data["matchingParams"][key]
+      data["matchingParams"] = params
+      # Run the nlp pipeline and matcher on the input statement(s)
       const, reg = processStatement(data["matchingParams"],data["origStmt"],nlp)
-      data["encodedStmt"] = reg + const
+      data["econdedStmtReg"] = reg
+      data["encodedStmtConst"] = const
 
    return(jsonify(responseData))
 
