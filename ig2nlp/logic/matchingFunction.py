@@ -13,12 +13,13 @@ def matchingHandler(words:list[Word], semantic:bool,
    a formatted string of annotated text"""
    # Handle the optional args
    if "coref" in args:
-      print("Coref: ", args["coref"])
       global coref
       coref = args["coref"]
-   if "semanticQuantity" in args:
+   if "semantic" in args:
+      semantic = True
+   if "semanticNumber" in args:
       global numberAnnotation
-      numberAnnotation = args["semanticQuantity"]
+      numberAnnotation = args["semanticNumber"]
 
    words = compoundWordsHandler(words)
    words = logicalOperatorHandler(words)
