@@ -309,7 +309,8 @@ def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=F
                   else:
                      corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1], True)
       elif (words[i].symbol == "" and words[i].corefid != -1 
-           and words[i].pos == "PRON" and not "PronType=Rel" in words[i].feats and brackets == 0):
+           and words[i].pos == "PRON" and not "PronType=Rel" in words[i].feats and brackets == 0
+           and words[i].deprel != "nmod:poss"):
          if words[i].corefid in corefIds:
             corefIds[words[i].corefid] += 1
             locations[words[i].corefid].append(i)
