@@ -48,7 +48,7 @@ def handleRequest() -> Response:
                               #"encodedStmt":"Some modified data",
                               "apiVersion":statement["apiVersion"],
                               "matchingParams": 
-                              statement["matchingParams"] if statement["matchingParams"] 
+                              statement["matchingParams"] if "matchingParams" in statement 
                               else {}
                            })
       except:
