@@ -5,6 +5,9 @@ import pandas as pd
 
 def main() -> None:
 
+   compNames = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
+                "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
+
    parser = argparse.ArgumentParser()
    parser.add_argument("-i", "--input", 
       help="input file, defaults to json extension, i.e. input is treated as input.json")
@@ -66,7 +69,15 @@ def main() -> None:
       totalMatches += matches
       statementData = dict()
       
-      statementData["Count"]=matches.tolist()
+      statementData["Count"] = []
+      count = matches.tolist()
+      for j in range(17):
+         matchData=compNames[j]+(6-len(compNames[j]))*" "+": "+str(count[j][0])
+         for k in range(4):
+            matchData+=","+str(count[j][k+1])
+         statementData["Count"].append(matchData)
+         
+      #statementData["Count"]=matches.tolist()
 
       for dataPoint in ["name","baseTx","manuTx","autoTx"]:
          statementData[dataPoint] = statement[dataPoint]
@@ -109,8 +120,6 @@ def main() -> None:
                 "Constituting Properties Property", "Or Else", "Attribute", "Deontic", "Aim",
                 "Contituted Entity", "Modal", "Constitutive Function"]
    """
-   compNames = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
-                "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
    for i in range(17):
       df = df._append({
          "Symbol":compNames[i], 
@@ -127,6 +136,8 @@ def main() -> None:
    # Create totals
    with open(outfilename+"Total.txt", "w") as output:
       output.write(str(df))
+
+
 
 
 def compareComponentsDirect(manual:list, automa:list, 
