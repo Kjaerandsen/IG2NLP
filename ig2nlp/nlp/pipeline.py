@@ -34,8 +34,11 @@ def nlpPipeline(pipeline:stanza.Pipeline, textDoc:str) -> list[stanza.Document]:
    return doc
 
 def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str,str]|str:
-   doc = nlpPipeline(nlp, statement)
-   
+   try:
+      doc = nlpPipeline(nlp, statement)
+   except:
+
+      return "","", "Error: Pipeline failed running the statement."
    words:list[Word]=[]
    outputConst = ""
    outputReg = ""
@@ -64,4 +67,4 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
       words = convertWordFormat(sentence.words)
       outputConst += matchingHandler(copy.deepcopy(words), False, True, args)
       outputReg += matchingHandler(words, False, False, args)
-   return outputConst, outputReg
+   return outputConst, outputReg, ""
