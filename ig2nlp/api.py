@@ -111,40 +111,6 @@ def handle_method_not_allowed(e) -> Response:
 def handle_internal_server_error(e) -> Response:
    return createError("Internal Server Error",500)
 
-"""   
-@app.route('/')
-def handleRequest() -> Response:
-   args = request.args
-
-   if len(args) == 0:
-      return createError("No parameters provided", HTTPStatus.BAD_REQUEST)
-   #for arg in args:
-   #   print(arg)
-   statement = args.get("statement")
-   statementType = args.get("statementType")
-   coref = args.get("coref")
-   semantic = args.get("semantic")
-   semanticQuantity = args.get("semanticQuantity")
-
-   if statement == None:
-      return createError("No statement query parameter provided", HTTPStatus.BAD_REQUEST)
-
-   print(args.get("statement"))
-   # Argument validation
-   # Max chars?
-
-   # Constitutive / Regulative
-
-   # Coreference resolution
-
-   # Combine property and component
-
-   # Semantic annotations (Date / Quantity / Entity)
-
-   # Statement input validation / formatting
-   return createError("Not found", HTTPStatus.BAD_REQUEST)
-"""
-
 def createError(msg:str, type:int) -> Response:
    response = Response(
       response=json.dumps({"error":msg}),
