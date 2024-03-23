@@ -1,3 +1,4 @@
+import werkzeug
 from utility import env
 import json
 from flask import Flask, request, Response, jsonify
@@ -84,6 +85,30 @@ def handleRequest() -> Response:
 
    return(jsonify(responseData))
 
+@app.errorhandler(werkzeug.exceptions.BadRequest)
+def handle_bad_request(e) -> Response:
+   return createError("Bad request, please refer to the documentation for details on the expected "+
+                      "JSON structure for input data.",400)
+
+@app.errorhandler(werkzeug.exceptions.NotFound)
+def handle_not_found(e) -> Response:
+   return createError("Endpoint or resource requested was not found on the server. " +
+                     'The default endpoint is "ig2nlp". ' +
+                     "For a list of valid endpoints please refer to the documentation.",404)
+
+@app.errorhandler(werkzeug.exceptions.UnsupportedMediaType)
+def handle_unsupported_media_type(e) -> Response:
+   return createError('The endpoint expects JSON data, but the provided Content-Type was not ' +
+                      '"application/json"',415)
+
+@app.errorhandler(werkzeug.exceptions.MethodNotAllowed)
+def handle_method_not_allowed(e) -> Response:
+   return createError("Method not allowed, for the ig2nlp endpoint a POST request with a JSON body"+
+                     " as defined in the documentation is expected.", 405)
+
+@app.errorhandler(werkzeug.exceptions.InternalServerError)
+def handle_internal_server_error(e) -> Response:
+   return createError("Internal Server Error",500)
 
 """   
 @app.route('/')
