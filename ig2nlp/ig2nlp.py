@@ -144,10 +144,10 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
          #for word in words[0]:
             #print(word.text)
 
-      output = matchingHandler(words[0], semanticAnnotations, constitutive)
+      output = matchingHandler(words[0], semanticAnnotations, constitutive)[0]
       if len(words) > 1:
          for sentence in words[1:]:
-            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)[0]
 
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
@@ -200,7 +200,7 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
 
       '''
       #docBak = copy.deepcopy(doc[0])
-      output = matchingHandler(doc[0], semanticAnnotations, constitutive)
+      output = matchingHandler(doc[0], semanticAnnotations, constitutive)[0]
       #outputComp = matchingHandler(docBak, semanticAnnotations)
       #reg, const = parseAndCompare(doc[0], semanticAnnotations)
       #output = const
@@ -208,7 +208,7 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
          for sentence in doc[1:]:
             #output += " " + parseAndCompare(sentence, semanticAnnotations)
             #sentenceBak = copy.deepcopy(sentence)
-            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)[0]
             #outputComp += " " + matchingHandler(sentenceBak, semanticAnnotations)
       #print(output)
       #print(outputComp)

@@ -33,7 +33,8 @@ def nlpPipeline(pipeline:stanza.Pipeline, textDoc:str) -> list[stanza.Document]:
    logger.debug("Finished running single statement pipeline")
    return doc
 
-def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str,str]|str:
+def processStatement(args:dict, statement:str, 
+                     nlp:stanza.Pipeline) -> tuple[str,str,str]|tuple[str,str]:
    try:
       doc = nlpPipeline(nlp, statement)
    except:
@@ -65,6 +66,9 @@ def processStatement(args:dict, statement:str, nlp:stanza.Pipeline) -> tuple[str
 
    for sentence in doc.sentences:
       words = convertWordFormat(sentence.words)
-      outputConst += matchingHandler(copy.deepcopy(words), False, True, args)
-      outputReg += matchingHandler(words, False, False, args)
-   return outputConst, outputReg, ""
+      outputReg, commentReg = matchingHandler(words, False, False, args)
+      outputConst, commentConst = matchingHandler(copy.deepcopy(words), False, True, args)
+
+      comment = "Regulative:\n"+commentReg
+      comment += "\nConstitutive:\n"+commentConst
+   return outputConst, outputReg, comment

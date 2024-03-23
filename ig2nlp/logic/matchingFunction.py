@@ -8,7 +8,7 @@ numberAnnotation = False
 coref = True
 
 def matchingHandler(words:list[Word], semantic:bool, 
-                    constitutive:bool=False, args:dict={}) -> list[Word]:
+                    constitutive:bool=False, args:dict={}) -> tuple[list[Word], str]:
    """takes a list of words, performs annotations using the matching function and returns 
    a formatted string of annotated text"""
    # Handle the optional args
@@ -36,7 +36,7 @@ def matchingHandler(words:list[Word], semantic:bool,
    else:
       print("Constitutive coverage: ", coverage(words))
    """
-   return WordsToSentence(words)
+   return WordsToSentence(words), ""
 
 def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False) -> list[Word]:
    """takes a list of words with dependency parse and pos-tag data.
