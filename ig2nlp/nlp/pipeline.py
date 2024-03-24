@@ -66,8 +66,8 @@ def processStatement(args:dict, statement:str,
 
    for sentence in doc.sentences:
       words = convertWordFormat(sentence.words)
-      outputReg, commentReg = matchingHandler(words, False, False, args)
-      outputConst, commentConst = matchingHandler(copy.deepcopy(words), False, True, args)
+      outputReg, commentReg = matchingHandler(copy.deepcopy(words), False, False, args)
+      outputConst, commentConst = matchingHandler(words, False, True, args)
 
       #comment = "Regulative:\n"+commentReg
       #comment += "\nConstitutive:\n"+commentConst
