@@ -69,6 +69,6 @@ def processStatement(args:dict, statement:str,
       outputReg, commentReg = matchingHandler(words, False, False, args)
       outputConst, commentConst = matchingHandler(copy.deepcopy(words), False, True, args)
 
-      comment = "Regulative:\n"+commentReg
-      comment += "\nConstitutive:\n"+commentConst
-   return outputConst, outputReg, comment
+      #comment = "Regulative:\n"+commentReg
+      #comment += "\nConstitutive:\n"+commentConst
+   return outputConst, outputReg, commentConst, commentReg

@@ -79,10 +79,12 @@ def handleRequest() -> Response:
       #print(["origStmt"], data["origStmt"][-1])
       data["matchingParams"] = params
       # Run the nlp pipeline and matcher on the input statement(s)
-      const, reg, comment = processStatement(data["matchingParams"],data["origStmt"],nlp)
+      const, reg, commentConst, commentReg = processStatement(
+         data["matchingParams"],data["origStmt"],nlp)
       data["encodedStmtReg"] = reg
       data["encodedStmtConst"] = const
-      data["comment"] = comment
+      data["commentReg"] = commentReg
+      data["commentConst"] = commentConst
 
    return(jsonify(responseData))
 

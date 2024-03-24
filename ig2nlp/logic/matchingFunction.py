@@ -2,6 +2,7 @@ import copy
 from utility import *
 from logic.classifier import *
 from logic.matchingHandlers import *
+from logic.matchingUtils import comments
 
 minimumCexLength = 1
 numberAnnotation = False
@@ -11,6 +12,12 @@ def matchingHandler(words:list[Word], semantic:bool,
                     constitutive:bool=False, args:dict={}) -> tuple[list[Word], str]:
    """takes a list of words, performs annotations using the matching function and returns 
    a formatted string of annotated text"""
+   global comments
+   keyList = []
+   for key in comments: keyList.append(key)
+   for key in keyList: del(comments[key])
+   del(keyList)
+
    # Handle the optional args
    if "coref" in args:
       global coref
@@ -36,9 +43,17 @@ def matchingHandler(words:list[Word], semantic:bool,
    else:
       print("Constitutive coverage: ", coverage(words))
    """
-   return WordsToSentence(words), ""
+   
+   # Go through all comments, add them to the comment output with a newline
+   comment = ""
+   commentList = [comments[key] + "\n" for key in comments]
+   for commentItem in commentList:
+      comment += commentItem
 
-def matchingFunction(words:list[Word], semantic:bool, constitutive:bool = False) -> list[Word]:
+   return WordsToSentence(words), comment
+
+def matchingFunction(words:list[Word], semantic:bool, 
+                     constitutive:bool = False) -> list[Word]:
    """takes a list of words with dependency parse and pos-tag data.
       Returns a list of words with IG Script notation symbols."""
    wordLen = len(words)
