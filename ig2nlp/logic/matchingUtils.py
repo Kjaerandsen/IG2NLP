@@ -351,12 +351,14 @@ def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=F
                logger.info("Replacing Constituted Entity (E) pronoun with "+ 
                      "coreference resolution data: " 
                      + words[id].text + " -> " + corefStrings[key])
+               if "coref" not in comments: comments["coref"] = ""
                comments["coref"] += \
                   "Replaced Constituted Entity (E) pronoun with coreference resolution data: "\
                   + words[id].text + " -> " + corefStrings[key] + ". "
             else:
                logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
                         + words[id].text + " -> " + corefStrings[key])
+               if "coref" not in comments: comments["coref"] = ""
                comments["coref"] += \
                   "Replaced Attribute (A) pronoun with coreference resolution data: "\
                   + words[id].text + " -> " + corefStrings[key] + ". "
