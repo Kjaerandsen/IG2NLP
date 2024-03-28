@@ -69,7 +69,8 @@ func componentHandler(inputStatement string, split bool) (StatisticsGeneric, boo
 	// If split, split the inputStatement into individual sentences using "."
 	// Then recurse with split set to false
 	if split {
-		sentences = strings.Split(inputStatement, ".")
+		//sentences = strings.Split(inputStatement, ".")
+		sentences = append(sentences, inputStatement)
 
 		//print(sentences[0])
 	start:
