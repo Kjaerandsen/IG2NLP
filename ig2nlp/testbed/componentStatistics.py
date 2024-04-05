@@ -59,6 +59,9 @@ def main() -> None:
 
       #print("7", "Manual statement: ", manuSt,"\n", data["manuTx"])
 
+      #print(manuSt)
+      #print(autoSt)
+
       data["manualParsed"] = {}
       data["manualParsed"]["components"], data["manualParsed"]["count"] = \
          getComponents(manuSt)
@@ -359,7 +362,7 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
                span = (spanStart,i)
 
                content = compStatement[span[0]:span[1]]
-               #print(compStatement, comp, content)
+               #print("Component match: ", comp, content, compStatement)
                component = {}
                component["Content"] = content
                component["Nested"] = nested
@@ -369,13 +372,13 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
 
                #print("Appending component")
                if output[j] != None:
-                  output[j] = output[j].append(component)
+                  output[j].append(component)
                else:
                   output[j] = [component]
                count[j] += 1
                #print(output[j])
                # Update the statement text to search the rest of the sentence
-               compStatement = compStatement[span[1]+1:]
+               compStatement = compStatement[span[1]:]
 
                # Iterate
                match = re.search(comp,compStatement)
@@ -406,26 +409,26 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          span = (span[1],i)
 
          content = compStatement[span[0]:span[1]]
-         #print(compStatement, comp, content)
+         #print("Component match: ", comp, content, compStatement)
 
          # check the rest of the sentence
          component = {}
          component["Content"] = content
          component["Nested"] = nested
-         component["SemanticAnnotation"] = ""
+         #component["SemanticAnnotation"] = ""
          component["componentType"] = COMPNAMES[j]
-         component["StartID"] = 0
+         #component["StartID"] = 0
 
          #print("Appending component")
          if output[j] != None:
-            output[j] = output[j].append(component)
+            output[j].append(component)
          else:
             output[j] = [component]
          count[j] += 1
          #print(output[j])
 
          # Update the statement text to search the rest of the sentence
-         compStatement = compStatement[span[1]+1:]
+         compStatement = compStatement[span[1]:]
 
          # Iterate
          match = re.search(comp,compStatement)
