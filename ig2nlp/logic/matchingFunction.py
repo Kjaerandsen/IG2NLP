@@ -23,7 +23,7 @@ def matchingHandler(words:list[Word], semantic:bool,
       global coref
       coref = args["coref"]
    if "semantic" in args:
-      semantic = True
+      semantic = args["semantic"]
    if "semanticNumber" in args:
       global numberAnnotation
       numberAnnotation = args["semanticNumber"]
