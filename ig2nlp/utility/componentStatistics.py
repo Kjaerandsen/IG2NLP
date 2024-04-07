@@ -1,32 +1,11 @@
 import json
-import argparse
 import re
 
 
 COMPNAMES = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
                 "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
 
-def main() -> None:
-   parser = argparse.ArgumentParser()
-   parser.add_argument("-i", "--input", 
-      help="input file, defaults to json extension, i.e. input is treated as input.json")
-   parser.add_argument("-o", "--output", 
-      help="output file, defaults to json extension, i.e. output is treated as output.json")
-   args = parser.parse_args()
-
-   if not args.input:
-      filename = "../data/output.json"
-   else:
-      filename = "../data/"+args.input+".json"
-
-   if not args.output:
-      outfilename = "../data/output"
-   else:
-      outfilename = "../data/"+args.output
-
-   with open(filename, "r") as input:
-      jsonData = json.load(input)
-
+def components(jsonData:dict, outfilename:str) -> None:
    outData:list[dict] = []
 
    for statement in jsonData:
@@ -434,8 +413,4 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          match = re.search(comp,compStatement)
 
    return output, count
-
-if (__name__ == '__main__'): 
-   main()
-
       
