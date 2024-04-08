@@ -116,11 +116,13 @@ def compareComponentsDirect(manual:list, automa:list,
       manualLen = len(manual[i])
       automaLen = len(automa[i])
       j = 0
-      k = 0
       while j < manualLen:
+         # Reset k, to check against all automatic components for each manual component
+         k=0
          while k < automaLen:
             #print(manualLen, j, automaLen, k)
             #print(type(manual[i]), type(automa[i]))
+            print("Comp: ", manual[i][j]["Content"].lower(), automa[i][k]["Content"].lower())
             if manual[i][j]["Content"].lower() == automa[i][k]["Content"].lower():
                if manual[i][j]["Nested"] == automa[i][k]["Nested"]:
                   #print("\n\nDIRECT NESTED EQUAL", automa[i][k], manual[i][j],"\n\n")
@@ -160,10 +162,11 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
          if manual[i] == None or automa[l] == None:
             continue
          j = 0
-         k = 0
          manualLen = len(manual[i])
          automaLen = len(automa[l])
          while j < manualLen:
+            # Reset k, to check against all automatic components for each manual component
+            k = 0
             while k < automaLen:
                #print(type(manual[i]), type(automa[l]))
                if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower():
@@ -200,10 +203,11 @@ def compareComponentsPartial(manual:list, automa:list,
          if manual[i] == None or automa[l] == None:
             continue
          j = 0
-         k = 0
          manualLen = len(manual[i])
          automaLen = len(automa[l])
          while j < manualLen:
+            # Reset k, to check against all automatic components for each manual component
+            k = 0
             while k < automaLen:
                
                autoMatch = False
