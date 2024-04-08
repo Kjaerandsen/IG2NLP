@@ -167,7 +167,7 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
             while k < automaLen:
                #print(type(manual[i]), type(automa[l]))
                if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower():
-                  output[l][1] += 1
+                  output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
                   # Add the components to the partialPool
                   entry = {}
@@ -205,15 +205,28 @@ def compareComponentsPartial(manual:list, automa:list,
          automaLen = len(automa[l])
          while j < manualLen:
             while k < automaLen:
-               #print(type(manual[i]), type(automa[l]))
+               
+               autoMatch = False
+               manuMatch = False
                if automa[l][k]["Content"] in manual[i][j]["Content"]:
+                  autoMatch = True
+               elif manual[i][j]["Content"] in automa[l][k]["Content"]:
+                  manuMatch = True
+                  
+               #print(type(manual[i]), type(automa[l]))
+               if autoMatch or manuMatch:
                   #print("Match, substring")
                   #print(automa[l][k],manual[i][j])
                   output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
 
                   # Look for further inclusions on the new substring
-                  extraText = manual[i][j]["Content"].replace(automa[l][k]["Content"], "")
+                  if autoMatch:
+                     #print(automa[l][k],manual[i][j])
+                     extraText = manual[i][j]["Content"].replace(automa[l][k]["Content"], "")
+                  else:
+                     #manual[i][j],automa[l][k]
+                     extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
                   entry = {}
                   entry["ManualComponents"] = [manual[i][j]]
                   entry["StanzaComponents"] = [automa[l][k]]
@@ -222,41 +235,16 @@ def compareComponentsPartial(manual:list, automa:list,
                   automa[l] = automa[l][:k] + automa[l][k+1:]
                   manual[i] = manual[i][:j] + manual[i][j+1:]
 
-                  entry, output = extraInclusions(automa, output, extraText, entry, False)
+                  if autoMatch:
+                     entry, output = extraInclusions(automa, output, extraText, entry, False)
+                  else:
+                     entry, output = extraInclusions(manual, output, extraText, entry, True)
 
                   # Add the components to the partialPool
                   partialPool.append(entry)
 
                   manualLen = len(manual[i])
                   automaLen = len(automa[l])
-                  j-=1
-                  break
-
-                  
-               elif manual[i][j]["Content"] in automa[l][k]["Content"]:
-                  #print(manual[i][j],automa[l][k])
-                  #print("Match, substring")
-                  output[i][1] += 1
-                  #print("COMPONENT: ", automa[l][k])
-
-                  # Look for further inclusions on the new substring
-                  extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
-                  entry = {}
-                  entry["ManualComponents"] = [manual[i][j]]
-                  entry["StanzaComponents"] = [automa[l][k]]
-
-                  # Remove the components from the list of components
-                  automa[l] = automa[l][:k] + automa[l][k+1:]
-                  manual[i] = manual[i][:j] + manual[i][j+1:]
-
-                  entry, output = extraInclusions(manual, output, extraText, entry, True)
-
-                  # Add the components to the partialPool
-                  partialPool.append(entry)
-
-                  manualLen = len(manual[i])
-                  automaLen = len(automa[l])
-                  # Iterate
                   j-=1
                   break
                      
@@ -292,6 +280,8 @@ def extraInclusions(components:list, output:np.array, extraText:str,
                # Add the component to the entry dict
                if isManual:
                   entry["ManualComponents"].append(components[i][j])
+                  # Add one to the partial positive count
+                  output[i][1] += 1
                   print("A")
                else:
                   entry["StanzaComponents"].append(components[i][j])
