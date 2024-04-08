@@ -90,7 +90,7 @@ def removeNesting(statement:str) -> str:
                i = findScopeEnd(spanStart, "{","}", compStatement)
                span = (spanStart,i)
 
-               content = removeAnnotations(compStatement[span[0]:span[1]])
+               content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
                #print("1", compStatement, comp, content)
 
                output += compStatement[:span[0]]
@@ -108,7 +108,7 @@ def removeNesting(statement:str) -> str:
             i = findScopeEnd(span[1], "{","}", compStatement)
             span = (span[1],i)
 
-            content = removeAnnotations(compStatement[span[0]:span[1]])
+            content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
             #print("2", compStatement, comp, content)
 
             # check the rest of the sentence
@@ -213,7 +213,7 @@ def removeAnnotations(statement:str) -> str:
                i = findScopeEnd(spanStart, start,end, compStatement)
                span = (spanStart,i)
 
-               content = compStatement[span[0]:span[1]]
+               content = formatContent(compStatement[span[0]:span[1]])
                #print(compStatement, comp, content)
 
                output += content
@@ -247,7 +247,7 @@ def removeAnnotations(statement:str) -> str:
          i = findScopeEnd(span[1], start,end, compStatement)
          span = (span[1],i)
 
-         content = compStatement[span[0]:span[1]]
+         content = formatContent(compStatement[span[0]:span[1]])
          #print(compStatement, comp, content)
 
          # check the rest of the sentence
@@ -340,7 +340,7 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
                i = findScopeEnd(spanStart, start,end, compStatement)
                span = (spanStart,i)
 
-               content = compStatement[span[0]:span[1]]
+               content = formatContent(compStatement[span[0]:span[1]])
                #print("Component match: ", comp, content, compStatement)
                component = {}
                component["Content"] = content
@@ -387,8 +387,10 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          i = findScopeEnd(span[1], start,end, compStatement)
          span = (span[1],i)
 
-         content = compStatement[span[0]:span[1]]
-         #print("Component match: ", comp, content, compStatement)
+         content = formatContent(compStatement[span[0]:span[1]])
+         
+         print("Component match: ", comp, content, "\n", compStatement)
+         print(content)
 
          # check the rest of the sentence
          component = {}
@@ -414,3 +416,16 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
 
    return output, count
       
+def formatContent(content:str) -> str:
+   content = content.lower()
+   content = content.replace("  ", " ")
+   content = content.replace(" and ", " ")
+   content = content.replace(" or ", " ")
+   content = content.replace(", ", " ")
+   content = content.replace("[", "")
+   content = content.replace("]", "")
+   content = content.replace("(", "")
+   content = content.replace(")", "")
+   content = content.replace("the ", "")
+
+   return content
