@@ -8,6 +8,7 @@ from logic.matchingFunction import matchingHandler
 from logic.matchingFunctionShared import parseAndCompare
 from utility import *
 from logic.classifier import *
+from nlp import initializePipeline, nlpPipeline, nlpPipelineMulti
 
 semanticAnnotations = False
 
@@ -93,27 +94,16 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    """Initializes the nlp pipeline globally to reuse the pipeline across the
       statements and runs through all included statements."""
 
-   global flaskURL
    global env
 
    jsonLen = len(jsonData)
    logger.info("\nRunning runnerAdvanced with "+ str(jsonLen) + " items.")
 
    logger.info("Loading nlp pipeline")
-   global nlp
-   nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
-                  processors='tokenize,lemma,pos,depparse, mwt, ner, coref',
-                  package={
-                        "tokenize": "combined",
-                        "mwt": "combined",
-                        "pos": "combined_electra-large",
-                        "depparse": "combined_electra-large",
-                        "lemma": "combined_charlm",
-                        "ner": "ontonotes-ww-multi_charlm"
-                  },
-                  download_method=env['downloadMethod'],
-                  logging_level=env['logLevel']
-                  )
+   global nlp 
+   nlp = initializePipeline(
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
+
    logger.info("Finished loading the nlp pipeline")
 
    # Delete the environment variables dictionary
@@ -126,19 +116,19 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
    if singleMode:
       docs:list[stanza.Document]=[]
       for sentence in textDocs:
-         docs.append(nlpPipeline(sentence))
+         docs.append(nlpPipeline(nlp, sentence))
    else:
       if batchSize == 0:
-         docs = nlpPipelineMulti(textDocs)
+         docs = nlpPipelineMulti(nlp, textDocs)
       else:
          docs=[]
          # Go through the nlp pipeline in batches of batchSize
          while len(textDocs) > batchSize:
-            pipelineResults = nlpPipelineMulti(textDocs[:batchSize])
+            pipelineResults = nlpPipelineMulti(nlp, textDocs[:batchSize])
             for doc in pipelineResults: docs.append(doc)
             textDocs = textDocs[batchSize:]
          # Add the remaining items
-         pipelineResults = nlpPipelineMulti(textDocs)
+         pipelineResults = nlpPipelineMulti(nlp, textDocs)
          for doc in pipelineResults: docs.append(doc)
 
    for i, doc in enumerate(docs):
@@ -154,10 +144,10 @@ def MatcherMiddleware(jsonData:list, constitutive:bool, singleMode:bool, batchSi
          #for word in words[0]:
             #print(word.text)
 
-      output = matchingHandler(words[0], semanticAnnotations, constitutive)
+      output = matchingHandler(words[0], semanticAnnotations, constitutive)[0]
       if len(words) > 1:
          for sentence in words[1:]:
-            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)[0]
 
       #print(jsonData[i]['baseTx'] + "\n" + jsonData[i]['manuTx'] + "\n" + output)
       logger.debug("Statement"+ str(i) + ": " + jsonData[i]['name'] + " finished processing.")
@@ -210,7 +200,7 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
 
       '''
       #docBak = copy.deepcopy(doc[0])
-      output = matchingHandler(doc[0], semanticAnnotations, constitutive)
+      output = matchingHandler(doc[0], semanticAnnotations, constitutive)[0]
       #outputComp = matchingHandler(docBak, semanticAnnotations)
       #reg, const = parseAndCompare(doc[0], semanticAnnotations)
       #output = const
@@ -218,7 +208,7 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
          for sentence in doc[1:]:
             #output += " " + parseAndCompare(sentence, semanticAnnotations)
             #sentenceBak = copy.deepcopy(sentence)
-            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)
+            output += " " + matchingHandler(sentence, semanticAnnotations, constitutive)[0]
             #outputComp += " " + matchingHandler(sentenceBak, semanticAnnotations)
       #print(output)
       #print(outputComp)
@@ -230,20 +220,6 @@ def cacheMatcher(jsonData:list, constitutive:bool) -> list:
       
    logger.info("Finished running matcher\n\n")
    return jsonData
-
-def nlpPipelineMulti(textDocs:list) -> list[stanza.Document]:
-   """Takes a list of sentences as strings, returns the nlp pipeline results for the sentences"""
-   logger.debug("Running multiple statement pipeline")
-   docs = nlp.bulk_process(textDocs)
-   logger.debug("Finished running multiple statement pipeline")
-   return docs
    
-def nlpPipeline(textDoc:str) -> list[stanza.Document]:
-   """Takes a sentence as a string, returns the nlp pipeline results for the sentence"""
-   logger.debug("Running single statement pipeline")
-   doc = nlp.process(textDoc)
-   logger.debug("Finished running single statement pipeline")
-   return doc
-
 # Run the main function
 main()

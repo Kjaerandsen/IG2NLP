@@ -8,8 +8,8 @@ import (
 
 func main() {
 	// Take parameters when running the application
-	inputFile := flag.String("input", "input", "Input flag for input file")
-	outputFile := flag.String("output", "output", "Output flag for output file")
+	inputFile := flag.String("i", "input", "Input flag for input file")
+	outputFile := flag.String("o", "output", "Output flag for output file")
 	mode := flag.Int("mode", 0,
 		"Mode flag for program mode, 0 for the autoRunner, 1 for the statistics runner\n"+
 			"2 for the comparrison runner")
@@ -28,7 +28,7 @@ func main() {
 			*inputFile+statistics.FILETYPE,
 			*outputFile+statistics.FILETYPE)
 	case 1:
-		statistics.RunStatistics(
+		statistics.GetComponents(
 			*inputFile+statistics.FILETYPE,
 			*outputFile+statistics.FILETYPE)
 	case 2:

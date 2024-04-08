@@ -165,7 +165,7 @@ func statementHandlerGeneric(statement *tree.Statement, stats *StatisticsGeneric
 	getComponentInfoGeneric(statement.OrElse, "O", stats)
 }
 
-// Recursive function which goes over a symbol and it's children,
+// Recursive function which goes over a symbol and its children,
 // adding the components to the statistics struct
 func getComponentInfoGeneric(componentNode *tree.Node, symbol string, stats *StatisticsGeneric) {
 	var component JSONComponent

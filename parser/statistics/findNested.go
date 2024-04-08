@@ -1,203 +1,14 @@
 package statistics
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
-	"sort"
 	"strings"
 )
 
 //"Somethignn Cac[afwfawfw]{A(something else) I(Something) Bdir{Nested} Cac(This is another)}", "Cac"
 //Somethignn Cac[afwfawfw]{something Cacelse Something Nested his is another}
-
-func RunStatistics(inputFile string, outputFile string) {
-	content, err := os.ReadFile(inputFile)
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
-	}
-
-	var data inputStructure
-
-	err = json.Unmarshal(content, &data)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-		return
-	}
-
-	fmt.Println(len(data))
-
-	var text string
-
-	// Open file for appending logs, based on the example from the
-	// golang docs https://pkg.go.dev/os#example_OpenFile_append
-	/*
-		file, err := os.OpenFile("operations.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
-
-	for i := 0; i < len(data); i++ {
-		var stats Statistics
-
-		// Remove Suffixes from the manually annotated text
-		text = data[i].ManuTx
-		text = removeSuffixes(text)
-
-		/*
-			if _, err := file.Write([]byte(text + "\n\n")); err != nil {
-				file.Close() // ignore error; Write error takes precedence
-				log.Fatal(err)
-			}
-			fmt.Println("Text without symbols: ", text)
-		*/
-
-		// Retrieve the statistics
-		stats = findSymbols(text)
-		data[i].ManualParsed = stats
-
-		/*
-			stats, success = findSymbols(data[i].Spacy)
-			if success {
-				data[i].SpacyParsed = stats
-			}
-		*/
-
-		// Retrieve the statistics
-		stats = findSymbols(data[i].AutoTx)
-		data[i].StanzaParsed = stats
-	}
-
-	/*
-		if err := file.Close(); err != nil {
-			log.Fatal(err)
-		}
-	*/
-
-	// Convert the struct to JSON
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return
-	}
-
-	// Write the JSON data to the file
-	err = os.WriteFile(outputFile, jsonData, 0644)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return
-	}
-
-	/*
-		text := "Somethignn Cac[afwfawfw]{A(something else) I(Something [AND] something else) Bdir{Nested} Cac(This is another)}"
-
-		fmt.Println(removeSymbols(text))
-		data := findSymbols(text)
-
-		outFile := "output2.json"
-
-		// Convert the struct to JSON
-		jsonData, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			fmt.Println("Error marshalling JSON:", err)
-			return
-		}
-
-		// Write the JSON data to the file
-		err = os.WriteFile(outFile, jsonData, 0644)
-		if err != nil {
-			fmt.Println("Error writing to file:", err)
-			return
-		}
-	*/
-
-	//fmt.Println(jsonData)
-}
-
-// Takes a string, returns a JSON object with all the components ordered, and counts of each component.
-func findSymbols(text string) Statistics {
-	fmt.Println("Running findSymbols on: ", text)
-
-	var output Statistics
-
-	var result Statistics
-	var resultLength int
-
-	// Set the logical operator counts
-	output.ORCount = strings.Count(text, "[OR]")
-	output.XORCount = strings.Count(text, "[XOR]")
-	output.ANDCount = strings.Count(text, "[AND]")
-
-	// Remove the logical operators
-	text = strings.ReplaceAll(text, "[OR]", "or")
-	text = strings.ReplaceAll(text, "[XOR]", "or")
-	text = strings.ReplaceAll(text, "[AND]", "and")
-
-	// Find and add all components
-	for i := 0; i < 17; i++ {
-		fmt.Println("Doing component: ", ComponentNames[i])
-		result, _ = getComponentOccurrances(text, ComponentNames[i])
-
-		// Add the new components to the output
-		output.Components = append(output.Components, result.Components...)
-
-		// Get the amount of new components discovered
-		resultLength = len(result.Components)
-		// Update the count of that component type
-		switch ComponentNames[i] {
-		case "A":
-			output.AttributeCount += resultLength
-		case "A,p":
-			output.AttributePropertyCount += resultLength
-		case "D":
-			output.DeonticCount += resultLength
-		case "I":
-			output.AimCount += resultLength
-		case "Bdir":
-			output.DirectObjectCount += resultLength
-		case "Bdir,p":
-			output.DirectObjectPropertyCount += resultLength
-		case "Bind":
-			output.IndirectObjectCount += resultLength
-		case "Bind,p":
-			output.IndirectObjectPropertyCount += resultLength
-		case "Cac":
-			output.ActivationConditionCount += resultLength
-		case "Cex":
-			output.ExecutionConstraintCount += resultLength
-		case "E":
-			output.ConstitutedEntityCount += resultLength
-		case "E,p":
-			output.ConstitutedEntityPropertyCount += resultLength
-		case "M":
-			output.ModalCount += resultLength
-		case "F":
-			output.ConstitutiveFunctionCount += resultLength
-		case "P":
-			output.ConstitutingPropertiesCount += resultLength
-		case "P,p":
-			output.ConstitutingPropertiesPropertyCount += resultLength
-		case "O":
-			output.OrElseCount += resultLength
-		}
-	}
-
-	fmt.Println(output)
-
-	// Sort the list of components
-	sort.Slice(output.Components,
-		func(a, b int) bool {
-			return output.Components[a].StartID < output.Components[b].StartID
-		})
-
-	// Update the id's
-
-	return output
-}
 
 // Takes a statement in the form of a string, goes through and removes all IG Script notation syntax
 func removeSymbols(text string) string {
@@ -342,7 +153,9 @@ func getComponentOccurrances(text string, component string) (Statistics, string)
 	// Find the first component
 	position = strings.Index(text, component)
 
-	for position != -1 {
+	// While a position for the start of a component is found, and that position is not the end of
+	// the statement text
+	for position != -1 && len(text) > position+componentLength {
 
 		fmt.Println("Found component: ", position)
 
@@ -647,4 +460,116 @@ func getNestedComponents(text string) []JSONComponent {
 	}
 
 	return output
+}
+
+func getNestedComponentsGeneric(text string) ([]JSONComponent, string) {
+	var output []JSONComponent
+
+	// Remove suffixes from the input text
+	text = removeSuffixes(text)
+	//fmt.Println("No suffix text is: ", text)
+	// Get the nested components
+	var result []JSONComponent
+	for i := 0; i < len(NestedComponentNames); i++ {
+		// Get the updated text and JSON components
+		result, text = findNestedPartGeneric(text, NestedComponentNames[i])
+		fmt.Println("Updated text is: ", text)
+		// Append the JSON components to the output
+		output = append(output, result...)
+	}
+
+	return output, text
+}
+
+func findNestedPartGeneric(text string, component string) ([]JSONComponent, string) {
+	var output []JSONComponent
+	var outputText string
+	// Look for symbols which support nesting
+	// A,p Bdir Bdir,p Bind Bind,p Cac Cex E,p P P,p
+	// Full list is in Constants "NestedComponentNames"
+
+	position := strings.Index(text, component)
+
+	// If a start of a symbol is found, and the text is long enough to contain symbol contents
+	if position != -1 && len(text) > position+1 {
+		var currentSymbol JSONComponent
+		currentSymbol.Nested = true
+		currentSymbol.ComponentType = component
+
+		componentLength := len(component)
+		position += componentLength
+
+		outputText = text[:position]
+		text := text[position:]
+
+		//fmt.Println(text)
+
+		// Capture the semantic annotation if any
+		if text[0:1] == "[" {
+			//fmt.Println("Semantic")
+
+			end := strings.Index((text), "]")
+
+			if end != -1 {
+				currentSymbol.SemanticAnnotation = text[1:end]
+				outputText += text[:end+1]
+				text = text[end+1:]
+
+				// If no closing bracket is found return an empty output
+			} else {
+				log.Fatalf("Error no end bracket ']' found: " + text)
+				return output, text
+			}
+		}
+
+		// If the component is nested, get the contents and recurse
+		if text[0:1] == "{" {
+
+			fmt.Println("Found nested component: ", text)
+
+			brackets := 1
+
+			componentContents := ""
+
+			for i := 1; i < len(text); i++ {
+				if text[i] == byte('{') {
+					brackets++
+				} else if text[i] == byte('}') {
+					brackets--
+				}
+				if brackets == 0 {
+					componentContents = text[1:i]
+					componentContents = removeSymbols(componentContents)
+					if component != "O" {
+						outputText += text[:1] + componentContents + text[i:i+1]
+					} else {
+						outputText += text[:i+1]
+					}
+					text = text[i+1:]
+
+					//fmt.Println("Found end: ", componentContents)
+					currentSymbol.Content = componentContents
+					//fmt.Println("Rest: ", len(text))
+					output = append(output, currentSymbol)
+					//fmt.Println("Added nested component: ", text)
+					break
+				}
+			}
+
+			// Find any further nested components
+			result, text := findNestedPartGeneric(text, component)
+			output = append(output, result...)
+			//fmt.Println("\n\n RETURNING \n\n", output)
+			return output, outputText + text
+
+			// If the component is not a nested component, recurse to look for nested components
+		} else {
+			//fmt.Println("Not Nested", text)
+			result, text := findNestedPartGeneric(text, component)
+			return result, outputText + text
+		}
+	}
+
+	// If no detections just return the empty output
+	return output, text
 }

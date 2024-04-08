@@ -37,6 +37,22 @@ func CompareParsed(inputFile string, outputFile string) {
 		outData[i].Count[0] = data[i].ManualParsed.Count
 		outData[i].Count[1] = data[i].StanzaParsed.Count
 
+		// Format the content of the component for proper comparison
+		for j := 0; j < 17; j++ {
+			for k := 0; k < len(data[i].ManualParsed.Components[j]); k++ {
+				fmt.Println(data[i].ManualParsed.Components[j][k].Content)
+				data[i].ManualParsed.Components[j][k].Content =
+					formatText(data[i].ManualParsed.Components[j][k].Content)
+				fmt.Println(data[i].ManualParsed.Components[j][k].Content)
+			}
+			for k := 0; k < len(data[i].StanzaParsed.Components[j]); k++ {
+				fmt.Println(data[i].StanzaParsed.Components[j][k].Content)
+				data[i].StanzaParsed.Components[j][k].Content =
+					formatText(data[i].StanzaParsed.Components[j][k].Content)
+				fmt.Println(data[i].StanzaParsed.Components[j][k].Content)
+			}
+		}
+
 		// Look for true positives
 		CompareComponentsDirect(&data[i].ManualParsed, &data[i].StanzaParsed,
 			&outData[i])
@@ -547,6 +563,7 @@ func CompareComponentTP(list1, list2 []JSONComponent, list1Len, list2Len int) (
 	for i := 0; i < list1Len; i++ {
 		for j := 0; j < list2Len; j++ {
 			// If content match and equal nesting
+
 			if list1[i].Content == list2[j].Content && list1[i].Nested == list2[j].Nested {
 				// If the two words are equal then remove both from their arrays
 				list1 = removeComponentList(list1, list1Len, i)
@@ -750,4 +767,10 @@ func createTotalJSON(total TotalOut) []byte {
 
 	jsonData = append(jsonData, []byte("\n}")...)
 	return jsonData
+}
+
+func formatText(text string) string {
+	text = strings.ReplaceAll(text, "(", "")
+	text = strings.ReplaceAll(text, ")", "")
+	return text
 }

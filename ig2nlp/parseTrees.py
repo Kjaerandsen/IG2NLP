@@ -1,5 +1,6 @@
 import json
 import stanza
+from nlp.pipeline import initializePipeline
 from spacy import displacy
 import argparse
 
@@ -30,19 +31,8 @@ else:
 if args.single:
    batchSize = 1
 
-nlp = stanza.Pipeline('en', use_gpu=env['useGPU'],
-   processors='tokenize,pos,lemma,depparse,ner,mwt', 
-   package={
-      "tokenize": "combined",
-      "mwt": "combined",
-      "pos": "combined_electra-large",
-      "depparse": "combined_electra-large",
-      "lemma": "combined_charlm",
-      "ner": "ontonotes-ww-multi_charlm"
-   },
-   download_method=env['downloadMethod'],
-   logging_level=env['logLevel']
-   )
+nlp = initializePipeline(
+      env['useGPU'], env['coref'], env['downloadMethod'], env['logLevel'], env['pipeline'])
 
 # Delete the environment variables dictionary
 del env
@@ -89,7 +79,7 @@ with open(filename, "r") as input:
          for word in sentence.words:
             # Generating the data structure for displacy visualization
             depData["words"].append({"text":word.text, "tag": word.pos})
-            if word.head != -1:
+            if word.head not in [0,-1]:
                depData["arcs"].append({
                   "start": min(word.id-1+lastWord, word.head+lastWord), 
                   "end": max(word.id-1+lastWord, word.head+lastWord), 

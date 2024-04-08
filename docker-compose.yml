@@ -1,0 +1,16 @@
+version: '3'
+services:
+  ig2nlp:
+    privileged: false
+    build: .
+    restart: always
+    volumes:
+    # If using a custom stanza_resources directory, use the environment variable
+    # ${STANZA_RESOURCES_DIR} instead
+      - ~/stanza_resources:/stanza_resources
+      - ./data:/data
+    environment:
+      STANZA_RESOURCES_DIR : "/stanza_resources"
+    ports:
+      - '5000:5000'
+    stop_signal: SIGINT

@@ -3,6 +3,16 @@ from dotenv import load_dotenv
 from stanza import DownloadMethod
 import logging
 
+PROCESSORS = [
+   "tokenize",
+   "mwt",
+   "ner",
+   "pos",
+   "depparse",
+   "ner",
+   "lemma"
+   ]
+
 def loadEnvironmentVariables() -> dict:
    """Function that loads all environment variables from a ".env" file or 
    the environment variables"""
@@ -32,7 +42,7 @@ def loadEnvironmentVariables() -> dict:
 
    env['displacyPort'] = int(getenv("IG2DISPLACYPORT", 5001))
 
-   env['flaskURL'] = getenv("IG2FLASKURL", "http://localhost:5000")
+   env['flaskPort'] = getenv("IG2FLASKPORT", 5000)
 
    logLevels = {"INFO":logging.INFO,
                "DEBUG":logging.DEBUG,
@@ -52,6 +62,18 @@ def loadEnvironmentVariables() -> dict:
       env["logLevelConsole"] = logLevels[env["logLevelConsole"]]
    else:
       env["logLevelConsole"] = logging.DEBUG
+
+   env['coref'] = getenv("IG2COREF", True)
+   if env['coref'] == "False":
+      env['coref'] = False
+   elif env['coref'] == "True":
+      env['coref'] = True
+   
+   env['pipeline'] = getenv("IG2PIPELINE", "default_accurate")
+   if env['pipeline'] in ["fast","accurate"]:
+      env['pipeline'] = "default_"+env['pipeline']
+   elif env['pipeline'] != "default":
+      env['pipeline'] = "default_accurate"
 
    return env
 

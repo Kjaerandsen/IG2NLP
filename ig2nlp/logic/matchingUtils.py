@@ -1,10 +1,13 @@
 from utility import *
 import numpy as np
 
+comments = {}
+
 def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:bool=False) -> int:
    """Finds the scope of components with logical operators and handles the logical operators"""
    scopeStart = i  
    scopeEnd = i
+   global comments
 
    j=scopeStart+1
    # Locations (ids) of cc dependent words
@@ -132,6 +135,9 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:
          if andConj and orConj:
             logger.warning('Found both "and" and "or" logical operators in component, '+
                   "please review manually to solve potential encapsulation issues.")
+            if "cc" not in comments:
+               comments["cc"] = ("Found more than one type of Logical operator in statement, "+
+                                 "please review the scoping manually.")
 
             # Go through all the cc and handle the bracketing
             for nextLoc, nextType in zip(ccLocs2, ccTypes):
@@ -154,6 +160,9 @@ def smallLogicalOperator(words:list[Word], i:int, symbol:str, wordLen:int, root:
          
          logger.warning("More than one CC in smallLogicalOperator function, " +
                       "please review logical operators")
+         if "cc" not in comments:
+            comments["cc"] = ("Found more than one type of Logical operator in statement, "+
+                           "please review the scoping manually.")
          
       return scopeEnd
    
@@ -265,6 +274,7 @@ def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=F
    #print("INITIALIZING COREF CHAIN FINDING:\n\n ")
    i = 0
    wordLen = len(words)
+   global comments
    
    corefIds:dict = {}
    locations:dict = {}
@@ -309,7 +319,8 @@ def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=F
                   else:
                      corefStrings[words[i].corefid]=WordsToSentence(words[iBak:i+1], True)
       elif (words[i].symbol == "" and words[i].corefid != -1 
-           and words[i].pos == "PRON" and not "PronType=Rel" in words[i].feats and brackets == 0):
+           and words[i].pos == "PRON" and not "PronType=Rel" in words[i].feats and brackets == 0
+           and words[i].deprel != "nmod:poss"):
          if words[i].corefid in corefIds:
             corefIds[words[i].corefid] += 1
             locations[words[i].corefid].append(i)
@@ -340,10 +351,17 @@ def corefReplace(words:list[Word], semanticAnnotations:bool, constitutive:bool=F
                logger.info("Replacing Constituted Entity (E) pronoun with "+ 
                      "coreference resolution data: " 
                      + words[id].text + " -> " + corefStrings[key])
+               if "coref" not in comments: comments["coref"] = ""
+               comments["coref"] += \
+                  "Replaced Constituted Entity (E) pronoun with coreference resolution data: "\
+                  + words[id].text + " -> " + corefStrings[key] + ". "
             else:
                logger.info("Replacing Attribute (A) pronoun with coreference resolution data: " 
                         + words[id].text + " -> " + corefStrings[key])
-            
+               if "coref" not in comments: comments["coref"] = ""
+               comments["coref"] += \
+                  "Replaced Attribute (A) pronoun with coreference resolution data: "\
+                  + words[id].text + " -> " + corefStrings[key] + ". "
             words = addWord(words, id, words[id].text)
             words[id+1].text = "["+corefStrings[key]+"]"
             words[id+1].spaces = 1
@@ -363,6 +381,7 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
    """Detects logical operator words, formats them, and replaces preceeding commas with the same
       logical operator"""
    #print("Finding logical operators\n", start, end)
+   global comments
    andCount = 0
    orCount = 0
    for j in range(start, end):
@@ -415,6 +434,9 @@ def findInternalLogicalOperators(words:list[Word], start:int, end:int) -> list[W
       
    if andCount > 0 and orCount > 0:
       logger.warning('Found both "and" and "or" logical operators in component, '+
+                  "please review manually to solve encapsulation issues.")
+      if "cc2" not in comments:
+            comments["cc2"] = ('Found both "and" and "or" logical operators in component, '+
                   "please review manually to solve encapsulation issues.")
       # Basic internal scoping, if both [AND] and [OR] are present then encapsulate [OR]
       # TODO: Handle a [AND] b [OR] c [OR] d (encapsulate (b [OR] c [OR] d) not (b [OR] (c) [OR] d))
@@ -495,17 +517,27 @@ def handleScopingIssues(words:list[Word]) -> None:
 
 def findComponentEnd(words:list[Word], id:int, symbol:str) -> int:
    """Function for a positive lookahead to find the end index of a component"""
+   global comments
    for i in range(id+1,len(words)):
       word = words[i]
       if word.symbol == symbol:
          if word.position == 2:
             return id
          else:
+            if not "scopingError" in comments:
+               comments["scope"] = ("Scoping error in component, please review manually to handle"+
+                  " potential scoping issues.")
             logger.warning("findComponentEnd invalid object scope")
             return -1
       elif word.symbol != "":
+         if not "scopingError" in comments:
+            comments["scope"] = ("Scoping error in component, please review manually to handle"+
+               " potential scoping issues.")
          logger.warning("findComponentEnd invalid object scope")
          return -1
+   if not "scopingError" in comments:
+      comments["scope"] = ("Scoping error in component, please review manually to handle"+
+         " potential scoping issues.")
    logger.warning("findComponentEnd could not find the end")
    return -1
 
@@ -517,11 +549,20 @@ def findComponentStart(words:list[Word], id:int, symbol:str) -> int:
          if word.position == 1:
             return id
          else:
+            if not "scopingError" in comments:
+               comments["scope"] = ("Scoping error in component, please review manually to handle"+
+                  " potential scoping issues.")
             logger.warning("findComponentStart invalid object scope")
             return -1
       elif word.symbol != "":
+         if not "scopingError" in comments:
+            comments["scope"] = ("Scoping error in component, please review manually to handle"+
+               " potential scoping issues.")
          logger.warning("findComponentStart invalid object scope")
          return -1
+   if not "scopingError" in comments:
+      comments["scope"] = ("Scoping error in component, please review manually to handle"+
+         " potential scoping issues.")
    logger.warning("findComponentStart could not find the start")
    return -1
 
