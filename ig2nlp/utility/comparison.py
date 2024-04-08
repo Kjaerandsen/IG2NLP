@@ -259,50 +259,54 @@ def extraInclusions(components:list, output:np.array, extraText:str,
       Finds extra partial content matches for the remainder of the text of a component in a partial
       match.
    """
+
+   #print("Looking for extra inclusions with the component text: ", extraText)
    #Remove trailing or prepending space from extraText
    if len(extraText) < 2:
       print(extraText, " too short")
       return entry, output
-   print(extraText, " handling")
+   #print(extraText, " handling")
    if extraText[0] == " ":
       extraText = extraText[1:]
-   elif extraText[len(extraText)-1] == " ":
-      extraText = extraText[:len(extraText)-2]
+   if extraText[len(extraText)-1] == " ":
+      extraText = extraText[:len(extraText)-1]
+
+   #print(extraText, " formatted")
 
    # Go through the component list and look for content matches
    for i in range(17):
-         if components[i] == None:
-            continue
-         j = 0
-         compLen = len(components[i])
-         while j < compLen:
-            if components[i][j]["Content"] in extraText:
-               # Add the component to the entry dict
-               if isManual:
-                  entry["ManualComponents"].append(components[i][j])
-                  # Add one to the partial positive count
-                  output[i][1] += 1
-                  print("A")
-               else:
-                  entry["StanzaComponents"].append(components[i][j])
-                  print("B")
+      if components[i] == None:
+         continue
+      j = 0
+      compLen = len(components[i])
+      while j < compLen:
+         if components[i][j]["Content"] in extraText:
+            # Add the component to the entry dict
+            if isManual:
+               entry["ManualComponents"].append(components[i][j])
+               # Add one to the partial positive count
+               output[i][1] += 1
+               print("A")
+            else:
+               entry["StanzaComponents"].append(components[i][j])
+               print("B")
 
-               extraText = extraText.replace(components[i][j]["Content"], "")
+            extraText = extraText.replace(components[i][j]["Content"], "")
 
-               # Remove the component from the component list
-               compLen -= 1
-               components[i] = components[i][:j] + components[i][j+1:]
+            # Remove the component from the component list
+            compLen -= 1
+            components[i] = components[i][:j] + components[i][j+1:]
 
-               
-               #Remove trailing or prepending space from extraText
-               if len(extraText) < 2:
-                  return entry, output
-               if extraText[0] == " ":
-                  extraText = extraText[1:]
-               elif extraText[len(extraText)-1] == " ":
-                  extraText = extraText[:len(extraText)-2]
-               j-=1
-            j+=1
+            
+            #Remove trailing or prepending space from extraText
+            if len(extraText) < 2:
+               return entry, output
+            if extraText[0] == " ":
+               extraText = extraText[1:]
+            elif extraText[len(extraText)-1] == " ":
+               extraText = extraText[:len(extraText)-2]
+            j-=1
+         j+=1
    return entry, output
 
 def combineComponents(input) -> list:
