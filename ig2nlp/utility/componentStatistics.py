@@ -41,15 +41,15 @@ def components(jsonData:dict, outfilename:str) -> None:
       #print(manuSt)
       #print(autoSt)
 
-      data["manualParsed"] = {}
-      data["manualParsed"]["components"], data["manualParsed"]["count"] = \
+      data["manuTxParsed"] = {}
+      data["manuTxParsed"]["components"], data["manuTxParsed"]["count"] = \
          getComponents(manuSt)
-      data["stanzaParsed"] = {}
-      data["stanzaParsed"]["components"], data["stanzaParsed"]["count"] = \
+      data["autoTxParsed"] = {}
+      data["autoTxParsed"]["components"], data["autoTxParsed"]["count"] = \
          getComponents(autoSt)
 
-      #"manualParsed": {"components":{},"count":[]}
-      #"stanzaParsed": {"components":{},"count":[]}
+      #"manuTxParsed": {"components":{},"count":[]}
+      #"autoTxParsed": {"components":{},"count":[]}
       
       outData.append(data)
 
@@ -389,8 +389,8 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
 
          content = formatContent(compStatement[span[0]:span[1]])
          
-         print("Component match: ", comp, content, "\n", compStatement)
-         print(content)
+         #print("Component match: ", comp, content, "\n", compStatement)
+         #print(content)
 
          # check the rest of the sentence
          component = {}
