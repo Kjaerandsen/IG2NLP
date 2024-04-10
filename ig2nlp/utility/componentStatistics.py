@@ -194,6 +194,7 @@ def removeAnnotations(statement:str) -> str:
             #print("Found semantic annotation")
             i = findScopeEnd(span[1], "[","]", compStatement)
             
+            # If the component match is a false positive (no encapsulation brackets), iterate
             if compStatement[i+1] != "{" and compStatement[i+1] != "(":
                #print("Could not find subsequent bracket")
                output += compStatement[:span[0]]
@@ -202,20 +203,30 @@ def removeAnnotations(statement:str) -> str:
                match = re.search(comp,compStatement)
                continue
             else:
+               output += compStatement[:span[0]]
+
+               # If nested remove the annotations within the nested structure and iterate
                if compStatement[i+1] == "{":
                   start = "{"
                   end = "}"
+                  spanStart = i+2
+                  i = findScopeEnd(spanStart, start,end, compStatement)
+                  span = (spanStart,i)
+                  content = compStatement[span[0]:span[1]]
+                  content = removeAnnotations(content)
+                  content = formatContent(content)
+                  #print(compStatement, comp, content)
+               # Else handle the component and iterate
                else:
                   start = "("
                   end = ")"
+                  spanStart = i+2
+                  i = findScopeEnd(spanStart, start,end, compStatement)
+                  span = (spanStart,i)
 
-               spanStart = i+2
-               i = findScopeEnd(spanStart, start,end, compStatement)
-               span = (spanStart,i)
-
-               content = formatContent(compStatement[span[0]:span[1]])
-               #print(compStatement, comp, content)
-
+                  content = formatContent(compStatement[span[0]:span[1]])
+                  #print(compStatement, comp, content)
+               
                output += content
                # Update the statement text to search the rest of the sentence
                compStatement = compStatement[span[1]+1:]
@@ -229,9 +240,22 @@ def removeAnnotations(statement:str) -> str:
          if compStatement[span[1]-1] == "(":
             start = "("
             end = ")"
+            preComp = span[0]
+            # If nested remove internal annotations
+            i = findScopeEnd(span[1], start,end, compStatement)
+            span = (span[1],i)
+
+            content = formatContent(compStatement[span[0]:span[1]])
          elif compStatement[span[1]-1] == "{":
             start = "{"
             end = "}"
+            preComp = span[0]
+            # If nested remove internal annotations
+            i = findScopeEnd(span[1], start,end, compStatement)
+            span = (span[1],i)
+            content = compStatement[span[0]:span[1]]
+            content = removeAnnotations(content)
+            content = formatContent(content)
          else:
             # check the rest of the sentence
             output += compStatement[:span[1]]
@@ -242,12 +266,6 @@ def removeAnnotations(statement:str) -> str:
             match = re.search(comp,compStatement)
             continue
          
-         preComp = span[0]
-         # If nested remove internal annotations
-         i = findScopeEnd(span[1], start,end, compStatement)
-         span = (span[1],i)
-
-         content = formatContent(compStatement[span[0]:span[1]])
          #print(compStatement, comp, content)
 
          # check the rest of the sentence
