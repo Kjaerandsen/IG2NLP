@@ -20,13 +20,13 @@ def components(jsonData:dict, outfilename:str) -> None:
          
       manuSt = removeSuffixes(data["manuTx"])
       autoSt = removeSuffixes(data["autoTx"])
-      #print("Done removing Suffixes", manuSt)
+      #print("No Suffixes: \n",manuSt,"\n",autoSt)
 
       nesting = False
       if nesting == False:
          manuSt = removeNesting(manuSt)
          autoSt = removeNesting(autoSt)
-      #print("Done removing nesting")
+      print("No Nesting: \n",manuSt,"\n",autoSt)
 
       # Remove suffixes:
       manuSt = manuSt.replace("[AND]","and")
@@ -62,7 +62,7 @@ def removeNesting(statement:str) -> str:
    with all nested component replaced by plain text"""
    output = ""
    # Iterate over the component types
-   for comp in [r"A,p[{\[]",r"Bdir[{\[]",r"Bdir,p[{\[]",r"Bind[{\[]",r"Bind,p[{\[]",r"Cac[({\[]",
+   for comp in [r"A,p[{\[]",r"Bdir[{\[]",r"Bdir,p[{\[]",r"Bind[{\[]",r"Bind,p[{\[]",r"Cac[{\[]",
                 r"Cex[{\[]",r"E,p[{\[]",r"P[{\[]",r"P,p[{\[]",r"O[{\[]"]:
       compStatement = statement
       match = re.search(comp,compStatement)
@@ -265,7 +265,7 @@ def removeAnnotations(statement:str) -> str:
             # Iterate
             match = re.search(comp,compStatement)
             continue
-         
+
          #print(compStatement, comp, content)
 
          # check the rest of the sentence
