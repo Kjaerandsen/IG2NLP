@@ -5,7 +5,7 @@ import re
 COMPNAMES = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
                 "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
 
-def components(jsonData:dict, outfilename:str) -> None:
+def components(jsonData:dict, outfilename:str, nesting:bool) -> None:
    outData:list[dict] = []
 
    for statement in jsonData:
@@ -22,7 +22,6 @@ def components(jsonData:dict, outfilename:str) -> None:
       autoSt = removeSuffixes(data["autoTx"])
       #print("No Suffixes: \n",manuSt,"\n",autoSt)
 
-      nesting = False
       if nesting == False:
          manuSt = removeNesting(manuSt)
          autoSt = removeNesting(autoSt)
@@ -43,10 +42,10 @@ def components(jsonData:dict, outfilename:str) -> None:
 
       data["manuTxParsed"] = {}
       data["manuTxParsed"]["components"], data["manuTxParsed"]["count"] = \
-         getComponents(manuSt)
+         getComponents(manuSt, nesting)
       data["autoTxParsed"] = {}
       data["autoTxParsed"]["components"], data["autoTxParsed"]["count"] = \
-         getComponents(autoSt)
+         getComponents(autoSt, nesting)
 
       #"manuTxParsed": {"components":{},"count":[]}
       #"autoTxParsed": {"components":{},"count":[]}
@@ -314,7 +313,7 @@ def removeSuffixes(statement:str) -> str:
       statement = output + compStatement
    return statement
 
-def getComponents(statement:str) -> tuple[list[dict],list[int]]:
+def getComponents(statement:str, nesting:bool) -> tuple[list[dict],list[int]]:
    output = [None] * 17
    count = [0]*17
 
@@ -375,7 +374,10 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
                count[j] += 1
                #print(output[j])
                # Update the statement text to search the rest of the sentence
-               compStatement = compStatement[span[1]:]
+               if nested and nesting:
+                  compStatement = compStatement[span[0]:span[1]] + compStatement[span[1]:]
+               else:
+                  compStatement = compStatement[span[1]:]
 
                # Iterate
                match = re.search(comp,compStatement)
@@ -427,7 +429,10 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          #print(output[j])
 
          # Update the statement text to search the rest of the sentence
-         compStatement = compStatement[span[1]:]
+         if nested and nesting:
+            compStatement = compStatement[span[0]:span[1]] + compStatement[span[1]:]
+         else:
+            compStatement = compStatement[span[1]:]
 
          # Iterate
          match = re.search(comp,compStatement)

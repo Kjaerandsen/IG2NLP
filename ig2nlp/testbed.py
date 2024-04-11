@@ -13,6 +13,9 @@ def main() -> None:
    parser.add_argument("-m", "--mode",
       help="mode of the program, defaults to the whole testing pipline ignoring nesting. For more info\
    refer to the readme file.", default=30, type=int)
+   parser.add_argument("-n", "--nested",
+      help="nesting toggle, defaults to not handling components nested within other components.", 
+      action='store_true')
    args = parser.parse_args()
 
    if not args.input:
@@ -33,12 +36,12 @@ def main() -> None:
    match mode:
       case 0:
          # Call case 1, then read the output data as the input for case 2
-         components(jsonData, outfilename)
+         components(jsonData, outfilename, args.nested)
          with open(outfilename+".json", "r") as input:
             jsonData = json.load(input)
          compare(jsonData, outfilename+"Comp")
       case 1:
-         components(jsonData, outfilename)
+         components(jsonData, outfilename, args.nested)
       case 2:
          compare(jsonData, outfilename)
 

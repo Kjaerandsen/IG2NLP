@@ -354,7 +354,6 @@ def countTotal(output:np.array) -> np.array:
 def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComponents:list[dict]) \
    -> tuple[dict, np.array]:
    """Validates partial matches, updates False Positives and False negatives accordingly"""
-   print("Running comparePartialMatches")
 
    # Go through each partial match
    matchLen = len(partialMatches)
@@ -428,7 +427,7 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
 
             # If the partial match is now empty on one side, remove the partial and do as above
             if compLen < 1:
-               print("Empty match")
+               #print("Empty match")
                j = 0
                compLen = len(partialMatches[i]["manuTxComponents"])
 
