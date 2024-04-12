@@ -364,7 +364,7 @@ def getComponents(statement:str, nesting:bool) -> tuple[list[dict],list[int]]:
                component["Nested"] = nested
                component["SemanticAnnotation"] = ""
                component["componentType"] = COMPNAMES[j]
-               component["StartID"] = 0
+               #component["StartID"] = 0
 
                #print("Appending component")
                if output[j] != None:

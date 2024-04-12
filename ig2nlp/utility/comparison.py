@@ -112,6 +112,34 @@ def compare(jsonData:dict, outfilename:str) -> None:
    with open(outfilename+"Total.txt", "w") as output:
       output.write(str(df))
 
+   df = pd.DataFrame(columns=["Symbol", "TP", "PP", "FP", "FN", "Total"])
+   for i in range(17):
+      if int(totalMatches[i][4]) != 0:
+         df = df._append({
+            "Symbol":COMPNAMES[i], 
+            "TP":np.round(int(totalMatches[i][0])/int(totalMatches[i][4]),2),
+            "PP":np.round(int(totalMatches[i][1])/int(totalMatches[i][4]),2), 
+            "FP":np.round(int(totalMatches[i][2])/int(totalMatches[i][4]),2), 
+            "FN":np.round(int(totalMatches[i][3])/int(totalMatches[i][4]),2), 
+            "Total":int(totalMatches[i][4])
+         },ignore_index=True)
+      else:
+         df = df._append({
+            "Symbol":COMPNAMES[i], 
+            "TP":0,
+            "PP":0, 
+            "FP":0, 
+            "FN":0, 
+            "Total":0
+         },ignore_index=True)
+
+   df = df.sort_values(by=['Symbol'])
+
+   #print(df)
+   # Create totals
+   with open(outfilename+"TotalPercentages.txt", "w") as output:
+      output.write(str(df))
+
 def compareComponentsDirect(manual:list, automa:list, 
                             output:np.array, partialMatches:list[dict]) -> dict:
    """Directly compares components from manual and automatically annotated statements,
@@ -360,6 +388,7 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
    i = 0
    while i < matchLen:
       match = partialMatches[i]
+      print("Validating match:\n", match, "\n--------------------")
 
       partialManuComps:list[str] = []
       #partialAutoComps:list[str] = []
@@ -370,6 +399,8 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
 
          if component["componentType"] in COMPNAMES:
             partialManuComps.append(component["componentType"])
+
+      print("Partials:", partialManuComps)
 
       j = 0
       compLen = len(match["autoTxComponents"])
@@ -414,6 +445,18 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
                if not "E,p" in partialManuComps:
                   print("Not E,p E,p")
                   invalid = True
+            
+            case "P":
+               if "P" not in partialManuComps and "P,p" not in partialManuComps \
+               and "Cex" not in partialManuComps and "Cac" not in partialManuComps:
+                  print("P invalid")
+                  invalid = True
+            
+            case "P,p":
+               if "P" not in partialManuComps and "P,p" not in partialManuComps \
+               and "Cex" not in partialManuComps and "Cac" not in partialManuComps:
+                  print("P,p invalid")
+                  invalid = True
                   
          if invalid:
             # Move the component from the partial match to the list of extra components
@@ -424,6 +467,7 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
             compLen -= 1
             # Add to the false positives
             output[compIndex][2] += 1
+            j-=1
 
             # If the partial match is now empty on one side, remove the partial and do as above
             if compLen < 1:
@@ -444,6 +488,13 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
                   output[compIndex][3] += 1
                   # Remove from the partial positives
                   output[compIndex][1] -= 1
+
+                  # Delete the partial match if it is not the only remaining partial match
+                  if matchLen > 1:
+                     del partialMatches[i]
+                     i -= 1
+                     matchLen -= 1
+               break
 
          j+=1
       i+=1
