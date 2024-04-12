@@ -44,7 +44,7 @@ def compare(jsonData:dict, outfilename:str) -> None:
       partialExtra["autoTxComponents"] = []
       partialExtra["manuTxComponents"] = []
       # Go through each statements partial matches, look for invalid combinations
-      matches = validatePartialMatches(matches, partialMatches, partialExtra)
+      # matches = validatePartialMatches(matches, partialMatches, partialExtra)
 
       # Count the total amount of matches in each category (TP, PP, FP, FN) for each component type
       matches = countTotal(matches)
@@ -72,10 +72,12 @@ def compare(jsonData:dict, outfilename:str) -> None:
       statementData["extraComponents"]["autoTx"] = combineComponents(
          statement["autoTxParsed"]["components"])
       # Add the partialExtra components if any
+      """
       for component in partialExtra["manuTxComponents"]:
          statementData["extraComponents"]["manuTx"].append(component)
       for component in partialExtra["autoTxComponents"]:
          statementData["extraComponents"]["autoTx"].append(component)
+      """
       statementData["partialMatches"] = partialMatches
       outData.append(statementData)
    
@@ -208,7 +210,9 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
             k = 0
             while k < automaLen:
                #print(type(manual[i]), type(automa[l]))
-               if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower():
+               if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower() \
+                  and validateComponentPairMiddleware(manual[i][j]["componentType"], 
+                                            automa[l][k]["componentType"]):
                   output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
                   # Add the components to the partialMatches
@@ -252,9 +256,12 @@ def compareComponentsPartial(manual:list, automa:list,
                autoMatch = False
                manuMatch = False
                if automa[l][k]["Content"] in manual[i][j]["Content"]:
-                  autoMatch = True
+                  autoMatch = validateComponentPairMiddleware(automa[l][k]["componentType"], 
+                                                    manual[i][j]["componentType"])
                elif manual[i][j]["Content"] in automa[l][k]["Content"]:
-                  manuMatch = True
+                  manuMatch = validateComponentPairMiddleware(automa[l][k]["componentType"], 
+                                                    manual[i][j]["componentType"])
+               componentType = manual[i][j]["componentType"]
                   
                #print(type(manual[i]), type(automa[l]))
                if autoMatch or manuMatch:
@@ -279,9 +286,13 @@ def compareComponentsPartial(manual:list, automa:list,
                   manual[i] = manual[i][:j] + manual[i][j+1:]
 
                   if autoMatch:
-                     entry, output = extraInclusions(automa, output, extraText, entry, False)
+                     entry, output = extraInclusions(
+                        automa, output, extraText, 
+                        entry, False, componentType)
                   else:
-                     entry, output = extraInclusions(manual, output, extraText, entry, True)
+                     entry, output = extraInclusions(
+                        manual, output, extraText, 
+                        entry, True, componentType)
 
                   # Add the components to the partialMatches
                   partialMatches.append(entry)
@@ -297,7 +308,7 @@ def compareComponentsPartial(manual:list, automa:list,
    return output
 
 def extraInclusions(components:list, output:np.array, extraText:str, 
-                    entry:dict, isManual:bool) -> tuple[dict, np.array]:
+                    entry:dict, isManual:bool, componentType:str) -> tuple[dict, np.array]:
    """
       Finds extra partial content matches for the remainder of the text of a component in a partial
       match.
@@ -323,7 +334,8 @@ def extraInclusions(components:list, output:np.array, extraText:str,
       j = 0
       compLen = len(components[i])
       while j < compLen:
-         if components[i][j]["Content"] in extraText:
+         if components[i][j]["Content"] in extraText \
+            and validateComponentPairMiddleware(componentType, components[i][j]["componentType"]):
             # Add the component to the entry dict
             if isManual:
                entry["manuTxComponents"].append(components[i][j])
@@ -500,3 +512,51 @@ def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComp
       i+=1
 
    return output
+
+def validateComponentPairMiddleware(comp1, comp2) -> bool:
+   """Middleware for validateComponentPairs, validates pairs of components for partial matches. 
+   Used to exclude certain component pair combinations from partial matches."""
+   #print("Validating component pair: ", comp1, comp2)
+   if not validateComponentPair(comp1, comp2):
+      return False
+   else:
+      return validateComponentPair(comp2, comp1)
+
+def validateComponentPair(comp1, comp2) -> bool:
+   """Validates pairs of components for partial matches. 
+   Used to exclude certain component pair combinations from partial matches."""
+   match comp1:
+      case "A":
+         if not comp2 in ["A","A,p"]:
+            return False
+         
+      case "A,p":
+         if not comp2 in ["A","A,p"]:
+            return False
+         
+      case "E":
+         if not comp2 in ["E","E,p"]:
+            return False
+
+      case "E,p":
+         if not comp2 in ["E","E,p"]:
+            return False
+
+      case "I":
+         if comp2 != comp1:
+            return False
+         
+      case "F":
+         if comp2 != comp1:
+            return False
+
+      case "D":
+         if comp2 != comp1:
+            return False
+
+      case "M":
+         if comp2 != comp1:
+            return False
+
+   #print("returning true")      
+   return True
