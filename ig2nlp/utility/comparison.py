@@ -43,8 +43,6 @@ def compare(jsonData:dict, outfilename:str) -> None:
       partialExtra = dict()
       partialExtra["autoTxComponents"] = []
       partialExtra["manuTxComponents"] = []
-      # Go through each statements partial matches, look for invalid combinations
-      # matches = validatePartialMatches(matches, partialMatches, partialExtra)
 
       # Count the total amount of matches in each category (TP, PP, FP, FN) for each component type
       matches = countTotal(matches)
@@ -71,13 +69,6 @@ def compare(jsonData:dict, outfilename:str) -> None:
          statement["manuTxParsed"]["components"])
       statementData["extraComponents"]["autoTx"] = combineComponents(
          statement["autoTxParsed"]["components"])
-      # Add the partialExtra components if any
-      """
-      for component in partialExtra["manuTxComponents"]:
-         statementData["extraComponents"]["manuTx"].append(component)
-      for component in partialExtra["autoTxComponents"]:
-         statementData["extraComponents"]["autoTx"].append(component)
-      """
       statementData["partialMatches"] = partialMatches
       outData.append(statementData)
    
@@ -388,128 +379,6 @@ def countTotal(output:np.array) -> np.array:
    for i in range(17):
       for j in range(4):
          output[i][4] += output[i][j]
-
-   return output
-
-def validatePartialMatches(output:np.array, partialMatches:list[dict], extraComponents:list[dict]) \
-   -> tuple[dict, np.array]:
-   """Validates partial matches, updates False Positives and False negatives accordingly"""
-
-   # Go through each partial match
-   matchLen = len(partialMatches)
-   i = 0
-   while i < matchLen:
-      match = partialMatches[i]
-      print("Validating match:\n", match, "\n--------------------")
-
-      partialManuComps:list[str] = []
-      #partialAutoComps:list[str] = []
-
-      # Create a list of component types on each side of the match
-      for component in match["manuTxComponents"]:
-         #print("Component manu: ", component)
-
-         if component["componentType"] in COMPNAMES:
-            partialManuComps.append(component["componentType"])
-
-      print("Partials:", partialManuComps)
-
-      j = 0
-      compLen = len(match["autoTxComponents"])
-      while j < compLen:
-         component = match["autoTxComponents"][j]
-         #print("Component auto: ", component)
-
-         invalid = False
-
-         match component["componentType"]:
-            case "A":
-               if not "A" in partialManuComps:
-                  print("Not A A")
-                  invalid = True
-
-            case "I":
-               if not "I" in partialManuComps:
-                  print("Not I I")
-                  invalid = True
-
-            case "D":
-               if not "D" in partialManuComps:
-                  print("Not D D")
-                  invalid = True
-
-            case "M":
-               if not "M" in partialManuComps:
-                  print("Not M M")
-                  invalid = True
-
-            case "E":
-               if not "E" in partialManuComps:
-                  print("Not E E")
-                  invalid = True
-
-            case "F":
-               if not "F" in partialManuComps:
-                  print("Not F F")
-                  invalid = True
-            
-            case "E,p":
-               if not "E,p" in partialManuComps:
-                  print("Not E,p E,p")
-                  invalid = True
-            
-            case "P":
-               if "P" not in partialManuComps and "P,p" not in partialManuComps \
-               and "Cex" not in partialManuComps and "Cac" not in partialManuComps:
-                  print("P invalid")
-                  invalid = True
-            
-            case "P,p":
-               if "P" not in partialManuComps and "P,p" not in partialManuComps \
-               and "Cex" not in partialManuComps and "Cac" not in partialManuComps:
-                  print("P,p invalid")
-                  invalid = True
-                  
-         if invalid:
-            # Move the component from the partial match to the list of extra components
-            extraComponents["autoTxComponents"].append(component)
-            compIndex = COMPNAMES.index(component["componentType"])
-            del partialMatches[i]["autoTxComponents"][j]
-            # Update the counts
-            compLen -= 1
-            # Add to the false positives
-            output[compIndex][2] += 1
-            j-=1
-
-            # If the partial match is now empty on one side, remove the partial and do as above
-            if compLen < 1:
-               #print("Empty match")
-               j = 0
-               compLen = len(partialMatches[i]["manuTxComponents"])
-
-               while j < compLen:
-                  # Move the component from the partial match to the list of extra components
-                  component = partialMatches[i]["manuTxComponents"][j]
-                  extraComponents["manuTxComponents"].append(component)
-                  del partialMatches[i]["manuTxComponents"][j]
-                  compLen -= 1
-
-                  # Handle the statistics
-                  compIndex = COMPNAMES.index(component["componentType"])
-                  # Add to the false negatives
-                  output[compIndex][3] += 1
-                  # Remove from the partial positives
-                  output[compIndex][1] -= 1
-
-                  # Delete the partial match if it is not the only remaining partial match
-                  if matchLen > 1:
-                     del partialMatches[i]
-                     i -= 1
-                     matchLen -= 1
-               break
-
-         j+=1
-      i+=1
 
    return output
 
