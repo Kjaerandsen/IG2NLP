@@ -1,4 +1,6 @@
 from utility.componentStatistics import *
+from utility.comparison import *
+import pytest
 
 def test_removeSuffixes() -> None:
 
@@ -43,3 +45,40 @@ def test_removeNesting() -> None:
 
    assert removeNesting("Cac{A, Cac{A(B) I([C]) D Bdir[semantic](E)}, F Bdir{A(G) H I([I]) or the \
 I(J)}}") == "Cac{a b c d e f g h i j}"
+   
+def test_formatContent() -> None:
+   assert formatContent("  and or , [], (), the ") == "    "
+
+def test_findScopeEnd() -> None:
+   # Parentheses base case
+   assert findScopeEnd(0, "(", ")", "Content)") == 7
+   # Extra parentheses
+   assert findScopeEnd(0, "(", ")", "Content (extra parentheses) more text)") == 37
+   # Square braces
+   assert findScopeEnd(0, "[", "]", "Content]") == 7
+   assert findScopeEnd(0, "[", "]", "Content [extra parentheses] more text]") == 37
+   # Curly braces
+   assert findScopeEnd(0, "{", "}", "Content}") == 7
+   assert findScopeEnd(0, "{", "}", "Content {extra parentheses} more text}") == 37
+
+   # Validate that the program exits on not finding an end
+   # Based on example by George Shuklin found at:
+   # https://medium.com/python-pandemonium/testing-sys-exit-with-pytest-10c6e5f7726f
+   with pytest.raises(SystemExit) as pytest_wrapped_e:
+      findScopeEnd(0, "(", ")", "Content")
+   assert pytest_wrapped_e.type == SystemExit
+
+def testvalidateComponentPairMiddleware() -> None:
+   assert validateComponentPair("A","I") == False
+   assert validateComponentPair("A","A,p") == True
+   assert validateComponentPair("E","F") == False
+   assert validateComponentPair("E","E,p") == True
+   assert validateComponentPair("I","Bdir") == False
+   assert validateComponentPair("I","I") == True
+   assert validateComponentPair("F","P") == False
+   assert validateComponentPair("F","F") == True
+   assert validateComponentPair("M","F") == False
+   assert validateComponentPair("M","M") == True
+   assert validateComponentPair("D","I") == False
+   assert validateComponentPair("D","D") == True
+   assert validateComponentPair("","") == True
