@@ -44,5 +44,7 @@ def main() -> None:
          components(jsonData, outfilename, args.nested)
       case 2:
          compare(jsonData, outfilename)
+      case _:
+         print("No mode selected. Please use a -m parameter with a mode as seen in the readme.")
 
 main()
