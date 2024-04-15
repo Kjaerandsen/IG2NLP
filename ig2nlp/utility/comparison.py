@@ -110,10 +110,10 @@ def compare(jsonData:dict, outfilename:str) -> None:
       if int(totalMatches[i][4]) != 0:
          df = df._append({
             "Symbol":COMPNAMES[i], 
-            "TP":np.round(int(totalMatches[i][0])/int(totalMatches[i][4]),2),
-            "PP":np.round(int(totalMatches[i][1])/int(totalMatches[i][4]),2), 
-            "FP":np.round(int(totalMatches[i][2])/int(totalMatches[i][4]),2), 
-            "FN":np.round(int(totalMatches[i][3])/int(totalMatches[i][4]),2), 
+            "TP":np.round(100*int(totalMatches[i][0])/int(totalMatches[i][4]),2),
+            "PP":np.round(100*int(totalMatches[i][1])/int(totalMatches[i][4]),2), 
+            "FP":np.round(100*int(totalMatches[i][2])/int(totalMatches[i][4]),2), 
+            "FN":np.round(100*int(totalMatches[i][3])/int(totalMatches[i][4]),2), 
             "Total":int(totalMatches[i][4])
          },ignore_index=True)
       else:
