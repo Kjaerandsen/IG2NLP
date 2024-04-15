@@ -25,7 +25,7 @@ def components(jsonData:dict, outfilename:str, nesting:bool) -> None:
       if nesting == False:
          manuSt = removeNesting(manuSt)
          autoSt = removeNesting(autoSt)
-      print("No Nesting: \n",manuSt,"\n",autoSt)
+         print("No Nesting: \n",manuSt,"\n",autoSt)
 
       # Remove suffixes:
       manuSt = manuSt.replace("[AND]","and")
@@ -357,7 +357,9 @@ def getComponents(statement:str, nesting:bool) -> tuple[list[dict],list[int]]:
                i = findScopeEnd(spanStart, start,end, compStatement)
                span = (spanStart,i)
 
-               content = formatContent(compStatement[span[0]:span[1]])
+               if not nested:
+                  content = formatContent(compStatement[span[0]:span[1]])
+               else: content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
                #print("Component match: ", comp, content, compStatement)
                component = {}
                component["Content"] = content
@@ -407,7 +409,9 @@ def getComponents(statement:str, nesting:bool) -> tuple[list[dict],list[int]]:
          i = findScopeEnd(span[1], start,end, compStatement)
          span = (span[1],i)
 
-         content = formatContent(compStatement[span[0]:span[1]])
+         if not nested:
+            content = formatContent(compStatement[span[0]:span[1]])
+         else: content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
          
          #print("Component match: ", comp, content, "\n", compStatement)
          #print(content)
