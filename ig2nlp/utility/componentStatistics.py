@@ -448,6 +448,7 @@ def formatContent(content:str) -> str:
    content = content.replace("  ", " ")
    content = content.replace(" and ", " ")
    content = content.replace(" or ", " ")
+   content = content.replace(" a ", " ")
    content = content.replace(", ", " ")
    content = content.replace("[", "")
    content = content.replace("]", "")
