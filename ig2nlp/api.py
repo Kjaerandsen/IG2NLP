@@ -2,6 +2,7 @@ import werkzeug
 from utility import env
 import json
 from flask import Flask, request, Response, jsonify
+from flask_cors import CORS
 from http import HTTPStatus
 from nlp import *
 import waitress
@@ -23,6 +24,7 @@ initialize()
 wlogger = logging.getLogger('waitress')
 wlogger.setLevel(logging.WARNING)
 app = Flask(__name__)
+CORS(app)
 
 @app.post("/ig2nlp")
 def handleRequest() -> Response:
@@ -33,6 +35,9 @@ def handleRequest() -> Response:
       statement = data[i]
       
       """ Data validation """
+      if not "apiVersion" in statement:
+         return createError("Missing apiVersion parameter, please supply a valid apiVersion (0.1)", 
+                              HTTPStatus.BAD_REQUEST)
       if statement["apiVersion"] != 0.1:
          statement["apiVersion"] = float(statement["apiVersion"])
          if statement["apiVersion"] != 0.1:
