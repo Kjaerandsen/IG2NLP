@@ -44,6 +44,11 @@ def main() -> None:
          components(jsonData, outfilename, args.nested)
       case 2:
          compare(jsonData, outfilename)
+      case 3:
+         components(jsonData, outfilename, True)
+         with open(outfilename+".json", "r") as input:
+            jsonData = json.load(input)
+         countComponents(jsonData, outfilename+"compCount")
       case _:
          print("No mode selected. Please use a -m parameter with a mode as seen in the readme.")
 

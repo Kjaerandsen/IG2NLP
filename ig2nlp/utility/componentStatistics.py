@@ -457,3 +457,17 @@ def formatContent(content:str) -> str:
    content = content.replace("the ", "")
 
    return content
+
+def countComponents(jsonData:dict, outfilename:str) -> None:
+   data = 17*[0]
+
+   for statement in jsonData:
+      #count = np.zeros((17), dtype=int)
+      count = statement["manuTxParsed"]["count"]
+
+      for i in range(17):
+         data[i] += count[i]
+
+   with open(outfilename+".txt", "w") as output:
+      for i in range(17):
+         output.write(COMPNAMES[i] + ": " + str(data[i])+"\n")
