@@ -166,13 +166,15 @@ def oblHandler(words:list[Word], i:int, wordLen:int, semantic:bool,
    return scopeEnd
 
 def oblConstitutivePropertyHandler(words:list[Word], iBak:int, scopeEnd:int, symbol:str) -> int:
+   """Handler for obl deprels connected to property annotations. 
+   Handles scope extension for property annotations."""
    rootHead:Word = getHead(words, iBak)
    if rootHead.position == 0:
       scopeStart = words[iBak].head
       # If the head is the start of the component find the end, remove its annotation,
       # encapsulate, return
    elif rootHead.position == 1:
-      for j in range(rootHead.position+1, scopeStart):
+      for j in range(rootHead.position+1, scopeEnd):
          if words[j].position == 2:
             words[j].setSymbol()
             words[scopeEnd].setSymbol(symbol,2)
