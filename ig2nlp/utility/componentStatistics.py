@@ -5,7 +5,7 @@ import re
 COMPNAMES = ["A,p","Bdir","Bdir,p","Bind","Bind,p","Cac",
                 "Cex","E,p","P","P,p","O","A","D","I","E","M","F"]
 
-def components(jsonData:dict, outfilename:str) -> None:
+def components(jsonData:dict, outfilename:str, nesting:bool) -> None:
    outData:list[dict] = []
 
    for statement in jsonData:
@@ -20,13 +20,12 @@ def components(jsonData:dict, outfilename:str) -> None:
          
       manuSt = removeSuffixes(data["manuTx"])
       autoSt = removeSuffixes(data["autoTx"])
-      #print("Done removing Suffixes", manuSt)
+      #print("No Suffixes: \n",manuSt,"\n",autoSt)
 
-      nesting = False
       if nesting == False:
          manuSt = removeNesting(manuSt)
          autoSt = removeNesting(autoSt)
-      #print("Done removing nesting")
+         print("No Nesting: \n",manuSt,"\n",autoSt)
 
       # Remove suffixes:
       manuSt = manuSt.replace("[AND]","and")
@@ -41,15 +40,15 @@ def components(jsonData:dict, outfilename:str) -> None:
       #print(manuSt)
       #print(autoSt)
 
-      data["manualParsed"] = {}
-      data["manualParsed"]["components"], data["manualParsed"]["count"] = \
-         getComponents(manuSt)
-      data["stanzaParsed"] = {}
-      data["stanzaParsed"]["components"], data["stanzaParsed"]["count"] = \
-         getComponents(autoSt)
+      data["manuTxParsed"] = {}
+      data["manuTxParsed"]["components"], data["manuTxParsed"]["count"] = \
+         getComponents(manuSt, nesting)
+      data["autoTxParsed"] = {}
+      data["autoTxParsed"]["components"], data["autoTxParsed"]["count"] = \
+         getComponents(autoSt, nesting)
 
-      #"manualParsed": {"components":{},"count":[]}
-      #"stanzaParsed": {"components":{},"count":[]}
+      #"manuTxParsed": {"components":{},"count":[]}
+      #"autoTxParsed": {"components":{},"count":[]}
       
       outData.append(data)
 
@@ -62,7 +61,7 @@ def removeNesting(statement:str) -> str:
    with all nested component replaced by plain text"""
    output = ""
    # Iterate over the component types
-   for comp in [r"A,p[{\[]",r"Bdir[{\[]",r"Bdir,p[{\[]",r"Bind[{\[]",r"Bind,p[{\[]",r"Cac[({\[]",
+   for comp in [r"A,p[{\[]",r"Bdir[{\[]",r"Bdir,p[{\[]",r"Bind[{\[]",r"Bind,p[{\[]",r"Cac[{\[]",
                 r"Cex[{\[]",r"E,p[{\[]",r"P[{\[]",r"P,p[{\[]",r"O[{\[]"]:
       compStatement = statement
       match = re.search(comp,compStatement)
@@ -194,6 +193,7 @@ def removeAnnotations(statement:str) -> str:
             #print("Found semantic annotation")
             i = findScopeEnd(span[1], "[","]", compStatement)
             
+            # If the component match is a false positive (no encapsulation brackets), iterate
             if compStatement[i+1] != "{" and compStatement[i+1] != "(":
                #print("Could not find subsequent bracket")
                output += compStatement[:span[0]]
@@ -202,20 +202,30 @@ def removeAnnotations(statement:str) -> str:
                match = re.search(comp,compStatement)
                continue
             else:
+               output += compStatement[:span[0]]
+
+               # If nested remove the annotations within the nested structure and iterate
                if compStatement[i+1] == "{":
                   start = "{"
                   end = "}"
+                  spanStart = i+2
+                  i = findScopeEnd(spanStart, start,end, compStatement)
+                  span = (spanStart,i)
+                  content = compStatement[span[0]:span[1]]
+                  content = removeAnnotations(content)
+                  content = formatContent(content)
+                  #print(compStatement, comp, content)
+               # Else handle the component and iterate
                else:
                   start = "("
                   end = ")"
+                  spanStart = i+2
+                  i = findScopeEnd(spanStart, start,end, compStatement)
+                  span = (spanStart,i)
 
-               spanStart = i+2
-               i = findScopeEnd(spanStart, start,end, compStatement)
-               span = (spanStart,i)
-
-               content = formatContent(compStatement[span[0]:span[1]])
-               #print(compStatement, comp, content)
-
+                  content = formatContent(compStatement[span[0]:span[1]])
+                  #print(compStatement, comp, content)
+               
                output += content
                # Update the statement text to search the rest of the sentence
                compStatement = compStatement[span[1]+1:]
@@ -229,9 +239,22 @@ def removeAnnotations(statement:str) -> str:
          if compStatement[span[1]-1] == "(":
             start = "("
             end = ")"
+            preComp = span[0]
+            # If nested remove internal annotations
+            i = findScopeEnd(span[1], start,end, compStatement)
+            span = (span[1],i)
+
+            content = formatContent(compStatement[span[0]:span[1]])
          elif compStatement[span[1]-1] == "{":
             start = "{"
             end = "}"
+            preComp = span[0]
+            # If nested remove internal annotations
+            i = findScopeEnd(span[1], start,end, compStatement)
+            span = (span[1],i)
+            content = compStatement[span[0]:span[1]]
+            content = removeAnnotations(content)
+            content = formatContent(content)
          else:
             # check the rest of the sentence
             output += compStatement[:span[1]]
@@ -241,13 +264,7 @@ def removeAnnotations(statement:str) -> str:
             # Iterate
             match = re.search(comp,compStatement)
             continue
-         
-         preComp = span[0]
-         # If nested remove internal annotations
-         i = findScopeEnd(span[1], start,end, compStatement)
-         span = (span[1],i)
 
-         content = formatContent(compStatement[span[0]:span[1]])
          #print(compStatement, comp, content)
 
          # check the rest of the sentence
@@ -296,7 +313,7 @@ def removeSuffixes(statement:str) -> str:
       statement = output + compStatement
    return statement
 
-def getComponents(statement:str) -> tuple[list[dict],list[int]]:
+def getComponents(statement:str, nesting:bool) -> tuple[list[dict],list[int]]:
    output = [None] * 17
    count = [0]*17
 
@@ -340,14 +357,16 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
                i = findScopeEnd(spanStart, start,end, compStatement)
                span = (spanStart,i)
 
-               content = formatContent(compStatement[span[0]:span[1]])
+               if not nested:
+                  content = formatContent(compStatement[span[0]:span[1]])
+               else: content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
                #print("Component match: ", comp, content, compStatement)
                component = {}
                component["Content"] = content
                component["Nested"] = nested
                component["SemanticAnnotation"] = ""
                component["componentType"] = COMPNAMES[j]
-               component["StartID"] = 0
+               #component["StartID"] = 0
 
                #print("Appending component")
                if output[j] != None:
@@ -357,7 +376,10 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
                count[j] += 1
                #print(output[j])
                # Update the statement text to search the rest of the sentence
-               compStatement = compStatement[span[1]:]
+               if nested and nesting:
+                  compStatement = compStatement[span[0]:span[1]] + compStatement[span[1]:]
+               else:
+                  compStatement = compStatement[span[1]:]
 
                # Iterate
                match = re.search(comp,compStatement)
@@ -387,10 +409,12 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          i = findScopeEnd(span[1], start,end, compStatement)
          span = (span[1],i)
 
-         content = formatContent(compStatement[span[0]:span[1]])
+         if not nested:
+            content = formatContent(compStatement[span[0]:span[1]])
+         else: content = formatContent(removeAnnotations(compStatement[span[0]:span[1]]))
          
-         print("Component match: ", comp, content, "\n", compStatement)
-         print(content)
+         #print("Component match: ", comp, content, "\n", compStatement)
+         #print(content)
 
          # check the rest of the sentence
          component = {}
@@ -409,7 +433,10 @@ def getComponents(statement:str) -> tuple[list[dict],list[int]]:
          #print(output[j])
 
          # Update the statement text to search the rest of the sentence
-         compStatement = compStatement[span[1]:]
+         if nested and nesting:
+            compStatement = compStatement[span[0]:span[1]] + compStatement[span[1]:]
+         else:
+            compStatement = compStatement[span[1]:]
 
          # Iterate
          match = re.search(comp,compStatement)
@@ -421,6 +448,7 @@ def formatContent(content:str) -> str:
    content = content.replace("  ", " ")
    content = content.replace(" and ", " ")
    content = content.replace(" or ", " ")
+   content = content.replace(" a ", " ")
    content = content.replace(", ", " ")
    content = content.replace("[", "")
    content = content.replace("]", "")
@@ -429,3 +457,17 @@ def formatContent(content:str) -> str:
    content = content.replace("the ", "")
 
    return content
+
+def countComponents(jsonData:dict, outfilename:str) -> None:
+   data = 17*[0]
+
+   for statement in jsonData:
+      #count = np.zeros((17), dtype=int)
+      count = statement["manuTxParsed"]["count"]
+
+      for i in range(17):
+         data[i] += count[i]
+
+   with open(outfilename+".txt", "w") as output:
+      for i in range(17):
+         output.write(COMPNAMES[i] + ": " + str(data[i])+"\n")

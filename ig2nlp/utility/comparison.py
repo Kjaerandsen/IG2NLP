@@ -12,34 +12,38 @@ def compare(jsonData:dict, outfilename:str) -> None:
    for statement in jsonData:
       matches = np.zeros((17,5), dtype=int)
       #print(statement["name"])
-      #print(statement["stanzaParsed"])
+      #print(statement["autoTxParsed"])
 
       """
       Compare components for direct matches 
       I.e. x(content) == x(content)
       """
-      partialPool = []
+      partialMatches = []
       
       #True positive scope and symbol, also accounts for invalid nesting
-      matches = compareComponentsDirect(statement["manualParsed"]["components"],
-                                        statement["stanzaParsed"]["components"],
-                                        matches, partialPool)
+      matches = compareComponentsDirect(statement["manuTxParsed"]["components"],
+                                        statement["autoTxParsed"]["components"],
+                                        matches, partialMatches)
       
       # True positive scope, wrong symbol
-      matches = compareComponentsWrongSymbol(statement["manualParsed"]["components"],
-                                        statement["stanzaParsed"]["components"],
-                                        matches, partialPool)
+      matches = compareComponentsWrongSymbol(statement["manuTxParsed"]["components"],
+                                        statement["autoTxParsed"]["components"],
+                                        matches, partialMatches)
       
       # Partial content matches
-      matches = compareComponentsPartial(statement["manualParsed"]["components"],
-                                        statement["stanzaParsed"]["components"],
-                                        matches, partialPool)
+      matches = compareComponentsPartial(statement["manuTxParsed"]["components"],
+                                        statement["autoTxParsed"]["components"],
+                                        matches, partialMatches)
       
       # Count the non-matched components as False Positives from auto, and False Negatives from manu
-      matches = countFPandFN(statement["manualParsed"]["components"],
-                                        statement["stanzaParsed"]["components"],
+      matches = countFPandFN(statement["manuTxParsed"]["components"],
+                                        statement["autoTxParsed"]["components"],
                                         matches)
       
+      partialExtra = dict()
+      partialExtra["autoTxComponents"] = []
+      partialExtra["manuTxComponents"] = []
+
       # Count the total amount of matches in each category (TP, PP, FP, FN) for each component type
       matches = countTotal(matches)
 
@@ -62,13 +66,13 @@ def compare(jsonData:dict, outfilename:str) -> None:
       statementData["extraComponents"] = dict()
       # Combine all components to a pool of extra components
       statementData["extraComponents"]["manuTx"] = combineComponents(
-         statement["manualParsed"]["components"])
+         statement["manuTxParsed"]["components"])
       statementData["extraComponents"]["autoTx"] = combineComponents(
-         statement["stanzaParsed"]["components"])
-      statementData["partialPool"] = partialPool
+         statement["autoTxParsed"]["components"])
+      statementData["partialMatches"] = partialMatches
       outData.append(statementData)
    
-   print(matches,"\n")
+   #print(matches,"\n")
 
    # Write all partial matches, extra components and individual statement counts
    with open(outfilename+".json", "w") as output:
@@ -101,8 +105,36 @@ def compare(jsonData:dict, outfilename:str) -> None:
    with open(outfilename+"Total.txt", "w") as output:
       output.write(str(df))
 
+   df = pd.DataFrame(columns=["Symbol", "TP", "PP", "FP", "FN", "Total"])
+   for i in range(17):
+      if int(totalMatches[i][4]) != 0:
+         df = df._append({
+            "Symbol":COMPNAMES[i], 
+            "TP":np.round(100*int(totalMatches[i][0])/int(totalMatches[i][4]),2),
+            "PP":np.round(100*int(totalMatches[i][1])/int(totalMatches[i][4]),2), 
+            "FP":np.round(100*int(totalMatches[i][2])/int(totalMatches[i][4]),2), 
+            "FN":np.round(100*int(totalMatches[i][3])/int(totalMatches[i][4]),2), 
+            "Total":int(totalMatches[i][4])
+         },ignore_index=True)
+      else:
+         df = df._append({
+            "Symbol":COMPNAMES[i], 
+            "TP":0,
+            "PP":0, 
+            "FP":0, 
+            "FN":0, 
+            "Total":0
+         },ignore_index=True)
+
+   df = df.sort_values(by=['Symbol'])
+
+   #print(df)
+   # Create totals
+   with open(outfilename+"TotalPercentages.txt", "w") as output:
+      output.write(str(df))
+
 def compareComponentsDirect(manual:list, automa:list, 
-                            output:np.array, partialPool:list[dict]) -> dict:
+                            output:np.array, partialMatches:list[dict]) -> dict:
    """Directly compares components from manual and automatically annotated statements,
    removes direct matches and adds to a count for the true positive rate of that specific component
    """
@@ -122,7 +154,7 @@ def compareComponentsDirect(manual:list, automa:list,
          while k < automaLen:
             #print(manualLen, j, automaLen, k)
             #print(type(manual[i]), type(automa[i]))
-            print("Comp: ", manual[i][j]["Content"].lower(), automa[i][k]["Content"].lower())
+            #print("Comp: ", manual[i][j]["Content"].lower(), automa[i][k]["Content"].lower())
             if manual[i][j]["Content"].lower() == automa[i][k]["Content"].lower():
                if manual[i][j]["Nested"] == automa[i][k]["Nested"]:
                   #print("\n\nDIRECT NESTED EQUAL", automa[i][k], manual[i][j],"\n\n")
@@ -130,11 +162,11 @@ def compareComponentsDirect(manual:list, automa:list,
                else:
                   output[i][1] += 1
                   #print("\n\nDIRECT NESTED UNEQUAL", automa[i][k], manual[i][j],"\n\n")
-                  # Add the components to the partialPool
+                  # Add the components to the partialMatches
                   entry = {}
-                  entry["ManualComponents"] = [manual[i][j]]
-                  entry["StanzaComponents"] = [automa[i][k]]
-                  partialPool.append(entry)
+                  entry["manuTxComponents"] = [manual[i][j]]
+                  entry["autoTxComponents"] = [automa[i][k]]
+                  partialMatches.append(entry)
 
                # Remove the components from the list of components
                automa[i] = automa[i][:k] + automa[i][k+1:]
@@ -151,7 +183,7 @@ def compareComponentsDirect(manual:list, automa:list,
    return output
 
 def compareComponentsWrongSymbol(manual:list, automa:list, 
-                                 output:np.array, partialPool:list[dict]) -> dict:
+                                 output:np.array, partialMatches:list[dict]) -> dict:
    """Directly compares components from manual and automatically annotated statements,
    removes content matches with incorrect symbols and adds to a count for the partial positive 
    rate of that specific component
@@ -169,14 +201,16 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
             k = 0
             while k < automaLen:
                #print(type(manual[i]), type(automa[l]))
-               if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower():
+               if manual[i][j]["Content"].lower() == automa[l][k]["Content"].lower() \
+                  and validateComponentPairMiddleware(manual[i][j]["componentType"], 
+                                            automa[l][k]["componentType"]):
                   output[i][1] += 1
                   #print("COMPONENT: ", automa[l][k])
-                  # Add the components to the partialPool
+                  # Add the components to the partialMatches
                   entry = {}
-                  entry["ManualComponents"] = [manual[i][j]]
-                  entry["StanzaComponents"] = [automa[l][k]]
-                  partialPool.append(entry)
+                  entry["manuTxComponents"] = [manual[i][j]]
+                  entry["autoTxComponents"] = [automa[l][k]]
+                  partialMatches.append(entry)
 
                   # Remove the components from the list of components
                   automa[l] = automa[l][:k] + automa[l][k+1:]
@@ -192,7 +226,7 @@ def compareComponentsWrongSymbol(manual:list, automa:list,
    return output
 
 def compareComponentsPartial(manual:list, automa:list, 
-                                 output:np.array, partialPool:list[dict]) -> dict:
+                                 output:np.array, partialMatches:list[dict]) -> dict:
    """Directly compares components from manual and automatically annotated statements,
    removes content matches with incorrect symbols and adds to a count for the partial positive 
    rate of that specific component
@@ -213,9 +247,12 @@ def compareComponentsPartial(manual:list, automa:list,
                autoMatch = False
                manuMatch = False
                if automa[l][k]["Content"] in manual[i][j]["Content"]:
-                  autoMatch = True
+                  autoMatch = validateComponentPairMiddleware(automa[l][k]["componentType"], 
+                                                    manual[i][j]["componentType"])
                elif manual[i][j]["Content"] in automa[l][k]["Content"]:
-                  manuMatch = True
+                  manuMatch = validateComponentPairMiddleware(automa[l][k]["componentType"], 
+                                                    manual[i][j]["componentType"])
+               componentType = manual[i][j]["componentType"]
                   
                #print(type(manual[i]), type(automa[l]))
                if autoMatch or manuMatch:
@@ -232,20 +269,24 @@ def compareComponentsPartial(manual:list, automa:list,
                      #manual[i][j],automa[l][k]
                      extraText = automa[l][k]["Content"].replace(manual[i][j]["Content"], "")
                   entry = {}
-                  entry["ManualComponents"] = [manual[i][j]]
-                  entry["StanzaComponents"] = [automa[l][k]]
+                  entry["manuTxComponents"] = [manual[i][j]]
+                  entry["autoTxComponents"] = [automa[l][k]]
 
                   # Remove the components from the list of components
                   automa[l] = automa[l][:k] + automa[l][k+1:]
                   manual[i] = manual[i][:j] + manual[i][j+1:]
 
                   if autoMatch:
-                     entry, output = extraInclusions(automa, output, extraText, entry, False)
+                     entry, output = extraInclusions(
+                        automa, output, extraText, 
+                        entry, False, componentType)
                   else:
-                     entry, output = extraInclusions(manual, output, extraText, entry, True)
+                     entry, output = extraInclusions(
+                        manual, output, extraText, 
+                        entry, True, componentType)
 
-                  # Add the components to the partialPool
-                  partialPool.append(entry)
+                  # Add the components to the partialMatches
+                  partialMatches.append(entry)
 
                   manualLen = len(manual[i])
                   automaLen = len(automa[l])
@@ -258,7 +299,7 @@ def compareComponentsPartial(manual:list, automa:list,
    return output
 
 def extraInclusions(components:list, output:np.array, extraText:str, 
-                    entry:dict, isManual:bool) -> tuple[dict, np.array]:
+                    entry:dict, isManual:bool, componentType:str) -> tuple[dict, np.array]:
    """
       Finds extra partial content matches for the remainder of the text of a component in a partial
       match.
@@ -267,7 +308,7 @@ def extraInclusions(components:list, output:np.array, extraText:str,
    #print("Looking for extra inclusions with the component text: ", extraText)
    #Remove trailing or prepending space from extraText
    if len(extraText) < 2:
-      print(extraText, " too short")
+      #print(extraText, " too short")
       return entry, output
    #print(extraText, " handling")
    if extraText[0] == " ":
@@ -284,16 +325,17 @@ def extraInclusions(components:list, output:np.array, extraText:str,
       j = 0
       compLen = len(components[i])
       while j < compLen:
-         if components[i][j]["Content"] in extraText:
+         if components[i][j]["Content"] in extraText \
+            and validateComponentPairMiddleware(componentType, components[i][j]["componentType"]):
             # Add the component to the entry dict
             if isManual:
-               entry["ManualComponents"].append(components[i][j])
+               entry["manuTxComponents"].append(components[i][j])
                # Add one to the partial positive count
                output[i][1] += 1
-               print("A")
+               #print("A")
             else:
-               entry["StanzaComponents"].append(components[i][j])
-               print("B")
+               entry["autoTxComponents"].append(components[i][j])
+               #print("B")
 
             extraText = extraText.replace(components[i][j]["Content"], "")
 
@@ -339,3 +381,51 @@ def countTotal(output:np.array) -> np.array:
          output[i][4] += output[i][j]
 
    return output
+
+def validateComponentPairMiddleware(comp1, comp2) -> bool:
+   """Middleware for validateComponentPairs, validates pairs of components for partial matches. 
+   Used to exclude certain component pair combinations from partial matches."""
+   #print("Validating component pair: ", comp1, comp2)
+   if not validateComponentPair(comp1, comp2):
+      return False
+   else:
+      return validateComponentPair(comp2, comp1)
+
+def validateComponentPair(comp1, comp2) -> bool:
+   """Validates pairs of components for partial matches. 
+   Used to exclude certain component pair combinations from partial matches."""
+   match comp1:
+      case "A":
+         if not comp2 in ["A","A,p"]:
+            return False
+         
+      case "A,p":
+         if not comp2 in ["A","A,p"]:
+            return False
+         
+      case "E":
+         if not comp2 in ["E","E,p"]:
+            return False
+
+      case "E,p":
+         if not comp2 in ["E","E,p"]:
+            return False
+
+      case "I":
+         if comp2 != comp1:
+            return False
+         
+      case "F":
+         if comp2 != comp1:
+            return False
+
+      case "D":
+         if comp2 != comp1:
+            return False
+
+      case "M":
+         if comp2 != comp1:
+            return False
+
+   #print("returning true")      
+   return True
