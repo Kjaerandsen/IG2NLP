@@ -9,7 +9,7 @@ To install the dependencies run
 
 Alternatively see the dependencies section below.
 
-I recommend using a virtual environment.
+I recommend using a virtual environment for Python.
 
 Tested using Python 3.11, models and programs used do not support Python 3.12 as of the time of writing.
 
@@ -222,24 +222,11 @@ Basic test program for the api, sends requests with a random amount of statement
 
 ## Dependencies
 
-Dependencies are Stanza, Spacy and Pandas.
-They can be installed using the commands:
+The dependencies are all located in the "requirements.txt" file and can be installed using the command:
 
-```
-pip install stanza 
-pip install spacy
-pip install pandas
-pip install pyarrow
-pip install transformers
-pip install peft
-pip install flask
-pip install requests
-pip install python-dotenv
-pip install pytest
-pip install pytest-cov
-```
+`pip install -r requirements.txt`
 
-Tested on Stanza v1.7.0, newer versions may not work as expected.
+Tested on Stanza v1.8.1, newer versions may not work as expected.
 
-Further for GPU processing Cuda is required, and PyTorch with Cuda.
+Further for GPU processing Cuda is required, and PyTorch with Cuda must be manually installed in addition to the requirements in the requirements.txt file.
 See `https://pytorch.org/get-started/locally/`.
