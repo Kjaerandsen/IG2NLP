@@ -75,6 +75,11 @@ def matchingFunction(words:list[Word], semantic:bool,
 
       #print(getHead(words, i), words[i].deprel, words[i].text)
 
+      # (O) Or else handling for the word "otherwise"
+      if word.text.lower() == "otherwise":
+         orElseHandler(words, wordsBak, wordLen, words2, i-1, semantic, constitutive)
+         return words2
+
       match deprel:
          # (Cac, Cex) Condition detection 
          case "advcl":
@@ -664,7 +669,11 @@ def orElseHandler(words: list[Word], wordsBak:list[Word], wordLen:int,
       lastIndex = wordLen
 
    # Add the values before the condition
-   words2 += words[:firstVal]
+   if words[firstVal+1].text.lower() == "otherwise":
+      # Otherwise handling (replaces one instead of two words with the (O) Or else)
+      words2 += words[:firstVal+1]
+   else:
+      words2 += words[:firstVal]
 
    orElseComponent = matchingFunction(
          reusePartEoS(wordsBak[firstVal+2:lastIndex], firstVal+2), semantic, constitutive)
