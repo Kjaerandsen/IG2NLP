@@ -528,6 +528,14 @@ def handleScopingIssues(words:list[Word]) -> None:
                else:
                   break
       i+=1
+   
+   # Handle any components ending with a determiner ("the"), move the closing tag back one word
+   i = 0
+   while i < wordLen:
+      if words[i].deprel == "det" and words[i].position == 2 and words[i].nested == False:
+         words[i-1].setSymbol(words[i].symbol, words[i].position, False)
+         words[i].setSymbol("")
+      i+=1
 
 def findComponentEnd(words:list[Word], id:int, symbol:str) -> int:
    """Function for a positive lookahead to find the end index of a component"""
