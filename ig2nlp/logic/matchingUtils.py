@@ -473,6 +473,7 @@ def handleScopingIssues(words:list[Word]) -> None:
    wordLen = len(words)
    within = False
    start = 0
+   # Handle any components that are contained within another non-nested component
    i = 0
    while i < wordLen:
       #print("i:", words[i].text, words[i].symbol, words[i].position, words[i].nested)
@@ -514,6 +515,19 @@ def handleScopingIssues(words:list[Word]) -> None:
             if words[i].symbol == words[start].symbol:
                within = False
       i += 1
+
+   # Handle any unclosed components
+   i = 0
+   while i < wordLen:
+      if words[i].position == 1 and words[i].nested == False:
+         for j in range(i+1,wordLen):
+            if words[j].symbol != "":
+               if words[j].position != 2:
+                  words[i].position = 0
+                  break
+               else:
+                  break
+      i+=1
 
 def findComponentEnd(words:list[Word], id:int, symbol:str) -> int:
    """Function for a positive lookahead to find the end index of a component"""
