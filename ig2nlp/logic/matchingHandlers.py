@@ -317,8 +317,8 @@ def rootHandler(words:list[Word], i:int, wordLen:int) -> int:
                   if words[j].head != k:
                      # Add semantic annotation for context based on xcomp
                      # if the xcomp is not adjacent to the aim
-                     words[i].text = (words[i].text + " " * words[k].spaces + "[" + 
-                                    words[k].text + "]")
+                     #words[i].text = (words[i].text + " " * words[k].spaces + "[" + 
+                     #               words[k].text + "]")
                      j = k
                      break
                   j+=1
